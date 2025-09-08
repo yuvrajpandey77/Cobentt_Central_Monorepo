@@ -1,27 +1,35 @@
 import { inngest } from "./client";
-import { openai, createAgent, createTool, createNetwork , AnyZodType } from "@inngest/agent-kit";
+import { openai, createAgent, createTool, createNetwork , AnyZodType, Tool } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { PROMPT } from "@/prompt";
 import { z } from "zod";
+import prisma from "@/lib/db";
+
+
+interface CogerphereAgentResult {
+  summary: string;
+  files: { [path: string]: string };
+
+}
 
 export const CogerphereAgent = inngest.createFunction(
   { id: "COGERPHERE" },
-  { event: "test/Cogerphereai" },
+  { event: "Cogerphereai/runAgent" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("cogerphereailabsbeta1");
       return sandbox.sandboxId;
     });
 
-    const CogerphereCodeAgent = createAgent({
+    const CogerphereCodeAgent = createAgent<CogerphereAgentResult>({
       name: "Coding-Agent",
       description: "An expert coding agent",
       system: PROMPT,
       model: openai({ 
         model:  "gpt-5-nano",
-        
-       }),
+      
+       }),    
       tools: [
         createTool({
           name: "terminal",
@@ -62,7 +70,7 @@ export const CogerphereAgent = inngest.createFunction(
               content: z.string(),
             })),
           })as unknown as AnyZodType ,
-          handler: async ({ files }, { step, network }) => {
+          handler: async ({ files }, { step, network }: Tool.Options<CogerphereAgentResult>) => {
             const newFiles = await step?.run("createOrUpdateFiles", async () => {
               try {
                 const updatedFiles = network.state.data.files || {};
@@ -122,7 +130,7 @@ export const CogerphereAgent = inngest.createFunction(
 
 
 
-    const network = createNetwork({
+    const network = createNetwork<CogerphereAgentResult>({
       name: "coding-agent-network",
       agents: [CogerphereCodeAgent],
       maxIter: 15,
@@ -136,14 +144,41 @@ export const CogerphereAgent = inngest.createFunction(
     });
 
     const result = await network.run(event.data.value);
-
+     
+    const isError = !result.state.data.summary || Object.keys(result.state.data.files|| {}).length === 0;
 
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
       const host = sandbox.getHost(3000);
       return `https://${host}`;
     });
-
+    
+    await step.run("save-result", async () => {
+      if(isError) {
+        return await prisma.message.create({
+          data: {
+            content: "Something went wrong , please try again",
+            role: "ASSISTANT",
+            type: "ERROR",
+          }
+        })
+      }
+      return await prisma.message.create({
+        data: {
+          content: result.state.data.summary,
+          role: "ASSISTANT",
+          type: "RESULT",
+          fragments: {
+            create: {
+              sandboxUrl: sandboxUrl,
+              title: "Fragment",
+              files: result.state.data.files,
+            }
+          }
+        }
+      })
+    });
+       
     return { 
       url: sandboxUrl,  
       title: "Fragment",
