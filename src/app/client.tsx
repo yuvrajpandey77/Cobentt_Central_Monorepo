@@ -5,7 +5,8 @@ import { useTRPC } from "@/trpc/client";
 
 export const Client = () => {
     const trpc = useTRPC(); 
-    const {data} = useSuspenseQuery(trpc.chatai.queryOptions({text: "Hello"}));
+    const {data} = useSuspenseQuery(trpc.projects.getMany.queryOptions());
+    // const {data} = useSuspenseQuery(trpc.chatai.queryOptions({text: "Hello"}));
     return (
         <div>
             {JSON.stringify(data)}      
