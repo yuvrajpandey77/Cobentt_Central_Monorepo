@@ -27,7 +27,7 @@ export const CogerphereAgent = inngest.createFunction(
       description: "An expert coding agent",
       system: PROMPT,
       model: openai({ 
-        model:  "gpt-5-nano",
+        model:  "gpt-4.1",
       
        }),    
       tools: [
@@ -157,6 +157,7 @@ export const CogerphereAgent = inngest.createFunction(
       if(isError) {
         return await prisma.message.create({
           data: {
+            projectId: event.data.projectId,
             content: "Something went wrong , please try again",
             role: "ASSISTANT",
             type: "ERROR",
@@ -165,6 +166,7 @@ export const CogerphereAgent = inngest.createFunction(
       }
       return await prisma.message.create({
         data: {
+          projectId: event.data.projectId,
           content: result.state.data.summary,
           role: "ASSISTANT",
           type: "RESULT",
@@ -186,4 +188,4 @@ export const CogerphereAgent = inngest.createFunction(
       summary: result.state.data.summary,
      };
   },
-);
+);             
