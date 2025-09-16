@@ -9,48 +9,51 @@ import { MessagesContainer } from "@/modules/projects/ui/components/messages-con
 import { Suspense, useState } from "react";
 import { Fragment } from "@/generated/prisma";
 import { ProjectHeader } from "../components/project-header";
+import { FragmentWeb } from "../components/fragment-web";
 
 interface Props {
     projectId: string;
 }
 
 export const ProjectView = ({ projectId }: Props) => {
-    const [activeFragment , setActiveFragment] = useState<Fragment | null>(null);
-    
+    const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
+
     // const trpc = useTRPC();
     // const {data: project} = useSuspenseQuery(trpc.projects.getOne.queryOptions({ id: projectId }));
     return (
         <div className="h-screen">
             <ResizablePanelGroup direction="horizontal">
                 <ResizablePanel
-                defaultSize={35}
-                minSize={20}
-                className="flex flex-col min-h-0"
-                >   <Suspense fallback={<div>Loading project...</div>}>
-                    <ProjectHeader projectId={projectId}/>
+                    defaultSize={35}
+                    minSize={20}
+                    className="flex flex-col min-h-0"
+                >
+                    <Suspense fallback={<div>Loading project...</div>}>
+                        <ProjectHeader projectId={projectId} />
                     </Suspense>
-                    <Suspense fallback={<div>Loading messages...</div>}> 
-                   <MessagesContainer
-                    projectId={projectId}
-                    activeFragment={activeFragment}
-                    setActiveFragment={setActiveFragment}
-                    
-                    />
-                   </Suspense>
-                </ResizablePanel>   
+
+                    <Suspense fallback={<div>Loading messages...</div>}>
+                        <MessagesContainer
+                            projectId={projectId}
+                            activeFragment={activeFragment}
+                            setActiveFragment={setActiveFragment}
+
+                        />
+                    </Suspense>
+                </ResizablePanel>
 
                 <ResizableHandle withHandle />
                 <ResizablePanel
-                defaultSize={65}
-                minSize={50}
-                
-                
+                    defaultSize={65}
+                    minSize={50}
+
+
                 >
-                    TODO: Preview
+                   {!!activeFragment && <FragmentWeb data={activeFragment}/>} 
                 </ResizablePanel>
-                
+
             </ResizablePanelGroup>
-           
+
         </div>
     )
 }
