@@ -40,7 +40,7 @@ export const ProjectHeader = ({ projectId }: Props) => {
    
    
     return (
-    <header className="p-2 flex justify-between items-center border-b">
+    <header className="p-3 flex justify-between items-center border-b">
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="focus-visible:ring-0 hover:bg-transparent hover:opacity-75 transition-opacity pl-2">
