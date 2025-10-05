@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUpIcon, Loader2Icon } from "lucide-react";
+import { ArrowUpIcon, Loader2Icon, LightbulbIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
@@ -35,6 +35,7 @@ export const ProjectForm = () => {
     const trpc = useTRPC();
     const [showLoading, setShowLoading] = useState(false);
     const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+    const [showIdeas, setShowIdeas] = useState(false);
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -147,69 +148,80 @@ export const ProjectForm = () => {
                             </div>
                         )}
                     />
-                    <div className="flex items-center justify-between px-5 py-3">
-                        <div className="text-sm text-white/80 font-mono">
-                            <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-white/40 bg-white/20 px-2 text-sm font-mono font-medium text-white/90">
-                                <span>⌘</span>Enter
-                            </kbd>
+                    
+                    {/* Ideas Section */}
+                    {showIdeas && (
+                        <div className="px-5 pb-3">
+                            <div className="p-4 bg-white/15 backdrop-blur-sm rounded-lg border border-white/30 shadow-lg">
+                                <div className="flex flex-wrap gap-2">
+                                    {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
+                                        <Button
+                                            key={template.title}
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 px-3 text-xs bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 transition-all duration-200 hover:scale-105 backdrop-blur-sm text-gray-800 font-medium shadow-sm"
+                                            onClick={() => {
+                                                onSelect(template.prompt);
+                                            }}
+                                        >
+                                            <span className="mr-1 text-sm">{template.emoji}</span>
+                                            {template.title}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                        <Button
-                            type="submit"
-                            disabled={isButtonDisabled}
-                            size="default"
-                            className={cn(
-                                "h-10 px-6 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
-                                isButtonDisabled && "opacity-50 cursor-not-allowed"
-                            )}
-                        >
-                            {isPending ? (
-                                <>
-                                    <Loader2Icon className="size-3 animate-spin mr-2" />
-                                    Building...
-                                </>
-                            ) : (
-                                <>
-                                    <ArrowUpIcon className="size-3 mr-2" />
-                                    Build
-                                </>
-                            )}
-                        </Button>
+                    )}
+
+                    {/* Build Button Section */}
+                    <div className="px-5 py-3">
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm text-white/80 font-mono">
+                                <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-white/40 bg-white/20 px-2 text-sm font-mono font-medium text-white/90">
+                                    <span>⌘</span>Enter
+                                </kbd>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setShowIdeas(!showIdeas)}
+                                    className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+                                >
+                                    <LightbulbIcon className="size-4 mr-2" />
+                                    Ideas
+                                    {showIdeas ? (
+                                        <ChevronUpIcon className="size-4 ml-2" />
+                                    ) : (
+                                        <ChevronDownIcon className="size-4 ml-2" />
+                                    )}
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isButtonDisabled}
+                                    size="default"
+                                    className={cn(
+                                        "h-10 px-6 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
+                                        isButtonDisabled && "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    {isPending ? (
+                                        <>
+                                            <Loader2Icon className="size-3 animate-spin mr-2" />
+                                            Building...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ArrowUpIcon className="size-3 mr-2" />
+                                            Build
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </form>
-                
-                {/* Template Suggestions */}
-                <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
-                    {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
-                        <Button
-                            key={template.title}
-                            variant="outline"
-                            size="default"
-                            className="h-10 px-4 text-sm bg-white/30 hover:bg-white/40 border-white/40 hover:border-white/60 transition-all duration-300 hover:shadow-xl hover:scale-105 backdrop-blur-sm text-white"
-                            onClick={() => {
-                                onSelect(template.prompt);
-                            }}
-                        >
-                            <span className="mr-2 text-base">{template.emoji}</span>
-                            {template.title}
-                        </Button>
-                    ))}
-                </div>
-                
-                {/* Debug Test Button */}
-                <div className="flex justify-center mt-4">
-                    <Button
-                        variant="outline"
-                        size="default"
-                        className="h-10 px-4 text-sm bg-red-500/30 hover:bg-red-500/40 border-red-500/40 hover:border-red-500/60 transition-all duration-300 backdrop-blur-sm text-white"
-                        onClick={() => {
-                            console.log("Test button clicked");
-                            setShowLoading(true);
-                            setCreatedProjectId("test-project-id");
-                        }}
-                    >
-                        Test Loading Screen
-                    </Button>
-                </div>
             </section>
         </Form>
         </>
