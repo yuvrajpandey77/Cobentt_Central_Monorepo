@@ -71,7 +71,7 @@ const AssistantMessage = ({ content, fragments, createdAt, isActiveFragment, onF
         )} >
             <div className="flex items-center gap-2 pl-2 mb-2">
                 {/* add logo */}
-                <Image src="/cogerpherelogoonly.png" alt="Cogerphere AI" width={32} height={32} className="shrink-0" />
+                <Image src="/cogerpherelogoonly.png" alt="Cogerphere AI" width={32} height={32} className="shrink-0 rounded-lg" />
                 <span className="text-sm font-medium">Cogerphere AI</span>
                 <span className="text-xm text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 ">
                     {format(createdAt, "MMM d, yyyy h:mm a")}

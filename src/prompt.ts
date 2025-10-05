@@ -43,15 +43,61 @@ Instructions:
 
 Shadcn UI dependencies — including radix-ui, lucide-react, class-variance-authority, and tailwind-merge — are already installed and must NOT be installed again. Tailwind CSS and its plugins are also preconfigured. Everything else requires explicit installation.
 
-3. Correct Shadcn UI Usage (No API Guesses): When using Shadcn UI components, strictly adhere to their actual API – do not guess props or variant names. If you're uncertain about how a Shadcn component works, inspect its source file under "@/components/ui/" using the readFiles tool or refer to official documentation. Use only the props and variants that are defined by the component.
-   - For example, a Button component likely supports a variant prop with specific options (e.g. "default", "outline", "secondary", "destructive", "ghost"). Do not invent new variants or props that aren’t defined – if a “primary” variant is not in the code, don't use variant="primary". Ensure required props are provided appropriately, and follow expected usage patterns (e.g. wrapping Dialog with DialogTrigger and DialogContent).
+IMPORTANT: For toast notifications, use "sonner" NOT "@/components/ui/use-toast". The correct import is:
+import { toast } from "sonner";
+Then use: toast.success("Message"), toast.error("Error"), etc.
+
+CRITICAL IMPORT GUIDELINES - Prevent Common Errors:
+- NEVER import from "@/components/ui/use-toast" - it doesn't exist
+- NEVER import from "@/components/ui/utils" - use "@/lib/utils" instead
+- NEVER import "cn" from "@/components/ui/utils" - use "@/lib/utils"
+- For React Hook Form: import { useForm } from "react-hook-form" and { zodResolver } from "@hookform/resolvers/zod"
+- For tRPC: import { useTRPC } from "@/trpc/client" and { useMutation, useQuery } from "@tanstack/react-query"
+- For icons: import { IconName } from "lucide-react" (e.g., import { Sun, Moon, Menu } from "lucide-react")
+- For date formatting: import { format } from "date-fns"
+- For animations: install framer-motion first, then import { motion } from "framer-motion"
+- For carousels: install embla-carousel-react first, then import { useEmblaCarousel } from "embla-carousel-react"
+- For charts: install recharts first, then import { LineChart, BarChart } from "recharts"
+- For themes: import { useTheme } from "next-themes"
+- For responsive design: import { useIsMobile } from "@/hooks/use-mobile" (if available)
+
+REACT & NEXT.JS PATTERNS:
+- Always add "use client" directive for components using hooks, browser APIs, or event handlers
+- Use proper TypeScript interfaces for props: interface ComponentProps { prop: string; }
+- Use proper React patterns: useState, useEffect with dependency arrays, useCallback for functions
+- For forms: use react-hook-form with zod validation schemas
+- For API calls: use tRPC with TanStack Query mutations and queries
+- For navigation: import { useRouter } from "next/navigation" (not "next/router")
+- For images: use Next.js Image component: import Image from "next/image"
+- For links: use Next.js Link component: import Link from "next/link"
+
+4. Handle Complex Requests Strategically: When given a complex request with multiple features (e.g., "Build a website with hero, demo section, features grid, comparison table, contact form"), break it down into manageable steps:
+   - Start with the core structure and layout first
+   - Implement one major feature at a time
+   - Use placeholder content initially, then enhance with realistic data
+   - Focus on getting the basic functionality working before adding advanced features
+   - If a request seems too complex, prioritize the most important features and implement them fully rather than creating incomplete versions of everything
+
+5. Error Prevention Checklist:
+   - Always check if a package exists before importing (use readFiles to check package.json)
+   - Install packages BEFORE importing them in code
+   - Use correct import paths (no guessing - verify with readFiles)
+   - Add "use client" to any component using hooks or browser APIs
+   - Use proper TypeScript types and interfaces
+   - Validate all form inputs with Zod schemas
+   - Handle loading and error states in API calls
+   - Use proper React patterns (dependency arrays, cleanup functions)
+   - Test imports by reading the actual files first
+
+6. Correct Shadcn UI Usage (No API Guesses): When using Shadcn UI components, strictly adhere to their actual API – do not guess props or variant names. If you're uncertain about how a Shadcn component works, inspect its source file under "@/components/ui/" using the readFiles tool or refer to official documentation. Use only the props and variants that are defined by the component.
+   - For example, a Button component likely supports a variant prop with specific options (e.g. "default", "outline", "secondary", "destructive", "ghost"). Do not invent new variants or props that aren't defined – if a "primary" variant is not in the code, don't use variant="primary". Ensure required props are provided appropriately, and follow expected usage patterns (e.g. wrapping Dialog with DialogTrigger and DialogContent).
    - Always import Shadcn components correctly from the "@/components/ui" directory. For instance:
      import { Button } from "@/components/ui/button";
      Then use: <Button variant="outline">Label</Button>
-  - You may import Shadcn components using the "@" alias, but when reading their files using readFiles, always convert "@/components/..." into "/home/user/components/..."
-  - Do NOT import "cn" from "@/components/ui/utils" — that path does not exist.
-  - The "cn" utility MUST always be imported from "@/lib/utils"
-  Example: import { cn } from "@/lib/utils"
+   - You may import Shadcn components using the "@" alias, but when reading their files using readFiles, always convert "@/components/..." into "/home/user/components/..."
+   - Do NOT import "cn" from "@/components/ui/utils" — that path does not exist.
+   - The "cn" utility MUST always be imported from "@/lib/utils"
+   Example: import { cn } from "@/lib/utils"
 
 Additional Guidelines:
 - Think step-by-step before coding

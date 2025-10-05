@@ -13,6 +13,8 @@ import { Form, FormField } from "@/components/ui/form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "./constants";
+import { TypingAnimation } from "@/components/ui/typing-animation";
+import { ProjectLoading } from "@/components/ui/project-loading";
 
 
 
@@ -28,11 +30,12 @@ const formSchema = z.object({
 
 
 export const ProjectForm = () => {
-
     const router = useRouter();
-
     const queryClient = useQueryClient();
     const trpc = useTRPC();
+    const [showLoading, setShowLoading] = useState(false);
+    const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -42,108 +45,173 @@ export const ProjectForm = () => {
 
     const createProject = useMutation(trpc.projects.create.mutationOptions({
         onSuccess: (data) => {
-
-            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions()
-            );
-            router.push(`/projects/${data.id}`);
-            //invalidate project usage status
+            console.log("Project created successfully:", data);
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            setCreatedProjectId(data.id);
+            setShowLoading(true);
+            console.log("Loading screen should now be visible");
         },
         onError: (error) => {
-            // redirec to pricing page if specific error
+            console.error("Project creation failed:", error);
             toast.error(error.message);
         },
-    }))
+    }));
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        await createProject.mutateAsync({
-            value: values.value,
+        console.log("Form submitted with values:", values);
+        try {
+            await createProject.mutateAsync({
+                value: values.value,
+            });
+        } catch (error) {
+            console.error("Error creating project:", error);
+        }
+    };
 
-        });
+    const handleLoadingComplete = () => {
+        console.log("Loading completed, navigating to project:", createdProjectId);
+        if (createdProjectId) {
+            router.push(`/projects/${createdProjectId}`);
+        }
+    };
 
-    }
     const onSelect = (value: string) => { 
         form.setValue("value", value, {
             shouldDirty: true,
             shouldTouch: true,
             shouldValidate: true,
         });
-    }
+    };
 
     const [isFocused, setIsFocused] = useState(false);
     const isPending = createProject.isPending;
     const isButtonDisabled = isPending || !form.formState.isValid;
 
-    return (
-        <Form {...form}>
-            <section className="space-y-6">
-                <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
-                    "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all ",
-                    isFocused && "shadow-xs",
+    // Typing animation texts
+    const typingTexts = [
+        "Ask Cogerphere to create a dashboard to track your team's productivity",
+        "Build a modern e-commerce website with React and Stripe integration",
+        "Create a social media app with real-time chat and notifications",
+        "Develop a project management tool with drag-and-drop functionality",
+        "Build a fitness tracking app with workout plans and progress charts",
+        "Create a restaurant ordering system with online payments",
+        "Develop a learning management system with video streaming",
+        "Build a real estate platform with property listings and virtual tours"
+    ];
 
+    return (
+        <>
+            {showLoading && (
+                <>
+                    {console.log("Rendering ProjectLoading component")}
+                    <ProjectLoading onComplete={handleLoadingComplete} />
+                </>
+            )}
+            <Form {...form}>
+                <section className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
+                    "relative border border-white/40 rounded-xl bg-white/20 backdrop-blur-lg transition-all duration-200 cursor-text shadow-xl",
+                    isFocused && "border-white/60 shadow-2xl ring-2 ring-white/30",
                 )}>
                     <FormField
                         control={form.control}
                         name="value"
                         render={({ field }) => (
-                            <TextareaAutosize
-                                {...field}
-                                disabled={isPending}
-                                onFocus={() => setIsFocused(true)}
-                                onBlur={() => setIsFocused(false)}
-                                minRows={2}
-                                maxRows={8}
-                                className="pt-4 resize-none border-none w-full outline-none bg-transparent"
-                                placeholder="What would you like to Build?"
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                                        e.preventDefault();
-                                        form.handleSubmit(onSubmit)(e);
-                                    }
-                                }}
-                            />
+                            <div className="relative">
+                                <TextareaAutosize
+                                    {...field}
+                                    disabled={isPending}
+                                    onFocus={() => setIsFocused(true)}
+                                    onBlur={() => setIsFocused(false)}
+                                    minRows={1}
+                                    maxRows={6}
+                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white placeholder:text-white/60 cursor-text"
+                                    placeholder=""
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                            e.preventDefault();
+                                            form.handleSubmit(onSubmit)(e);
+                                        }
+                                    }}
+                                />
+                                {!field.value && !isFocused && (
+                                    <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text">
+                                        <TypingAnimation 
+                                            texts={typingTexts} 
+                                            speed={15}
+                                            pauseTime={1500}
+                                            className="text-base text-white/60 text-left"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         )}
                     />
-                    <div className="flex gap-x-2 items-end justify-between pt-2">
-                        <div className="text-[10px] text-muted-foreground font-mono">
-                            <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5  text-[10px] font-mono font-medium text-muted-foreground ">
-                                <span>
-                                    &#8984;
-                                </span>Enter
+                    <div className="flex items-center justify-between px-5 py-3">
+                        <div className="text-sm text-white/80 font-mono">
+                            <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-white/40 bg-white/20 px-2 text-sm font-mono font-medium text-white/90">
+                                <span>⌘</span>Enter
                             </kbd>
-                            &nbsp; to submit
                         </div>
                         <Button
+                            type="submit"
                             disabled={isButtonDisabled}
+                            size="default"
                             className={cn(
-                                "size-8 rounded-full",
-                                isButtonDisabled && "bg-muted-foreground border"
+                                "h-10 px-6 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
+                                isButtonDisabled && "opacity-50 cursor-not-allowed"
                             )}
                         >
                             {isPending ? (
-                                <Loader2Icon className="size-4 animate-spin" />
+                                <>
+                                    <Loader2Icon className="size-3 animate-spin mr-2" />
+                                    Building...
+                                </>
                             ) : (
-                                <ArrowUpIcon />
+                                <>
+                                    <ArrowUpIcon className="size-3 mr-2" />
+                                    Build
+                                </>
                             )}
-
                         </Button>
                     </div>
                 </form>
-                <div className="flex-wrap justify-center gap-2 hidden md:flex max-w-3xl ">
-                    {PROJECT_TEMPLATES.map((template) => (
-                        < Button
+                
+                {/* Template Suggestions */}
+                <div className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+                    {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
+                        <Button
                             key={template.title}
                             variant="outline"
-                            size="sm"
-                            className="bg-white dark:bg-sidebar"
+                            size="default"
+                            className="h-10 px-4 text-sm bg-white/30 hover:bg-white/40 border-white/40 hover:border-white/60 transition-all duration-300 hover:shadow-xl hover:scale-105 backdrop-blur-sm text-white"
                             onClick={() => {
                                 onSelect(template.prompt);
                             }}
                         >
-                            {template.emoji} {template.title}
+                            <span className="mr-2 text-base">{template.emoji}</span>
+                            {template.title}
                         </Button>
                     ))}
                 </div>
+                
+                {/* Debug Test Button */}
+                <div className="flex justify-center mt-4">
+                    <Button
+                        variant="outline"
+                        size="default"
+                        className="h-10 px-4 text-sm bg-red-500/30 hover:bg-red-500/40 border-red-500/40 hover:border-red-500/60 transition-all duration-300 backdrop-blur-sm text-white"
+                        onClick={() => {
+                            console.log("Test button clicked");
+                            setShowLoading(true);
+                            setCreatedProjectId("test-project-id");
+                        }}
+                    >
+                        Test Loading Screen
+                    </Button>
+                </div>
             </section>
         </Form>
+        </>
     )
 }
