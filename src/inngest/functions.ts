@@ -132,7 +132,7 @@ export const CogerphereAgent = inngest.createFunction(
     const network = createNetwork<CogerphereAgentResult>({
       name: "coding-agent-network",
       agents: [CogerphereCodeAgent],
-      maxIter: 15,
+      maxIter: 30,
       router: async ({  network }) => {
         const summary = network.state.data.summary;
           if (summary) {
