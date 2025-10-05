@@ -6,16 +6,19 @@ import {formatDistanceToNow} from "date-fns";
 import { useTRPC } from "@/trpc/client";
 import {useQuery} from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
 
 export const ProjectsList = () => {
-
+    const {user} = useUser();
     const trpc = useTRPC();
     const {data: projects} = useQuery(trpc.projects.getMany.queryOptions());
-
+    if (!user) {
+        return null;
+    }
     return (
         <div className="w-full bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-border/50 shadow-lg">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-semibold">Your Projects</h2>
+                <h2 className="text-2xl font-semibold">{user?.firstName}&apos;s Projects</h2>
                 <div className="text-sm text-muted-foreground">
                     {projects?.length || 0} project{projects?.length !== 1 ? 's' : ''}
                 </div>

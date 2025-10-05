@@ -16,6 +16,7 @@ import { CodeIcon, CrownIcon, EyeIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileExplorer } from "@/components/file-explorer";
+import { UserControl } from "@/components/user-control";
 
 interface Props {
     projectId: string;
@@ -79,7 +80,13 @@ export const ProjectView = ({ projectId }: Props) => {
                                         <span className="font-medium">Upgrade</span>
                                     </Link>
                                 </Button>
+                                
                             </div>
+                            <div className="ml-2 gap-x-2 flex items-center">
+                            <UserControl showName={false} />    
+                            </div>
+
+                            
 
                         </div>
                         <TabsContent value="preview">
