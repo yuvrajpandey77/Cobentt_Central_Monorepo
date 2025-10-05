@@ -1,3 +1,4 @@
+"use client";
 import { z } from "zod";
 
 import { useState } from "react";
@@ -15,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "./constants";
 import { TypingAnimation } from "@/components/ui/typing-animation";
 import { ProjectLoading } from "@/components/ui/project-loading";
+import { useClerk } from "@clerk/nextjs";
 
 
 
@@ -30,6 +32,7 @@ const formSchema = z.object({
 
 
 export const ProjectForm = () => {
+    const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
     const trpc = useTRPC();
@@ -53,19 +56,31 @@ export const ProjectForm = () => {
             console.log("Loading screen should now be visible");
         },
         onError: (error) => {
-            console.error("Project creation failed:", error);
             toast.error(error.message);
+            if(error.data?.code === "UNAUTHORIZED") {
+                router.push("/sign-in");
+            }
         },
     }));
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         console.log("Form submitted with values:", values);
+        // If user is not authenticated, redirect to sign-in before attempting mutation
+        if (!clerk.user) {
+            router.push("/sign-in");
+            return;
+        }
         try {
             await createProject.mutateAsync({
                 value: values.value,
             });
         } catch (error) {
             console.error("Error creating project:", error);
+            const code = (error as any)?.data?.code ?? (error as any)?.shape?.code;
+            const httpStatus = (error as any)?.data?.httpStatus;
+            if (code === "UNAUTHORIZED" || httpStatus === 401) {
+                router.push("/sign-in");
+            }
         }
     };
 

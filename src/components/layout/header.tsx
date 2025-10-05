@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { UserControl } from "@/components/user-control";
 import { Menu, X, Sparkles, Github, Linkedin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -92,10 +94,28 @@ export const Header = () => {
                 <Linkedin className="h-4 w-4" />
               </Link>
             </Button>
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Get Started
-            </Button>
+            <SignedOut>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="secondary" size="sm" className="bg-white/10 text-white hover:bg-white/20">
+                  <Link href="/sign-in">Sign in</Link>
+                </Button>
+                <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+                  <Link href="/sign-up">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Sign up
+                  </Link>
+                </Button>
+              </div>
+            </SignedOut>
+            <SignedIn>
+              <div className="flex items-center gap-3">
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Get Started
+                </Button>
+                <UserControl showName={false} />
+              </div>
+            </SignedIn>
           </div>
 
           {/* Mobile Menu Button */}
@@ -159,10 +179,28 @@ export const Header = () => {
                     <Linkedin className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Get Started
-                </Button>
+                <SignedOut>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="secondary" size="sm" className="bg-white/10 text-white hover:bg-white/20">
+                      <Link href="/sign-in">Sign in</Link>
+                    </Button>
+                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+                      <Link href="/sign-up">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Sign up
+                      </Link>
+                    </Button>
+                  </div>
+                </SignedOut>
+                <SignedIn>
+                  <div className="flex items-center gap-3">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Get Started
+                    </Button>
+                    <UserControl showName={false} />
+                  </div>
+                </SignedIn>
               </div>
             </nav>
           </div>
