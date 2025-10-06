@@ -5,6 +5,7 @@ import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { z } from "zod";
 import prisma from "@/lib/db";
+import { SANDBOX_TIMEOUT } from "./types";
 
 
 interface CogerphereAgentResult {
@@ -19,6 +20,7 @@ export const CogerphereAgent = inngest.createFunction(
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("cogerphereailabsbeta1");
+      await sandbox.setTimeout(SANDBOX_TIMEOUT);
       return sandbox.sandboxId;
     });
 
@@ -30,8 +32,9 @@ export const CogerphereAgent = inngest.createFunction(
           projectId: event.data.projectId,
         },
         orderBy: {
-          createdAt: "asc",
+          createdAt: "desc",
         },
+        take: 6,
       });
 
       for (const message of messages) {
@@ -43,7 +46,7 @@ export const CogerphereAgent = inngest.createFunction(
           content: message.content,
         });
       }
-      return formattedMessages;
+      return formattedMessages.reverse();
     });
 
     const state = createState<CogerphereAgentResult>({

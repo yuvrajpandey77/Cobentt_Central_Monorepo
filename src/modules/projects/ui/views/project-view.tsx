@@ -17,6 +17,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user-control";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface Props {
     projectId: string;
@@ -36,18 +37,21 @@ export const ProjectView = ({ projectId }: Props) => {
                     minSize={20}
                     className="flex flex-col min-h-0"
                 >
-                    <Suspense fallback={<div>Loading project...</div>}>
-                        <ProjectHeader projectId={projectId} />
-                    </Suspense>
-
+                    <ErrorBoundary fallback={<div>Error loading project...</div>}>
+                        <Suspense fallback={<div>Loading project...</div>}>
+                            <ProjectHeader projectId={projectId} />
+                        </Suspense>
+                    </ErrorBoundary>
+                    <ErrorBoundary fallback={<div>Error loading messages...</div>}>
                     <Suspense fallback={<div>Loading messages...</div>}>
                         <MessagesContainer
                             projectId={projectId}
                             activeFragment={activeFragment}
                             setActiveFragment={setActiveFragment}
 
-                        />
-                    </Suspense>
+                            />
+                        </Suspense>
+                    </ErrorBoundary>
                 </ResizablePanel>
 
                 <ResizableHandle className="hover:bg-primary trasition-colors" />
@@ -80,13 +84,13 @@ export const ProjectView = ({ projectId }: Props) => {
                                         <span className="font-medium">Upgrade</span>
                                     </Link>
                                 </Button>
-                                
+
                             </div>
                             <div className="ml-2 gap-x-2 flex items-center">
-                            <UserControl showName={false} />    
+                                <UserControl showName={false} />
                             </div>
 
-                            
+
 
                         </div>
                         <TabsContent value="preview">
@@ -94,8 +98,8 @@ export const ProjectView = ({ projectId }: Props) => {
                         </TabsContent>
                         <TabsContent value="code" className="min-h-0">
                             {!!activeFragment?.files && (
-                                <FileExplorer 
-                                files={activeFragment.files as {[path: string]: string}} />
+                                <FileExplorer
+                                    files={activeFragment.files as { [path: string]: string }} />
                             )}
                         </TabsContent>
 
