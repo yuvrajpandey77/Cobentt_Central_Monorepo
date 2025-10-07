@@ -1,43 +1,44 @@
-# 🏗️ Cogerphere AI Architecture Diagram
+# 🏗️ Cogerphere Learning-Focused AI Architecture
 
 ## System Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           COGERPHERE AI ECOSYSTEM                             │
+│                        COGERPHERE LEARNING ECOSYSTEM                           │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
 │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐             │
-│  │   Frontend      │    │   Backend       │    │   Python AI     │             │
-│  │   (Next.js)     │◄──►│   (tRPC/API)    │◄──►│   Service       │             │
-│  │                 │    │                 │    │   (FastAPI)     │             │
+│  │   Frontend      │    │   Backend       │    │   Python        │             │
+│  │   (Next.js)     │◄──►│   (tRPC/API)    │◄──►│   Learning      │             │
+│  │                 │    │                 │    │   Service       │             │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘             │
 │           │                       │                       │                   │
 │           │                       │                       │                   │
 │           ▼                       ▼                       ▼                   │
 │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐             │
-│  │   UI Components │    │   Background    │    │   ML Pipeline   │             │
-│  │   (Shadcn UI)   │    │   Jobs          │    │   (PyTorch/     │             │
-│  │                 │    │   (Inngest)     │    │    Scikit-learn)│             │
+│  │   UI Learning   │    │   Background    │    │   AI Learning   │             │
+│  │   Components    │    │   Jobs          │    │   Pipeline      │             │
+│  │   (Shadcn UI)   │    │   (Inngest)     │    │                 │             │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘             │
 │                                                                                 │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│                           DATA LAYER                                            │
+│                           LEARNING DATA LAYER                                   │
 │                                                                                 │
 │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐             │
-│  │   PostgreSQL    │    │   pgvector      │    │   File Storage  │             │
-│  │   (Prisma ORM)  │    │   (Embeddings)  │    │   (Fragments)   │             │
+│  │   PostgreSQL    │    │   Learning      │    │   Project        │             │
+│  │   (Prisma ORM)  │    │   Datasets      │    │   Artifacts      │             │
 │  │                 │    │                 │    │                 │             │
-│  │ • Projects      │    │ • Text Vectors  │    │ • Code Files    │             │
-│  │ • Messages      │    │ • Similarity    │    │ • Images        │             │
-│  │ • Fragments     │    │ • Search        │    │ • Models        │             │
-│  │ • ML Models     │    │                 │    │                 │             │
+│  │ • Projects      │    │ • Titanic       │    │ • Code Files    │             │
+│  │ • Messages      │    │ • Iris          │    │ • Models        │             │
+│  │ • Fragments     │    │ • MNIST         │    │ • Visualizations│             │
+│  │ • Learning      │    │ • Custom Data   │    │ • Results        │             │
+│  │   Progress      │    │                 │    │                 │             │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘             │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## AI Learning Path Integration
+## AI Learning Path Integration (Corrected)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -84,63 +85,72 @@
                                               └─────────────────┘
 ```
 
-## Python Service Endpoints Map
+## Python Service Endpoints Map (Learning-Focused)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           PYTHON AI SERVICE ENDPOINTS                           │
+│                    PYTHON LEARNING SERVICE ENDPOINTS                           │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
-│  📊 Data Processing                                                             │
-│  ├── POST /data/csv-to-api     → Schema inference, CRUD generation             │
-│  ├── POST /data/process        → Data cleaning, transformation                 │
-│  └── POST /data/validate       → Data validation, quality checks              │
+│  🐍 Python Basics & Foundation                                                 │
+│  ├── GET /health                    → Service health check                      │
+│  └── GET /version                   → Service version info                     │
 │                                                                                 │
-│  🤖 Machine Learning                                                            │
-│  ├── POST /ml/train           → Model training (Scikit-learn)                 │
-│  ├── POST /ml/predict         → Model predictions                              │
-│  ├── POST /ml/embed           → Text embeddings (sentence-transformers)       │
-│  └── POST /ml/search          → Vector similarity search                      │
+│  📘 Math for ML & Essential Libraries                                          │
+│  ├── POST /math/matrix-operations   → Linear algebra operations                 │
+│  ├── POST /math/statistics          → Statistical analysis                      │
+│  ├── POST /data/csv-to-api          → CSV schema inference (from roadmap)      │
+│  ├── POST /data/visualize           → Data visualization with Matplotlib/Seaborn│
+│  └── POST /data/process             → Data cleaning and transformation         │
 │                                                                                 │
-│  🧬 Deep Learning                                                              │
-│  ├── POST /dl/train           → Neural network training (PyTorch)             │
-│  ├── POST /dl/infer           → Deep learning inference                        │
-│  └── POST /dl/fine-tune       → Model fine-tuning                              │
+│  🤖 Machine Learning Basics (Scikit-learn)                                     │
+│  ├── POST /ml/train                 → Model training (all algorithms)          │
+│  ├── POST /ml/evaluate              → Model evaluation and metrics             │
+│  ├── POST /ml/predict               → Model predictions                         │
+│  ├── POST /ml/projects/spam-classifier → Spam email classification            │
+│  ├── POST /ml/projects/titanic-survival → Titanic survival prediction          │
+│  ├── POST /ml/projects/movie-recommendation → Movie recommendation system     │
+│  └── POST /ml/projects/iris-classification → Iris flower classification       │
+│                                                                                 │
+│  🧬 Deep Learning (PyTorch)                                                    │
+│  ├── POST /dl/train                 → Neural network training                  │
+│  ├── POST /dl/infer                 → Deep learning inference                  │
+│  ├── POST /dl/projects/digit-recognition → Handwritten digit recognition       │
+│  ├── POST /dl/projects/sentiment-analysis → Sentiment analysis with RNN/LSTM  │
+│  ├── POST /dl/concepts/perceptron   → Perceptron implementation                │
+│  └── POST /dl/concepts/backprop     → Backpropagation demonstration            │
 │                                                                                 │
 │  🧠 Natural Language Processing                                                 │
-│  ├── POST /nlp/spec           → Prompt to structured spec conversion          │
-│  ├── POST /nlp/sentiment      → Sentiment analysis                             │
-│  ├── POST /nlp/summarize      → Text summarization                             │
-│  └── POST /nlp/classify       → Text classification                            │
+│  ├── POST /nlp/spec                 → Prompt to structured spec (from roadmap)  │
+│  ├── POST /nlp/sentiment            → Sentiment analysis                       │
+│  ├── POST /nlp/summarize            → Text summarization                       │
+│  ├── POST /nlp/projects/tweet-sentiment → Tweet sentiment analysis             │
+│  └── POST /ml/embed                 → Text embeddings (from roadmap)           │
 │                                                                                 │
 │  👁️ Computer Vision                                                             │
-│  ├── POST /cv/analyze         → Image analysis, classification                 │
-│  ├── POST /cv/detect          → Object detection                               │
-│  └── POST /cv/generate        → Image generation                               │
+│  ├── POST /cv/classify              → Image classification                     │
+│  ├── POST /cv/detect                → Object detection                         │
+│  ├── POST /cv/projects/image-classifier → Image classifier project             │
+│  └── POST /cv/preprocess            → Image preprocessing                      │
 │                                                                                 │
 │  🎯 Reinforcement Learning                                                      │
-│  ├── POST /rl/train           → RL agent training                             │
-│  ├── POST /rl/simulate        → Environment simulation                        │
-│  └── POST /rl/evaluate        → Policy evaluation                              │
+│  ├── POST /rl/train                 → RL agent training                        │
+│  ├── POST /rl/simulate              → Environment simulation                   │
+│  └── POST /rl/evaluate              → Policy evaluation                        │
 │                                                                                 │
-│  🔧 Code Analysis                                                              │
-│  ├── POST /code/quality       → Static analysis (Ruff, Black)                  │
-│  ├── POST /code/refactor      → Code refactoring suggestions                   │
-│  └── POST /code/summarize     → Code summarization                            │
+│  🔧 Code Analysis (from roadmap)                                               │
+│  ├── POST /code/quality             → Static analysis (Ruff, Black)             │
+│  ├── POST /code/refactor            → Code refactoring suggestions              │
+│  └── POST /code/summarize           → Code summarization                       │
 │                                                                                 │
-│  🌐 Web Scraping                                                               │
-│  ├── POST /web/scrape         → Content extraction                             │
-│  └── POST /web/analyze        → Web content analysis                           │
-│                                                                                 │
-│  🧩 AI Orchestration                                                           │
-│  ├── POST /ai/route           → Task routing to appropriate service           │
-│  ├── POST /ai/plan            → Multi-step task planning                      │
-│  └── POST /ai/summarize       → Result synthesis                               │
+│  🌐 Web Scraping (from roadmap)                                                 │
+│  ├── POST /web/scrape               → Content extraction                        │
+│  └── POST /web/analyze              → Web content analysis                      │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Learning Project Integration
+## Learning Project Integration (Corrected)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -148,71 +158,94 @@
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                 │
 │  📧 Spam Email Classifier                                                       │
-│  ├── Learning: Text preprocessing, feature extraction                          │
-│  ├── Implementation: /nlp/classify endpoint                                     │
-│  └── Integration: Message filtering system                                     │
+│  ├── Learning: Text preprocessing, feature extraction, model evaluation         │
+│  ├── Implementation: /ml/projects/spam-classifier endpoint                     │
+│  ├── Algorithms: Logistic Regression, Naive Bayes, SVM                          │
+│  └── Integration: Message filtering system in Cogerphere                      │
 │                                                                                 │
 │  🎬 Movie Recommendation System                                                 │
-│  ├── Learning: Collaborative filtering, matrix factorization                   │
-│  ├── Implementation: /ml/recommend endpoint                                     │
-│  └── Integration: Project recommendation system                               │
+│  ├── Learning: Collaborative filtering, matrix factorization                  │
+│  ├── Implementation: /ml/projects/movie-recommendation endpoint                │
+│  ├── Algorithms: KNN, Matrix Factorization, Content-based filtering            │
+│  └── Integration: Project recommendation system in Cogerphere                 │
 │                                                                                 │
 │  ✍️ Handwritten Digit Recognition                                                │
-│  ├── Learning: CNN architecture, image preprocessing                           │
-│  ├── Implementation: /dl/train endpoint with CNN                                │
-│  └── Integration: Code diagram recognition                                     │
+│  ├── Learning: CNN architecture, image preprocessing, model training           │
+│  ├── Implementation: /dl/projects/digit-recognition endpoint                   │
+│  ├── Algorithms: CNN, LeNet, ResNet                                             │
+│  └── Integration: Code diagram recognition in Cogerphere                       │
 │                                                                                 │
-│  🐦 Sentiment Analysis                                                          │
+│  🐦 Sentiment Analysis of Tweets                                                │
 │  ├── Learning: NLP preprocessing, sentiment classification                    │
-│  ├── Implementation: /nlp/sentiment endpoint                                   │
-│  └── Integration: Message sentiment analysis                                   │
+│  ├── Implementation: /nlp/projects/tweet-sentiment endpoint                    │
+│  ├── Algorithms: LSTM, BERT, Transformer                                       │
+│  └── Integration: Message sentiment analysis in Cogerphere                    │
 │                                                                                 │
 │  🖼️ Image Classifier                                                            │
 │  ├── Learning: Image classification, transfer learning                         │
-│  ├── Implementation: /cv/classify endpoint                                     │
+│  ├── Implementation: /cv/projects/image-classifier endpoint                    │
+│  ├── Algorithms: CNN, Transfer Learning, Data Augmentation                     │
 │  └── Integration: Screenshot analysis for code generation                     │
+│                                                                                 │
+│  📊 Titanic Dataset Analysis                                                    │
+│  ├── Learning: Data exploration, feature engineering, model comparison         │
+│  ├── Implementation: /ml/projects/titanic-survival endpoint                    │
+│  ├── Algorithms: Random Forest, Logistic Regression, SVM                       │
+│  └── Integration: Data analysis insights in project fragments                  │
+│                                                                                 │
+│  🌸 Iris Dataset Classification                                                 │
+│  ├── Learning: Classification algorithms, model evaluation                    │
+│  ├── Implementation: /ml/projects/iris-classification endpoint                 │
+│  ├── Algorithms: Decision Trees, SVM, KNN                                      │
+│  └── Integration: Classification results visualization                         │
 │                                                                                 │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Implementation Timeline
+## Implementation Timeline (Learning-Focused)
 
 ```
-Phase 1: Foundation (1-2 weeks)
+Phase 1: Python Basics + FastAPI Foundation (2-3 weeks)
+├── Python fundamentals (functions, OOP, file handling)
 ├── FastAPI service setup
 ├── Docker & Poetry configuration
 ├── Health endpoints
 └── Basic integration with Next.js
 
-Phase 2: Math & Libraries (2-3 weeks)
-├── Mathematical operations service
+Phase 2: Math + Essential Libraries (3-4 weeks)
+├── Linear Algebra operations
+├── Probability & Statistics
+├── NumPy, Pandas, Matplotlib, Seaborn
 ├── Data processing pipeline
-├── NumPy/Pandas integration
-└── Database schema extensions
+└── Titanic/Iris dataset exploration
 
-Phase 3: ML Basics (3-4 weeks)
-├── Scikit-learn service
-├── Model training pipeline
-├── Prediction service
-└── Model persistence
+Phase 3: ML Basics (4-5 weeks)
+├── Scikit-learn implementation
+├── All ML algorithms (Linear Regression, Logistic Regression, Decision Trees, Random Forest, KNN, SVM, K-Means)
+├── Model evaluation and validation
+├── Spam classifier project
+└── Movie recommendation system
 
-Phase 4: Deep Learning (4-5 weeks)
-├── PyTorch integration
-├── Neural network service
-├── Model management
-└── Transfer learning
+Phase 4: Deep Learning (5-6 weeks)
+├── PyTorch implementation
+├── Neural network fundamentals
+├── CNN, RNN, LSTM architectures
+├── Handwritten digit recognition
+└── Sentiment analysis with RNNs
 
-Phase 5: Advanced AI (3-4 weeks)
-├── NLP service
+Phase 5: Advanced AI (4-5 weeks)
+├── NLP service implementation
 ├── Computer vision service
-├── Reinforcement learning
-└── AI orchestration
+├── Reinforcement learning basics
+├── Image classifier project
+└── Tweet sentiment analysis
 
-Phase 6: Production (2-3 weeks)
-├── MLOps pipeline
-├── Performance optimization
-├── Security & compliance
-└── Monitoring & alerting
+Phase 6: Production Integration (3-4 weeks)
+├── Complete roadmap endpoints
+├── Inngest integration
+├── Agent toolset extension
+├── UI hooks implementation
+└── Testing and documentation
 ```
 
 ## Data Flow Architecture
@@ -255,4 +288,4 @@ Phase 6: Production (2-3 weeks)
                                               └─────────────────┘
 ```
 
-This architecture diagram shows how your AI learning journey maps directly to practical implementation in the Cogerphere project, creating a comprehensive system that grows with your knowledge and skills.
+This architecture diagram shows how your **Advanced AI Learning Roadmap** maps directly to practical implementation in the Cogerphere project, creating a **learning-focused system** that grows with your knowledge and skills. Each phase builds upon the previous one, ensuring steady progress while maintaining production-quality code and real-world applicability.
