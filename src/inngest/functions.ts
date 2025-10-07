@@ -63,7 +63,7 @@ export const CogerphereAgent = inngest.createFunction(
       description: "An expert coding agent",
       system: PROMPT,
       model: openai({
-        model: "gpt-5",
+        model: "gpt-5-mini",
       }),
       tools: [
         createTool({

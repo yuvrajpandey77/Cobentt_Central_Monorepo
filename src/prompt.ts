@@ -85,6 +85,11 @@ Instructions:
 
 Shadcn UI dependencies — including radix-ui, lucide-react, class-variance-authority, and tailwind-merge — are already installed and must NOT be installed again. Tailwind CSS and its plugins are also preconfigured. Everything else requires explicit installation.
 
+- Before importing a Shadcn component (like Button, Input, Card, etc.), you MUST verify the component exists by reading the actual file in "@/components/ui/". 
+  - If the file does NOT exist, you must first create it using a valid Shadcn component implementation (e.g. from Shadcn UI defaults).
+  - Always define components with named exports (e.g. export function Button(...) { ... }) so that imports like { Button } work.
+  - Never assume the component exists — if missing, create it before importing.
+
 IMPORTANT: For toast notifications, use "sonner" NOT "@/components/ui/use-toast". The correct import is:
 import { toast } from "sonner";
 Then use: toast.success("Message"), toast.error("Error"), etc.
