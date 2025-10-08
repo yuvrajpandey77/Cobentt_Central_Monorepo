@@ -47,7 +47,7 @@ export const ProjectsList = () => {
                                 <div className="relative">
                                     <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
                                         <Image
-                                            src="/cogerpherelogoonly.png"
+                                            src="/cogerpherelogoonly.jpg"
                                             alt="Cogerphere AI"
                                             width={24}
                                             height={24}

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { UserControl } from "@/components/user-control";
-import { Menu, X, Sparkles, Github, Linkedin } from "lucide-react";
+import { Menu, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Header = () => {
@@ -35,7 +35,7 @@ export const Header = () => {
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/cogerpherelogoonly.png"
+                src="/cogerpherelogoonly.jpg"
                 alt="Cogerphere AI"
                 width={32}
                 height={32}
@@ -47,8 +47,8 @@ export const Header = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation - Centered */}
+          <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <Link
               href="/customDesigns/features"
               className="text-sm font-medium text-white/80 hover:text-white transition-colors drop-shadow-md"
@@ -77,23 +77,6 @@ export const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild className="text-white/80 hover:text-white hover:bg-white/10">
-              <Link href="https://github.com/COGERPHEREAILABS" target="_blank" rel="noopener noreferrer">
-                <Github className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild className="text-white/80 hover:text-white hover:bg-white/10">
-              <Link href="https://x.com/cogerphere" target="_blank" rel="noopener noreferrer">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild className="text-white/80 hover:text-white hover:bg-white/10">
-              <Link href="https://www.linkedin.com/company/cogerphere" target="_blank" rel="noopener noreferrer">
-                <Linkedin className="h-4 w-4" />
-              </Link>
-            </Button>
             <SignedOut>
               <div className="flex items-center gap-2">
                 <Button asChild variant="secondary" size="sm" className="bg-white/10 text-white hover:bg-white/20">
@@ -109,11 +92,7 @@ export const Header = () => {
             </SignedOut>
             <SignedIn>
               <div className="flex items-center gap-3">
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Get Started
-                </Button>
-                <UserControl showName={false} />
+                <UserControl showName={true} />
               </div>
             </SignedIn>
           </div>
@@ -162,23 +141,6 @@ export const Header = () => {
                 Support
               </Link>
               <div className="flex items-center space-x-4 pt-4">
-                <Button variant="ghost" size="sm" asChild className="text-white/80 hover:text-white hover:bg-white/10">
-                  <Link href="https://github.com/COGERPHEREAILABS" target="_blank" rel="noopener noreferrer">
-                    <Github className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild className="text-white/80 hover:text-white hover:bg-white/10">
-                  <Link href="https://x.com/cogerphere" target="_blank" rel="noopener noreferrer">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="sm" asChild className="text-white/80 hover:text-white hover:bg-white/10">
-                  <Link href="https://www.linkedin.com/company/cogerphere" target="_blank" rel="noopener noreferrer">
-                    <Linkedin className="h-4 w-4" />
-                  </Link>
-                </Button>
                 <SignedOut>
                   <div className="flex items-center gap-2">
                     <Button asChild variant="secondary" size="sm" className="bg-white/10 text-white hover:bg-white/20">
@@ -194,11 +156,7 @@ export const Header = () => {
                 </SignedOut>
                 <SignedIn>
                   <div className="flex items-center gap-3">
-                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Get Started
-                    </Button>
-                    <UserControl showName={false} />
+                    <UserControl showName={true} />
                   </div>
                 </SignedIn>
               </div>
