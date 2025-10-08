@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Zap, Shield, Globe, Code, Sparkles } from "lucide-react";
+import { ArrowRight, Zap, Shield, Globe, Code, Sparkles, Github, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
@@ -105,7 +105,7 @@ export const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <Image
-                src="/cogerpherelogoonly.png"
+                src="/cogerpherelogoonly.jpg"
                 alt="Cogerphere AI"
                 width={32}
                 height={32}
@@ -145,13 +145,43 @@ export const Footer = () => {
           <p className="text-sm text-muted-foreground">
             © 2024 Cogerphere. All rights reserved.
           </p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Terms of Service
-            </a>
+          <div className="flex items-center space-x-6 mt-4 md:mt-0">
+            <div className="flex space-x-4">
+              <a 
+                href="https://github.com/COGERPHEREAILABS" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Github className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://x.com/cogerphere" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </a>
+              <a 
+                href="https://www.linkedin.com/company/cogerphere" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+            </div>
+            <div className="flex space-x-6">
+              <a href="#privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Privacy Policy
+              </a>
+              <a href="#terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Terms of Service
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   },
   description: "Cogerphere – Crafting intelligent platforms that merge AI and development.",
   icons: {
-    icon: "/cogerpherelogoonly.png",
-    apple: "/cogerpherelogoonly.png",
-    shortcut: "/cogerpherelogoonly.png",
+    icon: "/cogerpherelogoonly.jpg",
+    apple: "/cogerpherelogoonly.jpg",
+    shortcut: "/cogerpherelogoonly.jpg",
   },
 };
 

@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Fragment } from "@/generated/prisma";
 import { ProjectHeader } from "../components/project-header";
 import { FragmentWeb } from "../components/fragment-web";
-import { CodeIcon, CrownIcon, EyeIcon, RotateCcwIcon } from "lucide-react";
+import { CodeIcon, CrownIcon, EyeIcon, RotateCcwIcon, DownloadIcon } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FileExplorer } from "@/components/file-explorer";
@@ -29,6 +29,7 @@ export const ProjectView = ({ projectId }: Props) => {
 
     const [tabsState, setTabsState] = useState<"preview" | "code">("preview");
     const [restoring, setRestoring] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const [sandboxDead, setSandboxDead] = useState(false);
     const handleRestore = useCallback(async () => {
         if (!activeFragment?.id) return;
@@ -51,6 +52,46 @@ export const ProjectView = ({ projectId }: Props) => {
             setRestoring(false);
         }
     }, [activeFragment]);
+
+    const handleDownload = useCallback(async () => {
+        const dismiss = toast.loading("Preparing download…");
+        try {
+            setDownloading(true);
+            const res = await fetch("/api/projects/download", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ projectId }),
+            });
+            
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error?.error || "Failed to download");
+            }
+
+            // Get the filename from the response headers
+            const contentDisposition = res.headers.get("Content-Disposition");
+            const filename = contentDisposition
+                ? contentDisposition.split("filename=")[1]?.replace(/"/g, "")
+                : "project_code.zip";
+
+            // Create blob and download
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            toast.success("Download completed", { id: dismiss });
+        } catch (e: any) {
+            toast.error(e?.message || "Download failed", { id: dismiss });
+        } finally {
+            setDownloading(false);
+        }
+    }, [projectId]);
     // const trpc = useTRPC();
     // const {data: project} = useSuspenseQuery(trpc.projects.getOne.queryOptions({ id: projectId }));
     return (
@@ -102,6 +143,16 @@ export const ProjectView = ({ projectId }: Props) => {
                                 </TabsTrigger>
                             </TabsList>
                             <div className="ml-auto flex items-center gap-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDownload}
+                                    disabled={downloading}
+                                    className="flex items-center gap-2"
+                                >
+                                    <DownloadIcon className="h-4 w-4" />
+                                    <span>{downloading ? "Downloading..." : "Download"}</span>
+                                </Button>
                                 <Button
                                     variant="outline"
                                     size="sm"

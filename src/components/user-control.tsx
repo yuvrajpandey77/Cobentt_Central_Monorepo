@@ -21,6 +21,10 @@ export const UserControl = ({ showName = true }: Props) => {
                         "border-b border-white/30 dark:border-white/20 rounded-t-lg",
                     userButtonPopoverCardFooter:
                         "border-t border-white/30 dark:border-white/20 rounded-b-lg",
+                    // Make the user button avatar similar size to company logo (32x32)
+                    userButtonAvatarBox: "w-8 h-8",
+                    userButtonAvatarImage: "w-8 h-8",
+                    userButtonTrigger: "w-8 h-8",
                 },
                 baseTheme: theme === "dark" ? dark : undefined,
             }}
