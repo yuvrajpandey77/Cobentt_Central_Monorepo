@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUpIcon, Loader2Icon, LightbulbIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ArrowUp, Loader2Icon, LightbulbIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
@@ -151,12 +151,12 @@ export const ProjectForm = () => {
                                     }}
                                 />
                                 {!field.value && !isFocused && (
-                                    <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text">
+                                    <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text flex items-center">
                                         <TypingAnimation 
                                             texts={typingTexts} 
                                             speed={15}
                                             pauseTime={1500}
-                                            className="text-base text-white/60 text-left"
+                                            className="text-base text-white/60 text-left w-full"
                                         />
                                     </div>
                                 )}
@@ -193,7 +193,7 @@ export const ProjectForm = () => {
                         <div className="flex items-center justify-between">
                             <div className="text-sm text-white/80 font-mono">
                                 <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-white/40 bg-white/20 px-2 text-sm font-mono font-medium text-white/90">
-                                    <span>⌘</span>Enter
+                                    Ctrl + Enter
                                 </kbd>
                             </div>
                             <div className="flex items-center gap-3">
@@ -204,12 +204,12 @@ export const ProjectForm = () => {
                                     onClick={() => setShowIdeas(!showIdeas)}
                                     className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
                                 >
-                                    <LightbulbIcon className="size-4 mr-2" />
+                                    <LightbulbIcon className="size-4 mr-1" />
                                     Ideas
                                     {showIdeas ? (
-                                        <ChevronUpIcon className="size-4 ml-2" />
+                                        <ChevronUpIcon className="size-4 ml-1" />
                                     ) : (
-                                        <ChevronDownIcon className="size-4 ml-2" />
+                                        <ChevronDownIcon className="size-4 ml-1" />
                                     )}
                                 </Button>
                                 <Button
@@ -217,18 +217,18 @@ export const ProjectForm = () => {
                                     disabled={isButtonDisabled}
                                     size="default"
                                     className={cn(
-                                        "h-10 px-6 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
+                                        "h-10 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
                                         isButtonDisabled && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {isPending ? (
                                         <>
-                                            <Loader2Icon className="size-3 animate-spin mr-2" />
+                                            <Loader2Icon className="size-3 animate-spin mr-1" />
                                             Building...
                                         </>
                                     ) : (
                                         <>
-                                            <ArrowUpIcon className="size-3 mr-2" />
+                                            <ArrowUp className="size-3 mr-1" />
                                             Build
                                         </>
                                     )}

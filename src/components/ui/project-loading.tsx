@@ -78,16 +78,16 @@ export const ProjectLoading = ({ onComplete }: ProjectLoadingProps) => {
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center">
       <div className="text-center space-y-8">
-        {/* Creative Loader Icon */}
+        {/* Neutral Loader Icon (brand-matching, no purple/blue) */}
         <div className="relative flex items-center justify-center">
           {/* Outer rotating ring */}
-          <div className="w-20 h-20 border-4 border-transparent border-t-blue-500 border-r-purple-500 rounded-full animate-spin"></div>
-          
+          <div className="w-20 h-20 border-4 border-transparent border-t-white/80 border-r-white/40 rounded-full animate-spin"></div>
+
           {/* Inner pulsing circle */}
-          <div className="absolute w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
-          
+          <div className="absolute w-12 h-12 bg-white/15 rounded-full animate-pulse"></div>
+
           {/* Center dot */}
-          <div className="absolute w-4 h-4 bg-white rounded-full animate-ping"></div>
+          <div className="absolute w-4 h-4 bg-white/90 rounded-full animate-ping"></div>
         </div>
 
         {/* Loading Text */}
@@ -102,9 +102,9 @@ export const ProjectLoading = ({ onComplete }: ProjectLoadingProps) => {
 
         {/* Progress Bar */}
         <div className="w-80 mx-auto">
-          <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+          <div className="h-3 bg-white/15 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-100 ease-out"
+              className="h-full bg-white/80 rounded-full transition-all duration-100 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>

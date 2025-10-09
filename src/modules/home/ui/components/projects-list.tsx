@@ -45,13 +45,14 @@ export const ProjectsList = () => {
                         <Link href={`/projects/${project.id}`} className="block">
                             <div className="flex items-start gap-4">
                                 <div className="relative">
-                                    <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+                                    <div className="w-16 h-12 overflow-hidden rounded-md bg-muted">
                                         <Image
-                                            src="/cogerpherelogoonly.jpg"
-                                            alt="Cogerphere AI"
-                                            width={24}
-                                            height={24}
-                                            className="object-contain"
+                                            src={`/api/projects/${project.id}/screenshot`}
+                                            alt={`${project.name} preview`}
+                                            width={64}
+                                            height={48}
+                                            className="object-cover w-16 h-12"
+                                            unoptimized
                                         />
                                     </div>
                                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card"></div>

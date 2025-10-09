@@ -83,17 +83,17 @@ export default function FeaturesPage() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 min-h-screen">
+    <div className="min-h-screen">
       {/* Header Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-20">
-          <Badge className="mb-6 bg-primary/20 text-primary border-primary/30 px-6 py-3 text-lg font-semibold">
+          <Badge className="mb-6 px-6 py-3 text-lg font-semibold">
             Features
           </Badge>
-          <h1 className="text-6xl font-bold mb-8 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-6xl font-bold mb-8">
             Everything you need to build amazing apps
           </h1>
-          <p className="text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
             Cogerphere provides all the tools and features you need to create, deploy, and scale your applications with AI-powered development.
           </p>
         </div>
@@ -101,33 +101,33 @@ export default function FeaturesPage() {
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto mb-20">
           {features.map((feature, index) => (
-            <Card key={index} className="bg-gray-900/80 backdrop-blur-sm border-gray-800/50 hover:border-gray-700/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 group flex flex-col h-full">
+            <Card key={index} className="flex flex-col h-full">
               <CardContent className="p-8 flex flex-col h-full">
                 <div className="flex items-center mb-6 flex-shrink-0">
-                  <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center mr-6 group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mr-6">
                     {feature.icon}
                   </div>
                   <h3 className="text-2xl font-bold break-words">{feature.title}</h3>
                 </div>
-                <p className="text-gray-300 leading-relaxed text-lg flex-1 break-words">{feature.description}</p>
+                <p className="text-muted-foreground leading-relaxed text-lg flex-1 break-words">{feature.description}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* CTA Section */}
-        <div className="text-center bg-gray-900/50 backdrop-blur-sm rounded-3xl p-12 border border-gray-800/50">
-          <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+        <div className="text-center bg-card rounded-3xl p-12 border">
+          <h2 className="text-4xl font-bold mb-6">
             Ready to experience these features?
           </h2>
-          <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
             Start building with Cogerphere today and see the difference AI can make.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+            <Button className="px-10 py-4 text-lg font-semibold">
               Get Started Free
             </Button>
-            <Button variant="outline" className="border-gray-600 hover:border-gray-500 text-white px-10 py-4 text-lg font-semibold rounded-xl hover:bg-gray-800/50 transition-all duration-300">
+            <Button variant="outline" className="px-10 py-4 text-lg font-semibold">
               View Pricing
             </Button>
           </div>
