@@ -90,24 +90,24 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 min-h-screen">
+    <div className="min-h-screen">
       {/* Header Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-6xl font-bold mb-6">
             Pricing
           </h1>
-          <p className="text-2xl text-gray-300 mb-12">Start for free. Upgrade as you go.</p>
+          <p className="text-2xl text-muted-foreground mb-12">Start for free. Upgrade as you go.</p>
           
           {/* Toggle */}
           <div className="flex justify-center mb-8">
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-2 flex border border-gray-700/50">
+            <div className="bg-card rounded-xl p-2 flex border">
               <button
                 onClick={() => setIsYearly(false)}
                 className={`px-8 py-3 rounded-lg transition-all font-medium ${
                   !isYearly 
-                    ? 'bg-primary text-primary-foreground shadow-lg' 
-                    : 'text-gray-300 hover:text-white'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Monthly
@@ -116,8 +116,8 @@ export default function PricingPage() {
                 onClick={() => setIsYearly(true)}
                 className={`px-8 py-3 rounded-lg transition-all font-medium ${
                   isYearly 
-                    ? 'bg-primary text-primary-foreground shadow-lg' 
-                    : 'text-gray-300 hover:text-white'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 Yearly
@@ -131,9 +131,9 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {pricingPlans.map((plan, index) => (
-            <Card key={index} className="bg-gray-900/80 backdrop-blur-sm border-gray-800/50 relative hover:border-gray-700/50 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 group flex flex-col">
+            <Card key={index} className="relative flex flex-col">
               {plan.popular && (
-                <Badge className="absolute -top-4 right-6 bg-gradient-to-r from-primary to-secondary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                <Badge className="absolute -top-4 right-6 px-4 py-2 rounded-full text-sm font-semibold">
                   POPULAR
                 </Badge>
               )}
@@ -141,16 +141,16 @@ export default function PricingPage() {
               <CardHeader className="text-center pb-20 pt-8 flex-shrink-0 relative h-64">
                 <h3 className="text-3xl font-bold mb-4">{plan.name}</h3>
                 <div className="mb-6">
-                  <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  <div className="text-5xl font-bold mb-2">
                     {plan.price}
                   </div>
                   {plan.description && (
-                    <div className="text-sm text-gray-400 whitespace-pre-line">
+                    <div className="text-sm text-muted-foreground whitespace-pre-line">
                       {plan.description}
                     </div>
                   )}
                   {plan.customDescription && (
-                    <p className="text-sm text-gray-300 mt-3 leading-relaxed">
+                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
                       {plan.customDescription}
                     </p>
                   )}
@@ -159,8 +159,8 @@ export default function PricingPage() {
                 <Button 
                   className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] h-12 text-lg font-semibold ${
                     plan.buttonVariant === 'secondary' 
-                      ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600' 
-                      : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl'
+                      ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' 
+                      : ''
                   }`}
                 >
                   {plan.buttonText}
@@ -172,10 +172,10 @@ export default function PricingPage() {
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
                       <Check className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-300 leading-relaxed break-words">
+                      <span className="text-sm text-muted-foreground leading-relaxed break-words">
                         {feature}
                         {feature.includes("roll over") && (
-                          <Info className="h-3 w-3 inline ml-1 text-gray-500" />
+                          <Info className="h-3 w-3 inline ml-1 text-muted-foreground" />
                         )}
                       </span>
                     </li>

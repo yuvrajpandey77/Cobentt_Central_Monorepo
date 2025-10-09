@@ -6,6 +6,7 @@ import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { SANDBOX_TIMEOUT } from "./types";
+// Screenshot capture deps loaded dynamically to avoid type and runtime issues when unavailable
 
 
 interface CogerphereAgentResult {
@@ -257,6 +258,33 @@ export const CogerphereAgent = inngest.createFunction(
           }
         }
       })
+    });
+
+    // Fire-and-forget screenshot creation after fragment with sandboxUrl exists
+    await step.run("enqueue-screenshot", async () => {
+      try {
+        // capture and store thumbnail directly here to reduce complexity
+        const { chromium } = await import("playwright");
+        const sharp = (await import("sharp")).default;
+        const browser = await chromium.launch({ args: ["--no-sandbox"] });
+        const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+        try {
+          await page.goto(sandboxUrl, { waitUntil: "networkidle", timeout: 60000 });
+          await page.waitForTimeout(1500);
+          const raw = await page.screenshot({ fullPage: true, type: "png" });
+          const jpeg = await sharp(raw).resize({ width: 1200 }).jpeg({ quality: 70 }).toBuffer();
+          await prisma.project.update({
+            where: { id: event.data.projectId },
+            // Cast to any because Prisma types may not include new fields until client is regenerated
+            data: { screenshot: jpeg, screenshotMime: "image/jpeg" } as any,
+          });
+        } finally {
+          await page.close();
+          await browser.close();
+        }
+      } catch (_err) {
+        // Ignore failures; UI will fallback
+      }
     });
 
     return {

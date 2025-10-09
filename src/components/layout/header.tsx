@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import InteractiveNavLink from "@/components/interactive-nav-link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
@@ -24,7 +25,7 @@ export const Header = () => {
 
   return (
     <header className={cn(
-      "sticky top-0 z-50 w-full transition-all duration-300",
+      "sticky top-0 z-30 w-full transition-all duration-300",
       isScrolled 
         ? "bg-white/20 dark:bg-black/20 backdrop-blur-md border-b border-white/20" 
         : "bg-transparent backdrop-blur-sm"
@@ -39,7 +40,7 @@ export const Header = () => {
                 alt="Cogerphere AI"
                 width={32}
                 height={32}
-                className="rounded-lg"
+                className="rounded-full"
               />
               <span className="text-xl font-bold text-white drop-shadow-lg">
                 Cogerphere
@@ -49,30 +50,10 @@ export const Header = () => {
 
           {/* Desktop Navigation - Centered */}
           <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
-            <Link
-              href="/customDesigns/features"
-              className="text-sm font-medium text-white/80 hover:text-white transition-colors drop-shadow-md"
-            >
-              Features
-            </Link>
-            <Link
-              href="/customDesigns/pricing"
-              className="text-sm font-medium text-white/80 hover:text-white transition-colors drop-shadow-md"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="#docs"
-              className="text-sm font-medium text-white/80 hover:text-white transition-colors drop-shadow-md"
-            >
-              Docs
-            </Link>
-            <Link
-              href="/customDesigns/support"
-              className="text-sm font-medium text-white/80 hover:text-white transition-colors drop-shadow-md"
-            >
-              Support
-            </Link>
+            <InteractiveNavLink href="/customDesigns/features" className="drop-shadow-md">Features</InteractiveNavLink>
+            <InteractiveNavLink href="/customDesigns/pricing" className="drop-shadow-md">Pricing</InteractiveNavLink>
+            <InteractiveNavLink href="/docs" className="drop-shadow-md">Docs</InteractiveNavLink>
+            <InteractiveNavLink href="/customDesigns/support" className="drop-shadow-md">Support</InteractiveNavLink>
           </nav>
 
           {/* Desktop CTA */}
@@ -112,34 +93,10 @@ export const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-white/20 py-4">
             <nav className="flex flex-col space-y-4">
-              <Link
-                href="/customDesigns/features"
-                className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Features
-              </Link>
-              <Link
-                href="/customDesigns/pricing"
-                className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Pricing
-              </Link>
-              <Link
-                href="#docs"
-                className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Docs
-              </Link>
-              <Link
-                href="/customDesigns/support"
-                className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Support
-              </Link>
+              <InteractiveNavLink href="/customDesigns/features" className="text-sm" activeClassName="text-white" >Features</InteractiveNavLink>
+              <InteractiveNavLink href="/customDesigns/pricing" className="text-sm" activeClassName="text-white" >Pricing</InteractiveNavLink>
+              <InteractiveNavLink href="/docs" className="text-sm" activeClassName="text-white" >Docs</InteractiveNavLink>
+              <InteractiveNavLink href="/customDesigns/support" className="text-sm" activeClassName="text-white" >Support</InteractiveNavLink>
               <div className="flex items-center space-x-4 pt-4">
                 <SignedOut>
                   <div className="flex items-center gap-2">
