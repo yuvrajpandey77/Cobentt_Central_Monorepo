@@ -95,6 +95,46 @@ import { toast } from "sonner";
 Then use: toast.success("Message"), toast.error("Error"), etc.
 
 CRITICAL IMPORT GUIDELINES - Prevent Common Errors:
+🚨 MANDATORY: ALWAYS include ALL necessary imports at the top of EVERY file you create or modify
+🚨 NEVER use a component without importing it first - this causes "X is not defined" errors
+🚨 When using ANY Shadcn UI component, you MUST import it from "@/components/ui/[component-name]"
+
+COMMON SHADCN UI IMPORTS (use these exact patterns):
+- import { Button } from "@/components/ui/button";
+- import { Input } from "@/components/ui/input";
+- import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+- import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+- import { Label } from "@/components/ui/label";
+- import { Textarea } from "@/components/ui/textarea";
+- import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+- import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+- import { Badge } from "@/components/ui/badge";
+- import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+- import { Separator } from "@/components/ui/separator";
+- import { Skeleton } from "@/components/ui/skeleton";
+- import { Switch } from "@/components/ui/switch";
+- import { Checkbox } from "@/components/ui/checkbox";
+- import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+- import { Slider } from "@/components/ui/slider";
+- import { Progress } from "@/components/ui/progress";
+- import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+- import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+- import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+- import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+- import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+- import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+- import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+- import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "@/components/ui/command";
+- import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+- import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+- import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from "@/components/ui/menubar";
+- import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
+- import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+- import { ScrollArea } from "@/components/ui/scroll-area";
+- import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+- import { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+
+OTHER ESSENTIAL IMPORTS:
 - NEVER import from "@/components/ui/use-toast" - it doesn't exist
 - NEVER import from "@/components/ui/utils" - use "@/lib/utils" instead
 - NEVER import "cn" from "@/components/ui/utils" - use "@/lib/utils"
@@ -144,6 +184,15 @@ Design Quality Defaults (Beautiful, Eye-Catching UI):
    - Use proper React patterns (dependency arrays, cleanup functions)
    - Test imports by reading the actual files first
 
+🚨 CRITICAL: PREVENT "X IS NOT DEFINED" ERRORS:
+- BEFORE using ANY component (Button, Input, Card, etc.), you MUST import it first
+- Common error: Using <Button> without importing { Button } from "@/components/ui/button"
+- Common error: Using <Input> without importing { Input } from "@/components/ui/input"
+- Common error: Using <Card> without importing { Card } from "@/components/ui/card"
+- ALWAYS include ALL imports at the top of your file before using any component
+- If you see "Button is not defined", "Input is not defined", etc. - you forgot to import it
+- Double-check every component you use has a corresponding import statement
+
 6. Correct Shadcn UI Usage (No API Guesses): When using Shadcn UI components, strictly adhere to their actual API – do not guess props or variant names. If you're uncertain about how a Shadcn component works, inspect its source file under "@/components/ui/" using the readFiles tool or refer to official documentation. Use only the props and variants that are defined by the component.
    - For example, a Button component likely supports a variant prop with specific options (e.g. "default", "outline", "secondary", "destructive", "ghost"). Do not invent new variants or props that aren't defined – if a "primary" variant is not in the code, don't use variant="primary". Ensure required props are provided appropriately, and follow expected usage patterns (e.g. wrapping Dialog with DialogTrigger and DialogContent).
    - Always import Shadcn components correctly from the "@/components/ui" directory. For instance:
@@ -183,6 +232,129 @@ Additional Guidelines:
 - Functional clones must include realistic features and interactivity (e.g. drag-and-drop, add/edit/delete, toggle states, localStorage if helpful)
 - Prefer minimal, working features over static or hardcoded content
 - Reuse and structure components modularly — split large screens into smaller files (e.g., Column.tsx, TaskCard.tsx, etc.) and import them
+
+🚨 CRITICAL CODE FORMATTING RULES - PREVENT PARSING ERRORS:
+- NEVER include literal escape sequences like \\n, \\t, \\r in your generated code
+- NEVER use string literals with escaped characters in JSX or TypeScript
+- ALWAYS use proper line breaks and indentation in your code
+- NEVER generate code that looks like: "use client";\\n\\nimport { useEffect, useState } from "react";
+- ALWAYS format code with actual line breaks, not escaped newlines
+- NEVER include backslash escape sequences in className strings or JSX content
+- ALWAYS use proper multiline string formatting with actual line breaks
+- NEVER generate code as a single line with \\n separators
+- ALWAYS format JSX with proper indentation and line breaks
+- NEVER use template literals with escaped characters in generated code
+
+EXAMPLE OF CORRECT FORMATTING:
+\`\`\`typescript
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+
+export default function Home() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem("dark-mode");
+    if (savedMode) {
+      setDarkMode(savedMode === "true");
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prevMode) => !prevMode);
+    localStorage.setItem("dark-mode", !darkMode);
+  };
+
+  return (
+    <div className={\`font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 \${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}\`}>
+      <button onClick={toggleDarkMode} className="mb-4 p-2 border rounded">
+        Toggle Dark Mode
+      </button>
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={180}
+          height={38}
+          priority
+        />
+      </main>
+    </div>
+  );
+}
+\`\`\`
+
+EXAMPLE OF INCORRECT FORMATTING (DO NOT DO THIS):
+\`\`\`typescript
+"use client";\\\\n\\\\nimport { useEffect, useState } from "react";\\\\nimport Image from "next/image";\\\\n\\\\nexport default function Home() {\\\\n  const [darkMode, setDarkMode] = useState(false);\\\\n\\\\n  useEffect(() => {\\\\n    const savedMode = localStorage.getItem("dark-mode");\\\\n    if (savedMode) {\\\\n      setDarkMode(savedMode === "true");\\\\n    }\\\\n  }, []);\\\\n\\\\n  return (\\\\n    <div className={\\\`font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 \\\${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}\\\`}>\\\\n      <button onClick={toggleDarkMode} className="mb-4 p-2 border rounded">Toggle Dark Mode</button>\\\\n    </div>\\\\n  );\\\\n}
+\`\`\`
+
+🔍 PRE-CREATION CHECKLIST (MANDATORY):
+Before creating ANY component file, ask yourself:
+1. What Shadcn UI components will I use? (Button, Input, Card, etc.)
+2. What imports do I need? (List them all)
+3. Do I need "use client"? (If using hooks, browser APIs, or event handlers)
+4. What icons will I use? (Import from lucide-react)
+5. What other dependencies? (React hooks, Next.js components, etc.)
+6. Will my code have proper line breaks and formatting? (NO escaped characters)
+7. Is my JSX properly formatted with actual line breaks? (NOT \\n sequences)
+
+📝 FILE CREATION BEST PRACTICES:
+- ALWAYS format code with proper indentation and line breaks
+- NEVER generate code as a single string with \\n escape sequences
+- ALWAYS use actual line breaks in your generated files
+- NEVER include literal backslash characters in className or JSX content
+- ALWAYS ensure your generated code is syntactically valid TypeScript/JSX
+- NEVER use template literals with escaped characters in file content
+- ALWAYS test that your generated code would parse correctly
+- NEVER generate code that looks like escaped strings
+
+EXAMPLE CORRECT FILE STRUCTURE:
+\`\`\`typescript
+"use client"; // If needed
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowRight, Star } from "lucide-react";
+import { useState } from "react";
+
+interface ComponentProps {
+  title: string;
+  onAction: () => void;
+}
+
+export function MyComponent({ title, onAction }: ComponentProps) {
+  const [value, setValue] = useState("");
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="input">Enter value</Label>
+            <Input 
+              id="input"
+              value={value} 
+              onChange={(e) => setValue(e.target.value)} 
+            />
+          </div>
+          <Button onClick={onAction}>
+            Submit <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+\`\`\`
 
 
 App Structure Requirements (Production-Ready):

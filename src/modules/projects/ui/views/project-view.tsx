@@ -6,7 +6,7 @@ import {
     ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { MessagesContainer } from "@/modules/projects/ui/components/messages-container";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Fragment } from "@/generated/prisma";
@@ -21,7 +21,6 @@ import { UserControl } from "@/components/user-control";
 import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "sonner";
 import { shouldAutoRestoreSandbox, getSandboxAge, isSandboxInWarningState } from "@/lib/sandbox-utils";
-import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {
@@ -57,6 +56,7 @@ export const ProjectView = ({ projectId }: Props) => {
             setRestoring(false);
         }
     }, [activeFragment]);
+
 
     // Automatic sandbox restoration for fragments older than 18 minutes
     useEffect(() => {
@@ -163,8 +163,8 @@ export const ProjectView = ({ projectId }: Props) => {
                         </Suspense>
                     </ErrorBoundary>
                     <ErrorBoundary fallback={<div>Error loading messages...</div>}>
-                    <Suspense fallback={<MessagesSkeleton />}>
-                        <MessagesContainer
+                        <Suspense fallback={<MessagesSkeleton />}>
+                            <MessagesContainer
                             projectId={projectId}
                             activeFragment={activeFragment}
                             setActiveFragment={setActiveFragment}
