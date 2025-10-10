@@ -5,6 +5,7 @@ import { MessageForm } from "./message-form";
 import { useEffect, useRef } from "react";
 import { Fragment } from "@/generated/prisma";
 import { MessageLoading } from "./message-loading";
+import { BuildTimer } from "@/components/ui/build-timer";
 
 
 interface Props {
@@ -44,6 +45,10 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
 
     const lastMessage = messages[messages.length - 1];
     const isLastMessageUser = lastMessage.role === "USER";
+    
+    // Always show timer - it will show "Ready" when complete, "Building" when in progress
+    const shouldShowTimer = true;
+    const isCurrentlyBuilding = Boolean(isLastMessageUser || (activeFragment && !activeFragment.sandboxUrl));
 
     return (
         <div className="flex flex-col min-h-0 flex-1">
@@ -68,6 +73,10 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
             <div className="relative p-3 pt-1">
                 <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-background pointer-events-none">
 
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                    <div />
+                    {shouldShowTimer && <BuildTimer isBuilding={isCurrentlyBuilding} />}
                 </div>
                 <MessageForm projectId={projectId} />
             </div>
