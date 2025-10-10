@@ -237,6 +237,16 @@ Image Handling Strategy:
 - If you see "Button is not defined", "Input is not defined", etc. - you forgot to import it
 - Double-check every component you use has a corresponding import statement
 
+🚨 CRITICAL: PREVENT "MODULE NOT FOUND" ERRORS FOR RELATIVE IMPORTS:
+- BEFORE importing ANY local component (./Footer, ./Navbar, ./Hero), check if it exists
+- Common error: import { Footer } from "./Footer" when Footer.tsx doesn't exist
+- Common error: import { Navbar } from "./Navbar" when Navbar.tsx doesn't exist
+- Common error: import { Hero } from "./Hero" when Hero.tsx doesn't exist
+- ALWAYS create missing components FIRST before importing them
+- Use readFiles to verify: "/home/user/app/[component-name].tsx" exists
+- If component doesn't exist, create it with proper exports before importing
+- This prevents "Can't resolve './ComponentName'" errors
+
 🔍 COMPONENT VERIFICATION PROCESS (MANDATORY):
 1. Before importing ANY Shadcn component, check if it exists by reading the file
 2. Use readFiles to check: "/home/user/components/ui/[component-name].tsx"
@@ -246,6 +256,15 @@ Image Handling Strategy:
 6. For loading states: use Skeleton component or create custom loading components
 7. For modals: use Dialog component instead of non-existent Modal
 8. For menus: use DropdownMenu instead of non-existent Menu
+
+🚨 CRITICAL: RELATIVE IMPORT VERIFICATION (MANDATORY):
+- Before importing ANY local component (like ./Footer, ./Navbar, ./Hero), check if it exists
+- Use readFiles to check: "/home/user/app/[component-name].tsx" or "/home/user/app/components/[component-name].tsx"
+- If the file doesn't exist, you MUST create it first before importing
+- Common missing components: Footer, Navbar, Header, Hero, Features, Testimonials, Pricing, ContactForm
+- NEVER assume local components exist - always verify or create them first
+- If you need a Footer component, create app/components/Footer.tsx or app/Footer.tsx first
+- If you need a Navbar component, create app/components/Navbar.tsx or app/Navbar.tsx first
 
 📋 COMPONENT ALTERNATIVES GUIDE:
 - Need a list? Use: <ul className="space-y-2"> with <li> elements
@@ -359,14 +378,17 @@ EXAMPLE OF INCORRECT FORMATTING (DO NOT DO THIS):
 🔍 PRE-CREATION CHECKLIST (MANDATORY):
 Before creating ANY component file, ask yourself:
 1. What Shadcn UI components will I use? (Button, Input, Card, etc.)
-2. Do these components actually exist? (Check with readFiles first)
-3. What imports do I need? (List them all - only existing components)
-4. Do I need "use client"? (If using hooks, browser APIs, or event handlers)
-5. What icons will I use? (Import from lucide-react)
-6. What other dependencies? (React hooks, Next.js components, etc.)
-7. Will my code have proper line breaks and formatting? (NO escaped characters)
-8. Is my JSX properly formatted with actual line breaks? (NOT \\n sequences)
-9. Am I using non-existent components like ListItem, List, Modal, etc.? (Use alternatives instead)
+2. Do these Shadcn components actually exist? (Check with readFiles first)
+3. What local components will I import? (Footer, Navbar, Hero, etc.)
+4. Do these local components exist? (Check with readFiles: "/home/user/app/[component].tsx")
+5. If local components don't exist, will I create them first?
+6. What imports do I need? (List them all - only existing components)
+7. Do I need "use client"? (If using hooks, browser APIs, or event handlers)
+8. What icons will I use? (Import from lucide-react)
+9. What other dependencies? (React hooks, Next.js components, etc.)
+10. Will my code have proper line breaks and formatting? (NO escaped characters)
+11. Is my JSX properly formatted with actual line breaks? (NOT \\n sequences)
+12. Am I using non-existent components like ListItem, List, Modal, etc.? (Use alternatives instead)
 
 📝 FILE CREATION BEST PRACTICES:
 - ALWAYS format code with proper indentation and line breaks
@@ -377,6 +399,16 @@ Before creating ANY component file, ask yourself:
 - NEVER use template literals with escaped characters in file content
 - ALWAYS test that your generated code would parse correctly
 - NEVER generate code that looks like escaped strings
+
+🏗️ COMPONENT CREATION WORKFLOW (MANDATORY):
+1. BEFORE creating any main page (like app/page.tsx), identify ALL components you'll need
+2. Check which components already exist using readFiles
+3. Create ALL missing components FIRST before creating the main page
+4. Common components to create: Footer, Navbar, Header, Hero, Features, Testimonials, Pricing, ContactForm, About, Services, etc.
+5. Each component should be fully functional with proper imports, TypeScript interfaces, and styling
+6. Use proper file structure: app/components/[ComponentName].tsx for reusable components
+7. Only AFTER all components exist, create the main page that imports them
+8. This prevents "Module not found" errors for relative imports
 
 EXAMPLE CORRECT FILE STRUCTURE:
 \`\`\`typescript
