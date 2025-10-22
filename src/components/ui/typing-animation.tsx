@@ -48,7 +48,7 @@ export const TypingAnimation = ({
   }, [currentText, isDeleting, isPaused, currentTextIndex, texts, speed, pauseTime]);
 
   return (
-    <span className={className}>
+    <span className={`${className} inline-block`}>
       {currentText}
       <span className="animate-pulse">|</span>
     </span>

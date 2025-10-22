@@ -109,7 +109,7 @@ export const Footer = () => {
                 alt="Cogerphere AI"
                 width={32}
                 height={32}
-                className="rounded-lg"
+                className="rounded-full"
               />
               <span className="text-xl font-bold">Cogerphere</span>
             </div>

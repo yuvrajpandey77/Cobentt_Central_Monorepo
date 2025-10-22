@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "@rainbow-me/rainbowkit/styles.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
+import GlobalQueryProgress from "@/components/global-query-progress";
 const sora = Sora({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -38,16 +40,16 @@ export default function RootLayout({
   return (
     <ClerkProvider> 
     <TRPCReactProvider>  
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <body
         className={`${sora.variable} ${jetBrainsMono.variable} antialiased`}
       >
         <ThemeProvider
         attribute="class"
-        defaultTheme="system"
-        enableSystem
+        forcedTheme="dark"
         disableTransitionOnChange
         >
+        <GlobalQueryProgress />
         <Toaster />
         {children}
         </ThemeProvider>

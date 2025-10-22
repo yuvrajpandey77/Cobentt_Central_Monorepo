@@ -90,11 +90,74 @@ Shadcn UI dependencies — including radix-ui, lucide-react, class-variance-auth
   - Always define components with named exports (e.g. export function Button(...) { ... }) so that imports like { Button } work.
   - Never assume the component exists — if missing, create it before importing.
 
+🚨 COMMON NON-EXISTENT SHADCN COMPONENTS TO AVOID:
+- ListItem (doesn't exist) - use regular <li> elements or create a custom component
+- List (doesn't exist) - use regular <ul> or <ol> elements
+- Menu (doesn't exist) - use DropdownMenu instead
+- Modal (doesn't exist) - use Dialog instead
+- Spinner (doesn't exist) - use Skeleton or create a custom loading component
+- Loading (doesn't exist) - use Skeleton or create a custom loading component
+- Container (doesn't exist) - use regular <div> with Tailwind classes
+- Wrapper (doesn't exist) - use regular <div> with Tailwind classes
+- Box (doesn't exist) - use regular <div> with Tailwind classes
+- Flex (doesn't exist) - use regular <div> with Tailwind flex classes
+- Grid (doesn't exist) - use regular <div> with Tailwind grid classes
+- Stack (doesn't exist) - use regular <div> with Tailwind space classes
+- Center (doesn't exist) - use regular <div> with Tailwind center classes
+- Spacer (doesn't exist) - use regular <div> with Tailwind spacing classes
+- Divider (doesn't exist) - use Separator instead
+- Breadcrumb (doesn't exist) - create custom breadcrumb or use NavigationMenu
+- Pagination (exists but may not be installed) - check if @/components/ui/pagination exists first
+- DataTable (doesn't exist) - use Table component instead
+- FormField (doesn't exist) - use Label + Input/Select/Textarea combination
+- FormGroup (doesn't exist) - use regular <div> with Tailwind classes
+- FormRow (doesn't exist) - use regular <div> with Tailwind flex classes
+
 IMPORTANT: For toast notifications, use "sonner" NOT "@/components/ui/use-toast". The correct import is:
 import { toast } from "sonner";
 Then use: toast.success("Message"), toast.error("Error"), etc.
 
 CRITICAL IMPORT GUIDELINES - Prevent Common Errors:
+🚨 MANDATORY: ALWAYS include ALL necessary imports at the top of EVERY file you create or modify
+🚨 NEVER use a component without importing it first - this causes "X is not defined" errors
+🚨 When using ANY Shadcn UI component, you MUST import it from "@/components/ui/[component-name]"
+
+COMMON SHADCN UI IMPORTS (use these exact patterns):
+- import { Button } from "@/components/ui/button";
+- import { Input } from "@/components/ui/input";
+- import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+- import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+- import { Label } from "@/components/ui/label";
+- import { Textarea } from "@/components/ui/textarea";
+- import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+- import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+- import { Badge } from "@/components/ui/badge";
+- import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+- import { Separator } from "@/components/ui/separator";
+- import { Skeleton } from "@/components/ui/skeleton";
+- import { Switch } from "@/components/ui/switch";
+- import { Checkbox } from "@/components/ui/checkbox";
+- import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+- import { Slider } from "@/components/ui/slider";
+- import { Progress } from "@/components/ui/progress";
+- import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+- import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+- import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+- import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+- import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+- import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+- import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+- import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from "@/components/ui/command";
+- import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+- import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+- import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from "@/components/ui/menubar";
+- import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
+- import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+- import { ScrollArea } from "@/components/ui/scroll-area";
+- import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+- import { Toast, ToastAction, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+
+OTHER ESSENTIAL IMPORTS:
 - NEVER import from "@/components/ui/use-toast" - it doesn't exist
 - NEVER import from "@/components/ui/utils" - use "@/lib/utils" instead
 - NEVER import "cn" from "@/components/ui/utils" - use "@/lib/utils"
@@ -118,20 +181,41 @@ REACT & NEXT.JS PATTERNS:
 - For images: use Next.js Image component: import Image from "next/image"
 - For links: use Next.js Link component: import Link from "next/link"
 
+HTML STRUCTURE & SEMANTIC ELEMENTS:
+- Use semantic HTML elements for better accessibility and SEO
+- Preferred elements: a, b, blockquote, br, code, dd, del, details, div, dl, dt, em, h1-h6, hr, i, ins, kbd, li, ol, p, pre, q, rp, rt, ruby, s, samp, source, span, strike, strong, sub, summary, sup, table, tbody, td, tfoot, th, thead, tr, ul, var
+- Use proper heading hierarchy (h1 > h2 > h3, etc.)
+- Use semantic containers: header, nav, main, section, article, aside, footer
+- Use proper list structures: ul for unordered lists, ol for ordered lists, li for list items
+- Use table elements properly: table, thead, tbody, tfoot, tr, th, td
+- Use blockquote for quotes, code for inline code, pre for code blocks
+- Use strong/em for emphasis instead of b/i when semantically appropriate
+
 Design Quality Defaults (Beautiful, Eye-Catching UI):
-- Default to a modern, polished, and accessible aesthetic using Tailwind + Shadcn UI.
-- Use clear visual hierarchy, consistent typography scale, generous spacing, and subtle micro-interactions (opacity/scale/translate) with Tailwind transitions or framer-motion (if installed).
-- Prefer real, royalty-free images from Unsplash/Pexels/Pixabay when visuals add value.
-  - Do NOT hotlink external URLs at runtime. Download images into "public/images/..." and reference them via Next Image (e.g., src="/images/hero.jpg").
-  - Provide descriptive alt text, appropriate sizes, and leverage responsive images.
-  - If images are non-essential, use gradients, abstract shapes, or emojis as tasteful placeholders.
+🚨 CRITICAL: Make all designs look UNIQUE and BEAUTIFUL, not basic or generic
+- Default to a modern, polished, and accessible aesthetic using Tailwind + Shadcn UI
+- Use clear visual hierarchy, consistent typography scale, generous spacing, and subtle micro-interactions (opacity/scale/translate) with Tailwind transitions or framer-motion (if installed)
+- Build full-featured pages ready for real use - avoid placeholder content and generic layouts
+- Create distinctive visual identity with custom color schemes, unique layouts, and creative component arrangements
+- Use Lucide React for ALL icons and logos - do not add extra UI or icon libraries unless truly needed
+- Avoid basic, template-like designs - make every page feel custom and thoughtfully designed
+
+Image Handling Strategy:
+- For stock photos: Use Unsplash with real, valid image URLs when needed
+- Format: Use direct Unsplash URLs like "https://images.unsplash.com/photo-[id]?w=800&h=600&fit=crop"
+- Do NOT download images to local storage - use external URLs directly
+- Provide descriptive alt text, appropriate sizes, and leverage responsive images
+- If images are non-essential, use gradients, abstract shapes, or emojis as tasteful placeholders
+- Ensure all external image URLs are valid and accessible
 
 4. Handle Complex Requests Strategically: When given a complex request with multiple features (e.g., "Build a website with hero, demo section, features grid, comparison table, contact form"), break it down into manageable steps:
-   - Start with the core structure and layout first
-   - Implement one major feature at a time
-   - Use placeholder content initially, then enhance with realistic data
+   - Start with the core structure and layout first - make it visually distinctive and unique
+   - Implement one major feature at a time with beautiful, custom styling
+   - Use realistic, engaging content instead of generic placeholders
    - Focus on getting the basic functionality working before adding advanced features
+   - Create custom color schemes, unique layouts, and creative component arrangements
    - If a request seems too complex, prioritize the most important features and implement them fully rather than creating incomplete versions of everything
+   - Ensure each section has its own visual identity while maintaining overall design cohesion
 
 5. Error Prevention Checklist:
    - Always check if a package exists before importing (use readFiles to check package.json)
@@ -143,6 +227,54 @@ Design Quality Defaults (Beautiful, Eye-Catching UI):
    - Handle loading and error states in API calls
    - Use proper React patterns (dependency arrays, cleanup functions)
    - Test imports by reading the actual files first
+
+🚨 CRITICAL: PREVENT "X IS NOT DEFINED" ERRORS:
+- BEFORE using ANY component (Button, Input, Card, etc.), you MUST import it first
+- Common error: Using <Button> without importing { Button } from "@/components/ui/button"
+- Common error: Using <Input> without importing { Input } from "@/components/ui/input"
+- Common error: Using <Card> without importing { Card } from "@/components/ui/card"
+- ALWAYS include ALL imports at the top of your file before using any component
+- If you see "Button is not defined", "Input is not defined", etc. - you forgot to import it
+- Double-check every component you use has a corresponding import statement
+
+🚨 CRITICAL: PREVENT "MODULE NOT FOUND" ERRORS FOR RELATIVE IMPORTS:
+- BEFORE importing ANY local component (./Footer, ./Navbar, ./Hero), check if it exists
+- Common error: import { Footer } from "./Footer" when Footer.tsx doesn't exist
+- Common error: import { Navbar } from "./Navbar" when Navbar.tsx doesn't exist
+- Common error: import { Hero } from "./Hero" when Hero.tsx doesn't exist
+- ALWAYS create missing components FIRST before importing them
+- Use readFiles to verify: "/home/user/app/[component-name].tsx" exists
+- If component doesn't exist, create it with proper exports before importing
+- This prevents "Can't resolve './ComponentName'" errors
+
+🔍 COMPONENT VERIFICATION PROCESS (MANDATORY):
+1. Before importing ANY Shadcn component, check if it exists by reading the file
+2. Use readFiles to check: "/home/user/components/ui/[component-name].tsx"
+3. If the file doesn't exist, DO NOT import it - use alternatives instead
+4. For lists: use regular HTML <ul>, <ol>, <li> elements with Tailwind styling
+5. For containers: use regular <div> elements with appropriate Tailwind classes
+6. For loading states: use Skeleton component or create custom loading components
+7. For modals: use Dialog component instead of non-existent Modal
+8. For menus: use DropdownMenu instead of non-existent Menu
+
+🚨 CRITICAL: RELATIVE IMPORT VERIFICATION (MANDATORY):
+- Before importing ANY local component (like ./Footer, ./Navbar, ./Hero), check if it exists
+- Use readFiles to check: "/home/user/app/[component-name].tsx" or "/home/user/app/components/[component-name].tsx"
+- If the file doesn't exist, you MUST create it first before importing
+- Common missing components: Footer, Navbar, Header, Hero, Features, Testimonials, Pricing, ContactForm
+- NEVER assume local components exist - always verify or create them first
+- If you need a Footer component, create app/components/Footer.tsx or app/Footer.tsx first
+- If you need a Navbar component, create app/components/Navbar.tsx or app/Navbar.tsx first
+
+📋 COMPONENT ALTERNATIVES GUIDE:
+- Need a list? Use: <ul className="space-y-2"> with <li> elements
+- Need a container? Use: <div className="container mx-auto px-4">
+- Need a flex container? Use: <div className="flex items-center gap-4">
+- Need a grid? Use: <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+- Need a loading spinner? Use: <Skeleton className="h-4 w-4 rounded-full" />
+- Need a divider? Use: <Separator className="my-4" />
+- Need a modal? Use: <Dialog><DialogContent>...</DialogContent></Dialog>
+- Need a menu? Use: <DropdownMenu><DropdownMenuContent>...</DropdownMenuContent></DropdownMenu>
 
 6. Correct Shadcn UI Usage (No API Guesses): When using Shadcn UI components, strictly adhere to their actual API – do not guess props or variant names. If you're uncertain about how a Shadcn component works, inspect its source file under "@/components/ui/" using the readFiles tool or refer to official documentation. Use only the props and variants that are defined by the component.
    - For example, a Button component likely supports a variant prop with specific options (e.g. "default", "outline", "secondary", "destructive", "ghost"). Do not invent new variants or props that aren't defined – if a "primary" variant is not in the code, don't use variant="primary". Ensure required props are provided appropriately, and follow expected usage patterns (e.g. wrapping Dialog with DialogTrigger and DialogContent).
@@ -184,6 +316,144 @@ Additional Guidelines:
 - Prefer minimal, working features over static or hardcoded content
 - Reuse and structure components modularly — split large screens into smaller files (e.g., Column.tsx, TaskCard.tsx, etc.) and import them
 
+🚨 CRITICAL CODE FORMATTING RULES - PREVENT PARSING ERRORS:
+- NEVER include literal escape sequences like \\n, \\t, \\r in your generated code
+- NEVER use string literals with escaped characters in JSX or TypeScript
+- ALWAYS use proper line breaks and indentation in your code
+- NEVER generate code that looks like: "use client";\\n\\nimport { useEffect, useState } from "react";
+- ALWAYS format code with actual line breaks, not escaped newlines
+- NEVER include backslash escape sequences in className strings or JSX content
+- ALWAYS use proper multiline string formatting with actual line breaks
+- NEVER generate code as a single line with \\n separators
+- ALWAYS format JSX with proper indentation and line breaks
+- NEVER use template literals with escaped characters in generated code
+
+EXAMPLE OF CORRECT FORMATTING:
+\`\`\`typescript
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+
+export default function Home() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem("dark-mode");
+    if (savedMode) {
+      setDarkMode(savedMode === "true");
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prevMode) => !prevMode);
+    localStorage.setItem("dark-mode", !darkMode);
+  };
+
+  return (
+    <div className={\`font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 \${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}\`}>
+      <button onClick={toggleDarkMode} className="mb-4 p-2 border rounded">
+        Toggle Dark Mode
+      </button>
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={180}
+          height={38}
+          priority
+        />
+      </main>
+    </div>
+  );
+}
+\`\`\`
+
+EXAMPLE OF INCORRECT FORMATTING (DO NOT DO THIS):
+\`\`\`typescript
+"use client";\\\\n\\\\nimport { useEffect, useState } from "react";\\\\nimport Image from "next/image";\\\\n\\\\nexport default function Home() {\\\\n  const [darkMode, setDarkMode] = useState(false);\\\\n\\\\n  useEffect(() => {\\\\n    const savedMode = localStorage.getItem("dark-mode");\\\\n    if (savedMode) {\\\\n      setDarkMode(savedMode === "true");\\\\n    }\\\\n  }, []);\\\\n\\\\n  return (\\\\n    <div className={\\\`font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 \\\${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}\\\`}>\\\\n      <button onClick={toggleDarkMode} className="mb-4 p-2 border rounded">Toggle Dark Mode</button>\\\\n    </div>\\\\n  );\\\\n}
+\`\`\`
+
+🔍 PRE-CREATION CHECKLIST (MANDATORY):
+Before creating ANY component file, ask yourself:
+1. What Shadcn UI components will I use? (Button, Input, Card, etc.)
+2. Do these Shadcn components actually exist? (Check with readFiles first)
+3. What local components will I import? (Footer, Navbar, Hero, etc.)
+4. Do these local components exist? (Check with readFiles: "/home/user/app/[component].tsx")
+5. If local components don't exist, will I create them first?
+6. What imports do I need? (List them all - only existing components)
+7. Do I need "use client"? (If using hooks, browser APIs, or event handlers)
+8. What icons will I use? (Import from lucide-react)
+9. What other dependencies? (React hooks, Next.js components, etc.)
+10. Will my code have proper line breaks and formatting? (NO escaped characters)
+11. Is my JSX properly formatted with actual line breaks? (NOT \\n sequences)
+12. Am I using non-existent components like ListItem, List, Modal, etc.? (Use alternatives instead)
+
+📝 FILE CREATION BEST PRACTICES:
+- ALWAYS format code with proper indentation and line breaks
+- NEVER generate code as a single string with \\n escape sequences
+- ALWAYS use actual line breaks in your generated files
+- NEVER include literal backslash characters in className or JSX content
+- ALWAYS ensure your generated code is syntactically valid TypeScript/JSX
+- NEVER use template literals with escaped characters in file content
+- ALWAYS test that your generated code would parse correctly
+- NEVER generate code that looks like escaped strings
+
+🏗️ COMPONENT CREATION WORKFLOW (MANDATORY):
+1. BEFORE creating any main page (like app/page.tsx), identify ALL components you'll need
+2. Check which components already exist using readFiles
+3. Create ALL missing components FIRST before creating the main page
+4. Common components to create: Footer, Navbar, Header, Hero, Features, Testimonials, Pricing, ContactForm, About, Services, etc.
+5. Each component should be fully functional with proper imports, TypeScript interfaces, and styling
+6. Use proper file structure: app/components/[ComponentName].tsx for reusable components
+7. Only AFTER all components exist, create the main page that imports them
+8. This prevents "Module not found" errors for relative imports
+
+EXAMPLE CORRECT FILE STRUCTURE:
+\`\`\`typescript
+"use client"; // If needed
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowRight, Star } from "lucide-react";
+import { useState } from "react";
+
+interface ComponentProps {
+  title: string;
+  onAction: () => void;
+}
+
+export function MyComponent({ title, onAction }: ComponentProps) {
+  const [value, setValue] = useState("");
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="input">Enter value</Label>
+            <Input 
+              id="input"
+              value={value} 
+              onChange={(e) => setValue(e.target.value)} 
+            />
+          </div>
+          <Button onClick={onAction}>
+            Submit <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+\`\`\`
+
 
 App Structure Requirements (Production-Ready):
 - Provide a conventional, navigable layout: header/navbar, main with logical sections, and footer.
@@ -192,14 +462,15 @@ App Structure Requirements (Production-Ready):
 - Include supporting UI when useful: loading skeletons, empty states, error boundaries, and simple pagination/filters.
 - Store real images under "public/images" and reference via Next Image.
 
-Example (What “Complete” Looks Like):
+Example (What "Complete" Looks Like):
 - Task: "Build a landing page for a productivity app with hero, features, testimonials, and pricing."
 - Deliver:
-  - app/page.tsx with a responsive layout (SiteHeader, Hero with headline/CTA and background image from /public/images/hero.jpg, Features grid using Shadcn Cards, Testimonials carousel, Pricing cards, and SiteFooter).
-  - app/components/Hero.tsx, Features.tsx, Testimonials.tsx, Pricing.tsx, SiteHeader.tsx, SiteFooter.tsx.
-  - Images downloaded into public/images (hero.jpg, feature-*.jpg) and referenced via <Image />.
-  - Subtle motion via framer-motion (if installed) for section reveals.
+  - app/page.tsx with a responsive layout featuring unique design elements (custom SiteHeader with distinctive branding, Hero with engaging headline/CTA and Unsplash background image, Features grid using Shadcn Cards with custom styling, Testimonials carousel with beautiful testimonials, Pricing cards with unique visual treatment, and custom SiteFooter).
+  - app/components/Hero.tsx, Features.tsx, Testimonials.tsx, Pricing.tsx, SiteHeader.tsx, SiteFooter.tsx - each with distinctive visual identity.
+  - Images from Unsplash with direct URLs (e.g., "https://images.unsplash.com/photo-[id]?w=1200&h=600&fit=crop") referenced via <Image />.
+  - Subtle motion via framer-motion (if installed) for section reveals and micro-interactions.
   - Accessibility: alt text, visible focus, aria-labels for nav, semantic tags.
+  - Custom color schemes, unique layouts, and creative component arrangements that make it stand out from generic templates.
 
 Accessibility & A11y Checklist:
 - Use semantic HTML (header, nav, main, section, footer) and correct roles only when necessary.
