@@ -21,7 +21,10 @@ import { useClerk } from "@clerk/nextjs";
 
 
 interface Props {
-    projectId: string;
+    projectId?: string;
+    mode?: "app" | "contract";
+    contractPreview?: any;
+    onContractPrompt?: (prompt: string) => void;
 }
 
 const formSchema = z.object({
@@ -31,7 +34,7 @@ const formSchema = z.object({
 
 
 
-export const ProjectForm = () => {
+export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -63,14 +66,39 @@ export const ProjectForm = () => {
         },
     }));
 
+    const createDappProject = useMutation(trpc.projects.createDapp.mutationOptions({
+        onSuccess: (data) => {
+            console.log("Dapp project created successfully:", data);
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            
+            // Redirect to build page to show real-time progress
+            router.push(`/projects/${data.id}/build`);
+        },
+        onError: (error) => {
+            toast.error(error.message);
+            if(error.data?.code === "UNAUTHORIZED") {
+                router.push("/sign-in");
+            }
+        },
+    }));
+
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         console.log("Form submitted with values:", values);
+        
+        // If in contract mode without preview, trigger contract prompt analysis (redirect to dapp-studio)
+        if (mode === "contract" && onContractPrompt) {
+            onContractPrompt(values.value);
+            return;
+        }
+        
         // If user is not authenticated, redirect to sign-in before attempting mutation
         if (!clerk.user) {
             router.push("/sign-in");
             return;
         }
+        
         try {
+            // Create regular website project (app mode)
             await createProject.mutateAsync({
                 value: values.value,
             });
@@ -104,7 +132,7 @@ export const ProjectForm = () => {
     const isButtonDisabled = isPending || !form.formState.isValid;
 
     // Typing animation texts
-    const typingTexts = [
+    const appTexts = [
         "Ask Cogerphere to create a dashboard to track your team's productivity",
         "Build a modern e-commerce website with React and Stripe integration",
         "Create a social media app with real-time chat and notifications",
@@ -114,6 +142,17 @@ export const ProjectForm = () => {
         "Develop a learning management system with video streaming",
         "Build a real estate platform with property listings and virtual tours"
     ];
+
+    const contractTexts = [
+        "NFT collection for digital artwork with royalties",
+        "Loyalty token for my coffee shop rewards program",
+        "Gaming token with staking and rewards mechanism",
+        "Governance token for my DAO with voting capabilities",
+        "Multi-token standard for in-game items (ERC-1155)",
+        "Payment splitter contract for revenue sharing"
+    ];
+
+    const typingTexts = mode === "contract" ? contractTexts : appTexts;
 
     return (
         <>
@@ -126,7 +165,7 @@ export const ProjectForm = () => {
             <Form {...form}>
                 <section className="space-y-6">
                 <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
-                    "relative border border-white/40 rounded-xl bg-white/20 backdrop-blur-lg transition-all duration-200 cursor-text shadow-xl",
+                    "relative border border-white/40 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 cursor-text shadow-xl",
                     isFocused && "border-white/60 shadow-2xl ring-2 ring-white/30",
                 )}>
                     <FormField
@@ -229,7 +268,7 @@ export const ProjectForm = () => {
                                     ) : (
                                         <>
                                             <ArrowUp className="size-3 mr-1" />
-                                            Build
+                                            {mode === "contract" ? "Analyze" : "Build"}
                                         </>
                                     )}
                                 </Button>

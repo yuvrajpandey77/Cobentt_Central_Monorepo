@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery, useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { ProjectForm } from "@/modules/home/ui/components/project-form";
 import { Header } from "@/components/layout/header";
@@ -9,17 +12,42 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/sections/landing-sections";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
-import Image from "next/image";
 import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef } from "react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Badge } from "@/components/ui/badge";
+
+const STORAGE_KEY = "cogy.home.mode";
+
+type BuilderMode = "app" | "contract";
 
 const PageContent = () => {
     const { isCollapsed } = useSidebar();
+    const router = useRouter();
     const trpc = useTRPC();
     const loadMoreRef = useRef<HTMLDivElement>(null);
-    
+    const [mode, setMode] = useState<BuilderMode>("app");
+
+    useEffect(() => {
+        const stored = window.localStorage.getItem(STORAGE_KEY) as BuilderMode | null;
+        if (stored === "app" || stored === "contract") {
+            setMode(stored);
+        }
+    }, []);
+
+    const handleModeChange = (value: string) => {
+        if (value === "app" || value === "contract") {
+            setMode(value);
+            window.localStorage.setItem(STORAGE_KEY, value);
+        }
+    };
+
+    const handleContractPromptAnalysis = async (userPrompt: string) => {
+        // Redirect to DApp Studio with the prompt
+        // The DApp Studio page will handle the analysis and show the form
+        router.push(`/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`);
+    };
+
     const {
         data,
         fetchNextPage,
@@ -123,22 +151,72 @@ const PageContent = () => {
                             </div>
 
                             {/* Main Heading */}
-                            <h1 className="text-4xl md:text-5xl font-semibold mb-5 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight pb-1">
+                            <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
                                 Build your app with Cogy
                             </h1>
                             
                             {/* Subtitle */}
-                            <p className="text-lg text-white/90 mb-10 max-w-xl mx-auto drop-shadow-md">
-                                Describe your app idea and watch Cogerphere build it for you in minutes, not months.
+                            <p className="mt-2 text-lg text-white/20 mb-4 max-w-xl mx-auto ">
+                                {mode === "app" 
+                                    ? "Describe your app idea and watch Cogy build it for you in minutes."
+                                    : "Describe your smart contract and let AI generate the perfect configuration."}
                             </p>
 
                             {/* Project Form */}
-                            <div className="max-w-2xl mx-auto">
-                                <ProjectForm />
+                            <div className="max-w-3xl mx-auto  space-y-8">
+                                <ProjectForm 
+                                    mode={mode}
+                                    onContractPrompt={handleContractPromptAnalysis}
+                                />
+
+                                <div className="flex flex-col items-center justify-center gap-4">
+                                    <ToggleGroup
+                                        type="single"
+                                        value={mode}
+                                        onValueChange={handleModeChange}
+                                        className="flex overflow-hidden rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur"
+                                    >
+                                        <ToggleGroupItem
+                                            value="app"
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition",
+                                                mode === "app"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Sparkles className="h-4 w-4" />
+                                            Build Dapp
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="contract"
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition",
+                                                mode === "contract"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Code2 className="h-4 w-4" />
+                                            Smart Contract
+                                        </ToggleGroupItem>
+                                    </ToggleGroup>
+                                    <div className="flex flex-col items-center gap-2 text-center">
+                                        <Badge variant="secondary" className="rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold uppercase tracking-wider text-white/80">
+                                            {mode === "app" ? "Full App" : "Smart Contract"}
+                                        </Badge>
+                                        <p className="text-sm text-white/60">
+                                            {mode === "app"
+                                                ? "Describe your full-stack idea and let Cogy assemble UI, APIs, and infrastructure."
+                                                : "Describe your smart contract and AI will pre-fill the configuration for you to review."}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
+
 
                 {/* Projects Grid Section */}
                 <section className="py-16 bg-black/10 backdrop-blur-sm">

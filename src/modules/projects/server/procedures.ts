@@ -113,6 +113,97 @@ export const projectsRouter = createTRPCRouter({
             return createdProject;
         }),
 
+    createDapp: protectedProcedure
+        .input(z.object({
+            value: z.string().min(1, { message: "Value is required" }).max(10000, { message: "Value must be less than 10000 characters" }),
+            blockchain: z.enum(['ETHEREUM', 'POLYGON', 'ARBITRUM', 'OPTIMISM', 'SOLANA']),
+            contractType: z.enum(['ERC20', 'ERC721', 'ERC1155', 'PAYMENT_SPLITTER', 'CUSTOM']),
+            tokenName: z.string().optional(),
+            tokenSymbol: z.string().optional(),
+            tokenSupply: z.string().optional(),
+            decimals: z.string().optional(),
+            network: z.enum(['MAINNET', 'TESTNET']),
+            features: z.array(z.string()).default([]),
+        }))
+        .mutation(async ({ input, ctx }) => {
+            console.log('🔥 createDapp mutation called with input:', input);
+            
+            const createdProject = await prisma.project.create({
+                data: {
+                    userId: ctx.auth.userId,
+                    name: generateSlug(2, {
+                        format: "title",
+                    }),
+                    projectType: 'DAPP',
+                    blockchain: input.blockchain,
+                    contractType: input.contractType,
+                    tokenName: input.tokenName,
+                    tokenSymbol: input.tokenSymbol,
+                    tokenSupply: input.tokenSupply,
+                    decimals: input.decimals,
+                    network: input.network,
+                    features: input.features,
+                    messages: {
+                        create: {
+                            content: input.value,
+                            role: "USER",
+                            type: "RESULT",
+                        },
+                    }
+                },
+            });
+
+            // Create BuildJob for tracking progress
+            const buildJob = await prisma.buildJob.create({
+                data: {
+                    projectId: createdProject.id,
+                    type: 'GENERATE',
+                    status: 'PENDING',
+                    progress: 0,
+                    currentStep: 'Queued for generation...',
+                },
+            });
+
+            // Trigger contract generation with buildJobId
+            console.log('📤 Sending Inngest event for contract generation:', {
+                buildJobId: buildJob.id,
+                projectId: createdProject.id,
+                contractType: input.contractType,
+            });
+            
+            await inngest.send({
+                name: "contract/generate",
+                data: {
+                    buildJobId: buildJob.id,
+                    projectId: createdProject.id,
+                    contractType: input.contractType,
+                    tokenName: input.tokenName,
+                    tokenSymbol: input.tokenSymbol,
+                    tokenSupply: input.tokenSupply,
+                    decimals: input.decimals,
+                    features: input.features,
+                },
+            });
+
+            return createdProject;
+        }),
+
+    getBuildJobs: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+        }))
+        .query(async ({ input, ctx }) => {
+            const buildJobs = await prisma.buildJob.findMany({
+                where: {
+                    projectId: input.projectId,
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            });
+            return buildJobs;
+        }),
+
     // Backfill/recapture screenshot for a single project
     captureScreenshot: protectedProcedure
         .input(z.object({

@@ -1,12 +1,13 @@
 import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
-import { CogerphereAgent } from "@/inngest/functions";
+import { CogerphereAgent, generateContract, verifyContract } from "@/inngest/functions";
 
-// Create an API that serves zero functions
+// Create an API that serves all Inngest functions
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
     CogerphereAgent,
-    /* your functions will be passed here later! */
+    generateContract,
+    verifyContract,
   ],
 });

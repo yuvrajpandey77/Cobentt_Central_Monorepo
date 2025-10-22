@@ -1,0 +1,35 @@
+{
+  "erc20": {
+    "name": "ERC-20 Token",
+    "description": "Fungible token standard for fungible assets",
+    "features": ["mintable", "burnable", "pausable"],
+    "template": "templates/evm/erc20/contract.sol",
+    "variables": {
+      "TOKEN_NAME": "string",
+      "TOKEN_SYMBOL": "string", 
+      "DECIMALS": "uint8",
+      "INITIAL_SUPPLY": "uint256"
+    }
+  },
+  "erc721": {
+    "name": "ERC-721 NFT",
+    "description": "Non-fungible token standard",
+    "features": ["mintable", "burnable", "uri-storage"],
+    "template": "templates/evm/erc721/contract.sol",
+    "variables": {
+      "TOKEN_NAME": "string",
+      "TOKEN_SYMBOL": "string",
+      "MAX_SUPPLY": "uint256"
+    }
+  },
+  "payment-splitter": {
+    "name": "Payment Splitter",
+    "description": "Split ether or tokens across recipients",
+    "features": ["multi-recipient", "proportional", "automatic"],
+    "template": "templates/evm/payment-splitter/contract.sol",
+    "variables": {
+      "CONTRACT_NAME": "string"
+    }
+  }
+}
+

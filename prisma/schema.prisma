@@ -24,6 +24,19 @@ model Project {
   messages Message[]
   screenshot Bytes?
   screenshotMime String?
+  
+  // Blockchain fields
+  projectType ProjectType @default(WEBSITE)
+  blockchain Blockchain?
+  contractType ContractType?
+  contractAddress String?
+  network Network?
+  tokenName String?
+  tokenSymbol String?
+  tokenSupply String?
+  decimals String?
+  features String[] // Array of enabled features like ["mintable", "burnable"]
+  buildJobs BuildJob[]
 }
 
 enum MessageRole {
@@ -62,4 +75,62 @@ model Fragment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+}
+
+// Blockchain-related enums
+enum ProjectType {
+  WEBSITE
+  DAPP
+  SMART_CONTRACT
+}
+
+enum Blockchain {
+  ETHEREUM
+  POLYGON
+  ARBITRUM
+  OPTIMISM
+  SOLANA
+}
+
+enum ContractType {
+  ERC20
+  ERC721
+  ERC1155
+  PAYMENT_SPLITTER
+  CUSTOM
+}
+
+enum Network {
+  MAINNET
+  TESTNET
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum JobType {
+  GENERATE
+  COMPILE
+  DEPLOY
+  VERIFY
+}
+
+model BuildJob {
+  id String @id @default(uuid())
+  projectId String
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type JobType
+  status JobStatus
+  logs String? @db.Text
+  artifacts Json? // Store ABI, bytecode, deployment info
+  contractAddress String?
+  transactionHash String?
+  progress Int @default(0) // 0-100
+  currentStep String? // Current step description
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

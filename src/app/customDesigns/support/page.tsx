@@ -44,7 +44,7 @@ export default function SupportPage() {
       availability: "24/7 Available",
       responseTime: "Response within 4 hours",
       buttonText: "Send Email",
-      color: "bg-purple-600"
+      color: "bg-blue-600"
     },
     {
       icon: <Video className="h-6 w-6" />,
