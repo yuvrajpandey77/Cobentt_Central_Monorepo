@@ -1,0 +1,79 @@
+# E2B Custom Template Configuration
+# Template for Solidity development with Foundry pre-installed
+
+name: "solidity-foundry-template"
+description: "Custom E2B template with Foundry pre-installed for Solidity development"
+baseImage: "debian:12"
+
+# System packages to install
+packages:
+  - "build-essential"
+  - "libssl-dev"
+  - "pkg-config"
+  - "curl"
+  - "git"
+  - "wget"
+  - "tar"
+  - "gzip"
+  - "nodejs"
+  - "npm"
+
+# Custom installation script
+installScript: |
+  #!/bin/bash
+  set -e
+  
+  echo "🚀 Setting up Solidity development environment..."
+  
+  # Update package lists
+  apt-get update
+  
+  # Install system dependencies
+  apt-get install -y build-essential libssl-dev pkg-config curl git wget tar gzip nodejs npm
+  
+  # Install Foundry
+  echo "📦 Installing Foundry..."
+  curl -L https://foundry.paradigm.xyz | bash
+  
+  # Add Foundry to PATH
+  export PATH="$PATH:$HOME/.foundry/bin"
+  echo 'export PATH="$PATH:$HOME/.foundry/bin"' >> ~/.bashrc
+  
+  # Install Foundry tools
+  ~/.foundry/bin/foundryup
+  
+  # Verify installation
+  echo "✅ Verifying Foundry installation..."
+  ~/.foundry/bin/forge --version
+  ~/.foundry/bin/cast --version
+  ~/.foundry/bin/anvil --version
+  
+  # Create project structure
+  mkdir -p /home/user/projects
+  cd /home/user/projects
+  
+  # Initialize a sample Foundry project
+  ~/.foundry/bin/forge init sample-project --no-git
+  
+  echo "🎉 Solidity development environment ready!"
+  echo "Foundry tools available:"
+  echo "  - forge: $(~/.foundry/bin/forge --version)"
+  echo "  - cast: $(~/.foundry/bin/cast --version)"
+  echo "  - anvil: $(~/.foundry/bin/anvil --version)"
+
+# Environment variables
+env:
+  PATH: "$PATH:$HOME/.foundry/bin"
+  FOUNDRY_ROOT: "$HOME/.foundry"
+
+# Working directory
+workdir: "/home/user/projects"
+
+# Expose ports (if needed)
+ports:
+  - 8545  # Anvil default port
+  - 3000  # Development server
+
+# Volume mounts (if needed)
+volumes:
+  - "/home/user/projects:/workspace"
