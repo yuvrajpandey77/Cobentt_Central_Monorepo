@@ -1,0 +1,17 @@
+# This is a config for E2B sandbox template.
+# You can use template ID or template name to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox("solidity-foundry-template") # Sync sandbox
+# sandbox = await AsyncSandbox.create("solidity-foundry-template") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('solidity-foundry-template')
+
+team_id = "dbaa586a-fb31-4755-af3f-a5b7fbfdb209"
+start_cmd = "/compile_page.sh"
+dockerfile = "e2b.Dockerfile"
+template_name = "solidity-foundry-template"
+template_id = "solidity-foundry-template"
