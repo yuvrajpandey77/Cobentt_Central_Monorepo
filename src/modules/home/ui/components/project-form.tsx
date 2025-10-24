@@ -42,6 +42,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     const [showLoading, setShowLoading] = useState(false);
     const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
     const [showIdeas, setShowIdeas] = useState(false);
+    const [isAnalyzingContract, setIsAnalyzingContract] = useState(false);
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -87,7 +88,17 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
         
         // If in contract mode without preview, trigger contract prompt analysis (redirect to dapp-studio)
         if (mode === "contract" && onContractPrompt) {
-            onContractPrompt(values.value);
+            setIsAnalyzingContract(true);
+            try {
+                // Add a small delay to show the loading state before navigation
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await onContractPrompt(values.value);
+            } catch (error) {
+                console.error("Error analyzing contract:", error);
+                toast.error("Failed to analyze contract. Please try again.");
+                setIsAnalyzingContract(false);
+            }
+            // Note: Don't reset isAnalyzingContract here as we're navigating away
             return;
         }
         
@@ -129,7 +140,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
 
     const [isFocused, setIsFocused] = useState(false);
     const isPending = createProject.isPending;
-    const isButtonDisabled = isPending || !form.formState.isValid;
+    const isButtonDisabled = isPending || isAnalyzingContract || !form.formState.isValid;
 
     // Typing animation texts
     const appTexts = [
@@ -164,10 +175,14 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
             )}
             <Form {...form}>
                 <section className="space-y-6">
-                <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
-                    "relative border border-white/40 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 cursor-text shadow-xl",
-                    isFocused && "border-white/60 shadow-2xl ring-2 ring-white/30",
-                )}>
+                <form 
+                    id="main-project-form"
+                    onSubmit={form.handleSubmit(onSubmit)} 
+                    className={cn(
+                        "relative border border-white/40 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                        isFocused && "border-white/60 shadow-2xl ring-2 ring-white/30",
+                    )}
+                >
                     <FormField
                         control={form.control}
                         name="value"
@@ -213,7 +228,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                             key={template.title}
                                             variant="outline"
                                             size="sm"
-                                            className="h-8 px-3 text-xs bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 transition-all duration-200 hover:scale-105 backdrop-blur-sm text-gray-800 font-medium shadow-sm"
+                                            className="h-8 px-3 text-xs bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 transition-all duration-200 ease-out hover:scale-105 backdrop-blur-sm text-gray-800 font-medium shadow-sm focus:ring-2 focus:ring-white/20 focus:outline-none"
                                             onClick={() => {
                                                 onSelect(template.prompt);
                                             }}
@@ -241,7 +256,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowIdeas(!showIdeas)}
-                                    className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+                                    className="text-white/80 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                                 >
                                     <LightbulbIcon className="size-4 mr-1" />
                                     Ideas
@@ -256,14 +271,14 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                     disabled={isButtonDisabled}
                                     size="default"
                                     className={cn(
-                                        "h-10 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
+                                        "h-10 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none",
                                         isButtonDisabled && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
-                                    {isPending ? (
+                                    {isPending || isAnalyzingContract ? (
                                         <>
                                             <Loader2Icon className="size-3 animate-spin mr-1" />
-                                            Building...
+                                            {mode === "contract" ? "Analyzing..." : "Building..."}
                                         </>
                                     ) : (
                                         <>

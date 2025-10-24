@@ -45,7 +45,11 @@ const PageContent = () => {
     const handleContractPromptAnalysis = async (userPrompt: string) => {
         // Redirect to DApp Studio with the prompt
         // The DApp Studio page will handle the analysis and show the form
-        router.push(`/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`);
+        return new Promise<void>((resolve) => {
+            router.push(`/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`);
+            // Resolve after a short delay to allow the loading state to be visible
+            setTimeout(() => resolve(), 100);
+        });
     };
 
     const {
@@ -152,7 +156,7 @@ const PageContent = () => {
 
                             {/* Main Heading */}
                             <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
-                                Build your app with Cogy
+                                Build your Dapp with Clox
                             </h1>
                             
                             {/* Subtitle */}

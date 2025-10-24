@@ -17,7 +17,6 @@ import {
   Sparkles,
   Info,
 } from "lucide-react";
-import ThemeToggle from "@/components/theme-toggle";
 import FeedbackButtons from "@/app/docs/FeedbackButtons";
 import SearchBox from "./SearchBox";
 
@@ -302,9 +301,6 @@ export default async function DocsPage({ searchParams }: PageProps) {
         )}
       </aside>
       </div>
-
-      {/* Bottom-right theme toggle */}
-      <ThemeToggle />
     </div>
   );
 }

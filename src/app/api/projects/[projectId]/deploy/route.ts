@@ -3,6 +3,9 @@ import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 const deployContractSchema = z.object({
   buildJobId: z.string(),
   contractAddress: z.string().optional(),
@@ -27,6 +30,16 @@ export async function POST(
         transactionHash: validatedData.transactionHash,
       },
     });
+
+    // Also update the project with the contract address for easier access
+    if (validatedData.contractAddress) {
+      await prisma.project.update({
+        where: { id: projectId },
+        data: {
+          contractAddress: validatedData.contractAddress,
+        },
+      });
+    }
 
     // Trigger verification if contract address is provided
     if (validatedData.contractAddress) {

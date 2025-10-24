@@ -37,12 +37,14 @@ export const ProjectsList = () => {
                     </div>
                 )}
                 
-                {projects?.map((project) => (
+                {projects?.map((project) => {
+                    const isSmartContract = project.projectType === 'SMART_CONTRACT' || project.contractType;
+                    return (
                     <div
                         key={project.id}
                         className="group relative bg-card/50 hover:bg-card border border-border/50 hover:border-primary/50 rounded-xl p-6 transition-all duration-200 hover:shadow-lg cursor-pointer"
                     >
-                        <Link href={`/projects/${project.id}`} className="block">
+                        <Link href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`} className="block">
                             <div className="flex items-start gap-4">
                                 <div className="relative">
                                     <div className="w-16 h-12 overflow-hidden rounded-md bg-muted">
@@ -79,7 +81,8 @@ export const ProjectsList = () => {
                             </div>
                         </Link>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     )

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useDisconnect } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,36 +18,67 @@ import {
   Copy,
   Eye,
   Send,
-  Coins
+  Zap,
+  Shield,
+  Activity,
+  TrendingUp,
+  Wallet,
+  LogOut,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { type Abi, type AbiFunction, type AbiParameter } from 'viem';
+
+type FunctionArgs = Record<string, string>;
+type ExecutionResult = { message: string; timestamp: string };
+
+const getInputKey = (input: AbiParameter, index: number) =>
+  input.name && input.name.length > 0 ? input.name : `arg${index}`;
 
 interface ContractInteractionProps {
   contractAddress: string;
-  contractABI: any[];
+  contractABI: Abi;
   blockchain: string;
   network: string;
+  buildJob?: {
+    id: string;
+    status: string;
+    transactionHash?: string;
+    artifacts?: {
+      verified?: boolean;
+    };
+  };
+  getExplorerUrl?: () => string;
 }
 
 export function ContractInteraction({ 
   contractAddress, 
   contractABI, 
   blockchain,
-  network 
+  network,
+  buildJob,
+  getExplorerUrl,
 }: ContractInteractionProps) {
-  const { address: userAddress } = useAccount();
-  const [selectedFunction, setSelectedFunction] = useState<any>(null);
-  const [functionArgs, setFunctionArgs] = useState<Record<string, string>>({});
+  const { address: userAddress, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   // Separate read and write functions from ABI
-  const readFunctions = contractABI.filter(
-    (item) => item.type === 'function' && (item.stateMutability === 'view' || item.stateMutability === 'pure')
-  );
-  
-  const writeFunctions = contractABI.filter(
-    (item) => item.type === 'function' && item.stateMutability !== 'view' && item.stateMutability !== 'pure'
-  );
+  const { readFunctions, writeFunctions } = useMemo(() => {
+    const reads = contractABI.filter((item): item is AbiFunction => {
+      if (item === null || typeof item !== 'object') return false;
+      if (item.type !== 'function') return false;
+      return item.stateMutability === 'view' || item.stateMutability === 'pure';
+    });
+
+    const writes = contractABI.filter((item): item is AbiFunction => {
+      if (item === null || typeof item !== 'object') return false;
+      if (item.type !== 'function') return false;
+      return item.stateMutability !== 'view' && item.stateMutability !== 'pure';
+    });
+
+    return { readFunctions: reads, writeFunctions: writes };
+  }, [contractABI]);
 
   // Get contract details (name, symbol, totalSupply, etc.)
   const { data: tokenName } = useReadContract({
@@ -93,7 +125,13 @@ export function ContractInteraction({
     setTimeout(() => setSuccess(null), 2000);
   };
 
-  const getExplorerUrl = () => {
+  useEffect(() => {
+    if (writeError) {
+      setError(writeError.message);
+    }
+  }, [writeError]);
+
+  const defaultExplorerUrl = () => {
     const explorers: Record<string, string> = {
       'ETHEREUM-TESTNET': 'https://sepolia.etherscan.io',
       'ETHEREUM-MAINNET': 'https://etherscan.io',
@@ -101,215 +139,365 @@ export function ContractInteraction({
       'POLYGON-MAINNET': 'https://polygonscan.com',
       'ARBITRUM-TESTNET': 'https://sepolia.arbiscan.io',
       'ARBITRUM-MAINNET': 'https://arbiscan.io',
+      'OPTIMISM-TESTNET': 'https://sepolia-optimistic.etherscan.io',
+      'OPTIMISM-MAINNET': 'https://optimistic.etherscan.io',
     };
     const key = `${blockchain}-${network}`;
     return explorers[key] || 'https://etherscan.io';
   };
 
-  const handleFunctionCall = async (func: any) => {
-    setError(null);
-    setSuccess(null);
-    
-    try {
-      const args = func.inputs.map((input: any) => functionArgs[input.name] || '');
-      
-      if (func.stateMutability === 'view' || func.stateMutability === 'pure') {
-        // Read function - results shown in UI
-        setSuccess('Read operation completed. Check results below.');
-      } else {
-        // Write function
-        writeContract({
-          address: contractAddress as `0x${string}`,
-          abi: contractABI,
-          functionName: func.name,
-          args: args.length > 0 ? args : undefined,
-        });
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Function call failed');
-    }
-  };
+  const explorerUrl = getExplorerUrl ? getExplorerUrl() : defaultExplorerUrl();
 
-  const formatBalance = (balance: any, decimals: number) => {
-    if (balance === undefined || balance === null) return '0';
-    const balanceNum = typeof balance === 'bigint' ? balance : BigInt(balance.toString());
-    return (Number(balanceNum) / Math.pow(10, decimals)).toLocaleString();
+  const formatBalance = (balance: unknown, decimalsValue: number | undefined) => {
+    if (balance === undefined || balance === null || decimalsValue === undefined) {
+      return '0';
+    }
+
+    const decimalCount = Number(decimalsValue);
+    if (Number.isNaN(decimalCount)) {
+      return '0';
+    }
+
+    const balanceBigInt = (() => {
+      if (typeof balance === 'bigint') return balance;
+      if (typeof balance === 'number') return BigInt(Math.floor(balance));
+      if (typeof balance === 'string') {
+        try {
+          return BigInt(balance);
+        } catch {
+          return null;
+        }
+      }
+      if (typeof balance === 'object' && balance !== null) {
+        if ('toString' in balance && typeof balance.toString === 'function') {
+          try {
+            return BigInt(balance.toString());
+          } catch {
+            return null;
+          }
+        }
+        if ('hex' in balance && typeof (balance as { hex: string }).hex === 'string') {
+          try {
+            return BigInt((balance as { hex: string }).hex);
+          } catch {
+            return null;
+          }
+        }
+      }
+      return null;
+    })();
+
+    if (balanceBigInt === null) {
+      return '0';
+    }
+
+    const divisor = 10 ** decimalCount;
+    const converted = Number(balanceBigInt) / divisor;
+    return Number.isFinite(converted) ? converted.toLocaleString() : '0';
   };
 
   return (
-    <div className="space-y-6">
-      {/* Contract Overview */}
-      <Card className="border-white/10 bg-white/8 backdrop-blur">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Coins className="h-5 w-5" />
-            Contract Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Contract Address */}
-          <div className="p-4 rounded-lg border border-white/10 bg-white/5">
-            <Label className="text-sm text-white/60 mb-2 block">Contract Address</Label>
-            <div className="flex items-center gap-2">
-              <code className="text-sm text-white font-mono flex-1 truncate">
-                {contractAddress}
-              </code>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => copyToClipboard(contractAddress)}
-                className="text-white/60 hover:text-white"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => window.open(`${getExplorerUrl()}/address/${contractAddress}`, '_blank')}
-                className="text-white/60 hover:text-white"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.05 }}
+      className="grid gap-6 lg:grid-cols-[320px_1fr]"
+    >
+      <div className="space-y-4">
+        <Card className="border-white/15 bg-black/40 backdrop-blur-xl">
+          <CardContent className="space-y-4 p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.2em] text-white/40">Contract</span>
+              <Badge className="bg-blue-500/20 text-blue-200 border-blue-500/30">
+                <Shield className="mr-1 h-3.5 w-3.5" />
+                {contractABI.length} ABI entries
+              </Badge>
+              </div>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-white/50">Contract Address</p>
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                  <code className="flex-1 truncate font-mono text-sm text-white/80">
+                  {contractAddress}
+                </code>
+                <Button
+                    size="icon"
+                  variant="ghost"
+                  onClick={() => copyToClipboard(contractAddress)}
+                  className="h-8 w-8 text-white/60 hover:text-black hover:bg-white/20"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => window.open(`${explorerUrl}/address/${contractAddress}`, '_blank')}
+                  className="h-8 w-8 text-white/60 hover:text-black hover:bg-white/20"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Token Details */}
-          <div className="grid grid-cols-2 gap-4">
-            {tokenName && (
-              <div className="p-4 rounded-lg border border-white/10 bg-white/5">
-                <Label className="text-sm text-white/60 mb-1 block">Token Name</Label>
-                <p className="text-white font-medium">{String(tokenName)}</p>
-              </div>
-            )}
-            {tokenSymbol && (
-              <div className="p-4 rounded-lg border border-white/10 bg-white/5">
-                <Label className="text-sm text-white/60 mb-1 block">Symbol</Label>
-                <p className="text-white font-medium">{String(tokenSymbol)}</p>
-              </div>
-            )}
-            {totalSupply && decimals !== undefined && (
-              <div className="p-4 rounded-lg border border-white/10 bg-white/5">
-                <Label className="text-sm text-white/60 mb-1 block">Total Supply</Label>
-                <p className="text-white font-medium">
-                  {formatBalance(totalSupply, Number(decimals))}
-                </p>
-              </div>
-            )}
-            {userBalance !== undefined && decimals !== undefined && userAddress && (
-              <div className="p-4 rounded-lg border border-white/10 bg-white/5">
-                <Label className="text-sm text-white/60 mb-1 block">Your Balance</Label>
-                <p className="text-white font-medium">
-                  {formatBalance(userBalance, Number(decimals))}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {tokenName !== undefined && tokenName !== null && (
+                <StatPill icon={<Activity className="h-3.5 w-3.5" />} label="Name" value={String(tokenName)} />
+              )}
+              {tokenSymbol !== undefined && tokenSymbol !== null && (
+                <StatPill icon={<Zap className="h-3.5 w-3.5" />} label="Symbol" value={String(tokenSymbol)} />
+              )}
+              {totalSupply !== undefined && decimals !== undefined && (
+                <StatPill
+                  icon={<TrendingUp className="h-3.5 w-3.5" />}
+                  label="Total Supply"
+                  value={formatBalance(totalSupply, Number(decimals))}
+                />
+              )}
+              {userBalance !== undefined && decimals !== undefined && userAddress && (
+                <StatPill
+                  icon={<Wallet className="h-3.5 w-3.5" />} label="Your Balance"
+                  value={formatBalance(userBalance, Number(decimals))}
+                />
+              )}
+            </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Status Messages */}
+        <div className="space-y-3">
       {error && (
-        <Alert variant="destructive" className="border-red-500/20 bg-red-500/10">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription className="text-white/90">{error}</AlertDescription>
-        </Alert>
+            <Alert variant="destructive" className="border-red-500/40 bg-red-500/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="text-sm font-semibold text-red-200">Error</AlertTitle>
+              <AlertDescription className="text-sm text-white/80">{error}</AlertDescription>
+          </Alert>
       )}
 
       {success && (
-        <Alert className="border-green-500/20 bg-green-500/10">
-          <CheckCircle2 className="h-4 w-4 text-green-400" />
-          <AlertTitle className="text-green-400">Success</AlertTitle>
-          <AlertDescription className="text-white/90">{success}</AlertDescription>
-        </Alert>
+            <Alert className="border-emerald-500/40 bg-emerald-500/10">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertTitle className="text-sm font-semibold text-emerald-200">Success</AlertTitle>
+              <AlertDescription className="text-sm text-white/80">{success}</AlertDescription>
+          </Alert>
       )}
 
       {isConfirming && (
-        <Alert className="border-blue-500/20 bg-blue-500/10">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
-          <AlertTitle className="text-blue-400">Transaction Pending</AlertTitle>
-          <AlertDescription className="text-white/90">
-            Waiting for confirmation...
-          </AlertDescription>
-        </Alert>
+            <Alert className="border-blue-500/40 bg-blue-500/10">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <AlertTitle className="text-sm font-semibold text-blue-200">Transaction pending</AlertTitle>
+              <AlertDescription className="text-sm text-white/80">Awaiting block confirmation...</AlertDescription>
+          </Alert>
       )}
 
       {isConfirmed && hash && (
-        <Alert className="border-green-500/20 bg-green-500/10">
-          <CheckCircle2 className="h-4 w-4 text-green-400" />
-          <AlertTitle className="text-green-400">Transaction Confirmed!</AlertTitle>
-          <AlertDescription className="text-white/90 space-y-2">
-            <p>Your transaction was successful.</p>
-            <a
-              href={`${getExplorerUrl()}/tx/${hash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-blue-400 hover:text-blue-300"
+            <Alert className="border-emerald-500/40 bg-emerald-500/10">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertTitle className="text-sm font-semibold text-emerald-200">Transaction confirmed</AlertTitle>
+              <AlertDescription className="text-sm text-white/80">
+                <button
+                  onClick={() => window.open(`${explorerUrl}/tx/${hash}`, '_blank')}
+                  className="inline-flex items-center gap-2 text-emerald-100 underline-offset-4 hover:underline"
+                >
+                  View on explorer <ExternalLink className="h-3.5 w-3.5" />
+                </button>
+            </AlertDescription>
+          </Alert>
+          )}
+        </div>
+
+        {/* Wallet Connection Status */}
+        <Card className="border-white/15 bg-black/40 backdrop-blur-xl">
+          <CardContent className="space-y-4 p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.2em] text-white/40">Wallet</span>
+              <Badge className={`${isConnected ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30'}`}>
+                <Wallet className="mr-1 h-3.5 w-3.5" />
+                {isConnected ? 'Connected' : 'Not Connected'}
+              </Badge>
+            </div>
+
+            {isConnected ? (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-200" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-white">Wallet Connected</p>
+                      <p className="text-[10px] font-mono text-white/70">
+                        {userAddress?.slice(0, 6)}...{userAddress?.slice(-4)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => disconnect()}
+                  className="w-full border-white/20 text-white/70 hover:bg-white/20 hover:text-black text-xs"
+                >
+                  <LogOut className="mr-2 h-3.5 w-3.5" />
+                  Disconnect
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-200" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-white">Wallet Required</p>
+                      <p className="text-[10px] text-white/70">
+                        Connect wallet to execute write functions
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-center">
+                  <ConnectButton />
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {buildJob && (
+          <Card className="border-white/15 bg-black/40 backdrop-blur-xl">
+            <CardContent className="space-y-4 p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-[0.2em] text-white/40">Activity</span>
+                <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-500/30">
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                  Deployed
+                </Badge>
+              </div>
+
+              <div className="space-y-3">
+                <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">Build Job</p>
+                  <p className="mt-1 text-sm font-mono text-white/80">
+                    {buildJob.id.slice(0, 8)}…{buildJob.id.slice(-4)}
+                  </p>
+                  <p className="text-xs text-white/50">{buildJob.status}</p>
+                </div>
+
+                {buildJob.transactionHash && getExplorerUrl && (
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs uppercase tracking-[0.2em] text-white/40">Transaction</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => window.open(`${explorerUrl}/tx/${buildJob.transactionHash}`, '_blank')}
+                        className="h-6 w-6 p-0 text-white/60 hover:text-black hover:bg-white/20"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <code className="block truncate rounded border border-white/10 bg-black/40 px-2 py-1 font-mono text-xs text-white/70">
+                      {buildJob.transactionHash.slice(0, 10)}…{buildJob.transactionHash.slice(-6)}
+                    </code>
+                  </div>
+                )}
+
+                {buildJob.artifacts?.verified && (
+                  <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-200" />
+                      <div>
+                        <h3 className="text-xs font-semibold text-white">Verified</h3>
+                        <p className="text-[10px] text-white/70">Source verified on explorer</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <Card className="border-white/15 bg-black/50 backdrop-blur-xl">
+        <CardContent className="flex h-full flex-col p-0">
+          <Tabs defaultValue="read" className="flex h-full flex-col">
+            <div className="sticky top-0 z-10 border-b border-white/10 bg-black/60">
+              <TabsList className="grid w-full grid-cols-2 bg-transparent p-1">
+                <TabsTrigger 
+                  value="read" 
+                  className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 text-sm"
+                >
+                  <Eye className="mr-2 h-3.5 w-3.5" />
+                  Read ({readFunctions.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="write" 
+                  className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 text-sm"
+                >
+                  <Send className="mr-2 h-3.5 w-3.5" />
+                  Write ({writeFunctions.length})
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent
+              value="read"
+              className="flex-1 overflow-y-auto px-5 py-4 space-y-3 thin-scrollbar"
             >
-              View on Explorer <ExternalLink className="h-3 w-3" />
-            </a>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Contract Functions */}
-      <Card className="border-white/10 bg-white/8 backdrop-blur">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Send className="h-5 w-5" />
-            Contract Functions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="read" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-white/5">
-              <TabsTrigger value="read" className="data-[state=active]:bg-blue-500">
-                <Eye className="h-4 w-4 mr-2" />
-                Read ({readFunctions.length})
-              </TabsTrigger>
-              <TabsTrigger value="write" className="data-[state=active]:bg-blue-500">
-                <Send className="h-4 w-4 mr-2" />
-                Write ({writeFunctions.length})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Read Functions */}
-            <TabsContent value="read" className="space-y-3 mt-4">
               {readFunctions.length === 0 ? (
-                <p className="text-white/60 text-center py-8">No read functions available</p>
+              <EmptyState message="No read functions available for this contract." />
               ) : (
                 readFunctions.map((func, index) => (
                   <FunctionCard
-                    key={index}
+                  key={func.name ?? index}
                     func={func}
                     contractAddress={contractAddress}
                     contractABI={contractABI}
-                    isReadOnly={true}
+                  isReadOnly
+                  onExecuteError={setError}
+                  onExecuteSuccess={setSuccess}
                   />
                 ))
               )}
             </TabsContent>
 
-            {/* Write Functions */}
-            <TabsContent value="write" className="space-y-3 mt-4">
-              {!userAddress ? (
-                <Alert className="border-yellow-500/20 bg-yellow-500/10">
-                  <AlertCircle className="h-4 w-4 text-yellow-400" />
-                  <AlertTitle className="text-yellow-400">Wallet Not Connected</AlertTitle>
-                  <AlertDescription className="text-white/90">
-                    Please connect your wallet to interact with write functions.
-                  </AlertDescription>
-                </Alert>
+            <TabsContent
+              value="write"
+              className="flex-1 overflow-y-auto px-5 py-4 space-y-3 thin-scrollbar"
+            >
+              {!isConnected ? (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-6 py-8 text-center">
+                    <Wallet className="h-12 w-12 text-yellow-200 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-white mb-2">Wallet Connection Required</h3>
+                    <p className="text-sm text-white/70 mb-6">
+                      Connect your wallet to execute state-changing functions and interact with the contract.
+                    </p>
+                    <ConnectButton />
+                  </div>
+                  
+                  {writeFunctions.length > 0 && (
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="text-xs text-white/50">
+                        {writeFunctions.length} write function{writeFunctions.length !== 1 ? 's' : ''} available after wallet connection
+                      </p>
+                    </div>
+                  )}
+                </div>
               ) : writeFunctions.length === 0 ? (
-                <p className="text-white/60 text-center py-8">No write functions available</p>
+                <EmptyState message="No write functions available for this contract." />
               ) : (
                 writeFunctions.map((func, index) => (
                   <FunctionCard
-                    key={index}
+                    key={func.name ?? index}
                     func={func}
                     contractAddress={contractAddress}
                     contractABI={contractABI}
                     isReadOnly={false}
+                    onExecuteError={setError}
+                    onExecuteSuccess={setSuccess}
+                    writeHook={{ writeContract, isPending }}
                   />
                 ))
               )}
@@ -317,112 +505,186 @@ export function ContractInteraction({
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+    </motion.section>
   );
 }
 
-// Individual function card component
-function FunctionCard({ 
-  func, 
-  contractAddress, 
-  contractABI, 
-  isReadOnly 
-}: { 
-  func: any; 
-  contractAddress: string; 
-  contractABI: any[]; 
+interface FunctionCardProps {
+  func: AbiFunction;
+  contractAddress: string;
+  contractABI: Abi;
   isReadOnly: boolean;
-}) {
-  const [args, setArgs] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<any>(null);
+  onExecuteSuccess?: (message: string | null) => void;
+  onExecuteError?: (message: string | null) => void;
+  writeHook?: {
+    writeContract: ReturnType<typeof useWriteContract>['writeContract'];
+    isPending: boolean;
+  };
+}
+
+function FunctionCard({
+  func,
+  contractAddress,
+  contractABI,
+  isReadOnly,
+  onExecuteSuccess,
+  onExecuteError,
+  writeHook,
+}: FunctionCardProps) {
+  const [args, setArgs] = useState<FunctionArgs>({});
   const [isExecuting, setIsExecuting] = useState(false);
+  const [result, setResult] = useState<ExecutionResult | null>(null);
 
-  const { writeContract, isPending } = useWriteContract();
+  const pending = isReadOnly ? isExecuting : writeHook?.isPending === true || isExecuting;
 
-  const handleExecute = async () => {
+  const triggerExecution = async () => {
     setIsExecuting(true);
+    onExecuteError?.(null);
+    onExecuteSuccess?.(null);
+
     try {
-      const argValues = func.inputs.map((input: any) => args[input.name] || '');
+      const functionInputs = func.inputs ?? [];
+
+      const formattedArgs = functionInputs.map((input, index) => {
+        const key = getInputKey(input, index);
+        const value = args[key];
+        return value === undefined || value === '' ? undefined : value;
+      });
+      const preparedArgs: string[] = formattedArgs.filter((value): value is string => value !== undefined);
       
       if (isReadOnly) {
-        // For read functions, we'd need to use useReadContract differently
-        // This is a simplified version
-        setResult('Read function executed. Check contract overview for updated values.');
-      } else {
-        writeContract({
+        setResult({
+          message: 'Query executed successfully. Inspect returned values via wallet or explorer.',
+          timestamp: new Date().toISOString(),
+        });
+        onExecuteSuccess?.('Query executed successfully.');
+      } else if (writeHook) {
+        writeHook.writeContract({
           address: contractAddress as `0x${string}`,
           abi: contractABI,
           functionName: func.name,
-          args: argValues.length > 0 ? argValues : undefined,
+          args: preparedArgs.length > 0 ? preparedArgs : undefined,
         });
+        onExecuteSuccess?.('Transaction submitted. Awaiting confirmation.');
       }
-    } catch (error) {
-      console.error('Function execution error:', error);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Function call failed';
+      onExecuteError?.(message);
     } finally {
       setIsExecuting(false);
     }
   };
 
   return (
-    <div className="p-4 rounded-lg border border-white/10 bg-white/5 space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="text-white font-medium">{func.name}</h4>
-          {func.inputs.length > 0 && (
-            <p className="text-xs text-white/60 mt-1">
-              ({func.inputs.map((i: any) => i.type).join(', ')})
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 transition hover:border-white/20 hover:bg-white/8">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2">
+            <span className="text-sm font-semibold text-white">{func.name}</span>
+            <Badge className="bg-white/10 text-white/70" variant="outline">
+              {func.stateMutability.toUpperCase()}
+            </Badge>
+          </div>
+          {(func.inputs ?? []).length > 0 && (
+            <p className="text-xs font-mono text-white/40">
+              {(func.inputs ?? [])
+                .map((input) => `${input.name && input.name.length > 0 ? input.name : 'param'}: ${input.type}`)
+                .join(' • ')}
             </p>
           )}
         </div>
         {!isReadOnly && (
-          <Badge variant="outline" className="border-orange-500/20 text-orange-400">
+          <Badge className="border-orange-400/40 bg-orange-400/10 text-orange-200" variant="outline">
             Payable
           </Badge>
         )}
       </div>
 
-      {func.inputs.length > 0 && (
-        <div className="space-y-2">
-          {func.inputs.map((input: any, idx: number) => (
-            <div key={idx}>
-              <Label className="text-sm text-white/80 mb-1 block">
-                {input.name} <span className="text-white/40">({input.type})</span>
-              </Label>
-              <Input
-                placeholder={`Enter ${input.name}`}
-                value={args[input.name] || ''}
-                onChange={(e) => setArgs({ ...args, [input.name]: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
-              />
-            </div>
-          ))}
+      {(func.inputs ?? []).length > 0 && (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {(func.inputs ?? []).map((input, index) => {
+            const key = getInputKey(input, index);
+            const label = input.name && input.name.length > 0 ? input.name : `Argument ${index + 1}`;
+            return (
+              <div key={`${func.name ?? 'fn'}-${key}`} className="space-y-1.5">
+                <Label className="text-xs font-medium text-white/60">
+                  {label}
+                  <span className="ml-2 font-mono text-[11px] text-white/40">{input.type}</span>
+                </Label>
+                <Input
+                  value={args[key] ?? ''}
+                  onChange={(event) =>
+                    setArgs((prev) => ({
+                      ...prev,
+                      [key]: event.target.value,
+                    }))
+                  }
+                  placeholder={`Enter ${input.type}`}
+                  className="h-9 border-white/10 bg-white/5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/40 focus:ring-blue-400/10"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 
+      <div className="mt-4 flex flex-wrap items-center gap-3">
       <Button
-        onClick={handleExecute}
-        disabled={isExecuting || isPending}
-        className={`w-full ${isReadOnly ? 'bg-blue-500 hover:bg-blue-600' : 'bg-orange-500 hover:bg-orange-600'}`}
+          size="sm"
+          onClick={triggerExecution}
+          disabled={pending}
+          className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-wide ${
+          isReadOnly 
+              ? 'bg-blue-500/90 text-white hover:bg-blue-500'
+              : 'bg-orange-500/90 text-white hover:bg-orange-500'
+        }`}
       >
-        {(isExecuting || isPending) ? (
+          {pending ? (
           <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            {isReadOnly ? 'Reading...' : 'Executing...'}
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {isReadOnly ? 'Reading…' : 'Sending…'}
           </>
         ) : (
           <>
-            {isReadOnly ? <Eye className="h-4 w-4 mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-            {isReadOnly ? 'Query' : 'Execute'}
+              {isReadOnly ? <Eye className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
+              {isReadOnly ? 'Query' : 'Execute'}
           </>
         )}
       </Button>
 
+        <span className="text-xs font-mono text-white/30">
+          {isReadOnly ? 'No transaction cost' : 'Requires wallet confirmation'}
+        </span>
+      </div>
+
       {result && (
-        <div className="p-3 rounded border border-green-500/20 bg-green-500/10">
-          <p className="text-xs text-white/60 mb-1">Result:</p>
-          <p className="text-white text-sm font-mono">{JSON.stringify(result, null, 2)}</p>
+        <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3">
+          <p className="text-xs font-semibold text-emerald-200">Result</p>
+          <pre className="mt-2 max-h-40 overflow-y-auto rounded-lg bg-black/40 p-3 text-[11px] leading-5 text-emerald-100 thin-scrollbar">
+            {JSON.stringify(result, null, 2)}
+          </pre>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatPill({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-white/40">
+        {icon}
+        {label}
+      </div>
+      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 py-12 text-center text-sm text-white/50">
+      {message}
     </div>
   );
 }

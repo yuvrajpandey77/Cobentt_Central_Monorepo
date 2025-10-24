@@ -4,7 +4,6 @@ import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "sonner";
-import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
 import GlobalQueryProgress from "@/components/global-query-progress";
 const sora = Sora({
@@ -44,15 +43,9 @@ export default function RootLayout({
       <body
         className={`${sora.variable} ${jetBrainsMono.variable} antialiased`}
       >
-        <ThemeProvider
-        attribute="class"
-        forcedTheme="dark"
-        disableTransitionOnChange
-        >
         <GlobalQueryProgress />
         <Toaster />
         {children}
-        </ThemeProvider>
       </body>
     </html>
     </TRPCReactProvider>

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import JSZip from "jszip";
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { projectId } = await req.json();

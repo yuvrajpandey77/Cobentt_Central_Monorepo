@@ -6,6 +6,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -13,13 +19,15 @@ import {
   AlertCircle,
   Download,
   Rocket,
-  Code2,
   FileJson,
   FileCode,
   Play,
   ExternalLink,
+  EyeIcon,
+  CodeIcon,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
+import { FileExplorer } from '@/components/file-explorer';
 
 interface BuildStatus {
   id: string;
@@ -41,7 +49,52 @@ export default function BuildPage() {
   const [buildStatus, setBuildStatus] = useState<BuildStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'source' | 'abi' | 'bytecode'>('source');
+  const [showArtifacts, setShowArtifacts] = useState(false);
   const [sourceCode, setSourceCode] = useState('');
+  const [tabsState, setTabsState] = useState<"preview" | "code">("code");
+  const [realFiles, setRealFiles] = useState<{ [path: string]: string }>({});
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+
+  const handleFileChange = async (filePath: string, content: string) => {
+    // Update local state
+    setRealFiles(prev => ({
+      ...prev,
+      [filePath]: content
+    }));
+
+    // If it's a Solidity file, update sourceCode state
+    if (filePath.endsWith('.sol')) {
+      setSourceCode(content);
+    }
+
+    // Save the entire codebase to E2B sandbox
+    try {
+      console.log('💾 Saving codebase after file change:', filePath);
+      
+      const response = await fetch(`/api/projects/${projectId}/save-codebase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          files: {
+            ...realFiles,
+            [filePath]: content
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Codebase saved successfully:', result);
+      } else {
+        const error = await response.json();
+        console.error('❌ Failed to save codebase:', error);
+      }
+    } catch (error) {
+      console.error('❌ Error saving codebase:', error);
+    }
+  };
   
   // Fetch project info
   useEffect(() => {
@@ -78,6 +131,26 @@ export default function BuildPage() {
             setSourceCode(data.artifacts.sourceCode);
           }
           
+          // Also update realFiles with artifacts if available
+          if (data.artifacts && Object.keys(realFiles).length === 0) {
+            const artifactFiles: { [path: string]: string } = {};
+            
+            if (data.artifacts.sourceCode) {
+              const contractName = data.artifacts.contractName || project?.tokenName?.replace(/\s+/g, '') || 'Token';
+              artifactFiles[`src/${contractName}.sol`] = data.artifacts.sourceCode;
+            }
+            
+            if (data.artifacts.abi) {
+              artifactFiles['artifacts/abi.json'] = JSON.stringify(data.artifacts.abi, null, 2);
+            }
+            
+            if (data.artifacts.bytecode) {
+              artifactFiles['artifacts/bytecode.txt'] = data.artifacts.bytecode;
+            }
+            
+            setRealFiles(artifactFiles);
+          }
+          
           // Stop polling if completed or failed
           if (data.status === 'COMPLETED' || data.status === 'FAILED') {
             setIsLoading(false);
@@ -100,11 +173,132 @@ export default function BuildPage() {
     return () => clearInterval(interval);
   }, [projectId]);
 
+  // Fetch real files from E2B sandbox
+  useEffect(() => {
+    const fetchRealFiles = async () => {
+      if (!projectId) return;
+      
+      setIsLoadingFiles(true);
+      try {
+        const response = await fetch(`/api/projects/${projectId}/files`);
+        if (response.ok) {
+          const data = await response.json();
+          setRealFiles(data.files || {});
+          console.log('📁 Real files loaded:', Object.keys(data.files || {}));
+        } else {
+          console.error('Failed to fetch real files');
+        }
+      } catch (error) {
+        console.error('Error fetching real files:', error);
+      } finally {
+        setIsLoadingFiles(false);
+      }
+    };
+
+    // Fetch files when build is completed
+    if (buildStatus?.status === 'COMPLETED') {
+      fetchRealFiles();
+    }
+  }, [projectId, buildStatus?.status]);
+
   const handleSourceCodeChange = (value: string | undefined) => {
     if (value) {
       setSourceCode(value);
     }
   };
+
+  // Create file structure - prioritize artifacts from database, then E2B sandbox files
+  const createFileStructure = () => {
+    const files: { [path: string]: string } = {};
+    
+    // First, add artifacts from database if available
+    if (buildStatus?.artifacts) {
+      if (buildStatus.artifacts.sourceCode) {
+        const contractName = buildStatus.artifacts.contractName || project?.tokenName?.replace(/\s+/g, '') || 'Token';
+        files[`src/${contractName}.sol`] = buildStatus.artifacts.sourceCode;
+      }
+      
+      if (buildStatus.artifacts.abi) {
+        files['artifacts/abi.json'] = JSON.stringify(buildStatus.artifacts.abi, null, 2);
+      }
+      
+      if (buildStatus.artifacts.bytecode) {
+        files['artifacts/bytecode.txt'] = buildStatus.artifacts.bytecode;
+      }
+    }
+    
+    // Then merge with real files from E2B sandbox (but don't override artifacts)
+    Object.entries(realFiles).forEach(([path, content]) => {
+      if (!files[path]) { // Only add if not already present from artifacts
+        files[path] = content;
+      }
+    });
+    
+    // If we still don't have source code, use the sourceCode state
+    if (!Object.keys(files).some(key => key.endsWith('.sol')) && sourceCode) {
+      const contractName = project?.tokenName?.replace(/\s+/g, '') || 'Token';
+      files[`src/${contractName}.sol`] = sourceCode;
+    }
+    
+    // Add common Foundry files as fallback if not present
+    if (!files['foundry.toml']) {
+      files['foundry.toml'] = `[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.20"
+
+[profile.default.optimizer]
+enabled = true
+runs = 200
+
+[profile.default.fuzz]
+runs = 1000
+
+[profile.default.invariant]
+runs = 256
+depth = 15
+fail_on_revert = false
+`;
+    }
+
+    if (!files['remappings.txt']) {
+      files['remappings.txt'] = `@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+forge-std/=lib/forge-std/src/
+`;
+    }
+
+    if (!files['README.md']) {
+      files['README.md'] = `# ${project?.tokenName || 'Smart Contract'}
+
+This is a smart contract generated by Cogerphere.
+
+## Contract Details
+- **Name**: ${project?.tokenName || 'Token'}
+- **Symbol**: ${project?.tokenSymbol || 'TKN'}
+- **Type**: ${project?.contractType || 'ERC20'}
+- **Blockchain**: ${project?.blockchain || 'Ethereum'}
+- **Network**: ${project?.network || 'Testnet'}
+
+## Files
+- \`src/${project?.tokenName?.replace(/\s+/g, '') || 'Token'}.sol\` - Main contract source code
+- \`artifacts/abi.json\` - Contract ABI
+- \`artifacts/bytecode.txt\` - Contract bytecode
+
+## Usage
+This contract was generated using Foundry. You can compile and test it using:
+
+\`\`\`bash
+forge build
+forge test
+\`\`\`
+`;
+    }
+
+    console.log('📁 File structure created:', Object.keys(files));
+    return files;
+  };
+
 
   const handleDownloadArtifacts = () => {
     if (!buildStatus?.artifacts) return;
@@ -171,116 +365,98 @@ export default function BuildPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black relative overflow-hidden">
-      {/* Animated star background - matching main app */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {Array.from({ length: 40 }, (_, i) => {
-          const left = Math.random() * 100;
-          const width = 1 + Math.random() * 2;
-          const length = 20 + Math.random() * 50;
-          const duration = 8 + Math.random() * 12;
-          const delay = -Math.random() * duration;
-          const opacity = 0.1 + Math.random() * 0.2;
-          
-          return (
-            <div
-              key={i}
-              className="absolute top-0 h-px bg-gradient-to-b from-white/0 via-white to-white/0 animate-[fall_linear_infinite]"
-              style={{
-                left: `${left}vw`,
-                width: `${width}px`,
-                height: `${length}px`,
-                animationDuration: `${duration}s`,
-                animationDelay: `${delay}s`,
-                opacity: opacity,
-              }}
-            />
-          );
-        })}
-      </div>
-      
-      {/* Main content with z-index to appear above stars */}
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/')}
-            className="mb-4 border-white/15 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Projects
-          </Button>
-          
-          <div className="flex items-center gap-4 mb-2">
-            <h1 className="text-3xl md:text-4xl font-semibold text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white">
-              {project.tokenName || project.name}
-            </h1>
-            {isRunning && (
-              <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                Building...
-              </Badge>
-            )}
-            {isCompleted && (
-              <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                Ready
-              </Badge>
-            )}
-            {isFailed && (
-              <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Failed
-              </Badge>
-            )}
+    <div className="h-screen bg-black">
+      <ResizablePanelGroup direction="horizontal">
+        {/* Left Panel - Configuration & Progress */}
+        <ResizablePanel
+          defaultSize={30}
+          minSize={20}
+          maxSize={50}
+          className="flex flex-col min-h-0"
+        >
+          {/* Header */}
+          <div className="p-3 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/')}
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Projects
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                {isRunning && (
+                  <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Building...
+                  </Badge>
+                )}
+                {isCompleted && (
+                  <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Ready
+                  </Badge>
+                )}
+                {isFailed && (
+                  <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Failed
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <h1 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white">
+                {project?.tokenName || project?.name}
+              </h1>
+              <p className="text-white/60 text-sm">
+                {project?.contractType} • {project?.blockchain} {project?.network}
+              </p>
+            </div>
           </div>
-          
-          <p className="text-white/60">
-            {project.contractType} • {project.blockchain} {project.network}
-          </p>
-        </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left Side - 40% - Configuration & Progress */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto thin-scrollbar p-3 space-y-4">
             {/* Configuration Summary */}
             <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-white mb-4">Configuration</h3>
+              <CardContent className="p-4 space-y-3">
+                <h3 className="text-lg font-semibold text-white">Configuration</h3>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-sm text-white/60">Blockchain</p>
-                    <p className="text-white font-medium">{project.blockchain}</p>
+                    <p className="text-xs text-white/60">Blockchain</p>
+                    <p className="text-white font-medium text-sm">{project?.blockchain}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-white/60">Contract Type</p>
-                    <p className="text-white font-medium">{project.contractType}</p>
+                    <p className="text-xs text-white/60">Contract Type</p>
+                    <p className="text-white font-medium text-sm">{project?.contractType}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-white/60">Token Symbol</p>
-                    <p className="text-white font-medium">{project.tokenSymbol}</p>
+                    <p className="text-xs text-white/60">Token Symbol</p>
+                    <p className="text-white font-medium text-sm">{project?.tokenSymbol}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-white/60">Network</p>
-                    <p className="text-white font-medium capitalize">{project.network?.toLowerCase()}</p>
+                    <p className="text-xs text-white/60">Network</p>
+                    <p className="text-white font-medium text-sm capitalize">{project?.network?.toLowerCase()}</p>
                   </div>
-                  {project.tokenSupply && (
+                  {project?.tokenSupply && (
                     <div className="col-span-2">
-                      <p className="text-sm text-white/60">Total Supply</p>
-                      <p className="text-white font-medium">{project.tokenSupply}</p>
+                      <p className="text-xs text-white/60">Total Supply</p>
+                      <p className="text-white font-medium text-sm">{project.tokenSupply}</p>
                     </div>
                   )}
                 </div>
 
-                {project.features && project.features.length > 0 && (
+                {project?.features && project.features.length > 0 && (
                   <div>
-                    <p className="text-sm text-white/60 mb-2">Features</p>
-                    <div className="flex flex-wrap gap-2">
+                    <p className="text-xs text-white/60 mb-2">Features</p>
+                    <div className="flex flex-wrap gap-1">
                       {project.features.map((feature: string) => (
-                        <Badge key={feature} variant="outline" className="border-white/20 text-white/70">
+                        <Badge key={feature} variant="outline" className="border-white/20 text-white/70 text-xs">
                           {feature}
                         </Badge>
                       ))}
@@ -292,25 +468,25 @@ export default function BuildPage() {
 
             {/* Build Progress */}
             <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex items-center justify-between mb-4">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-white">Build Progress</h3>
-                  <span className="text-2xl font-bold text-white">
+                  <span className="text-xl font-bold text-white">
                     {buildStatus?.progress || 0}%
                   </span>
                 </div>
                 
-                <Progress value={buildStatus?.progress || 0} className="h-3" />
+                <Progress value={buildStatus?.progress || 0} className="h-2" />
                 
                 {buildStatus?.currentStep && (
-                  <p className="text-sm text-white/70 flex items-center gap-2">
-                    {isRunning && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <p className="text-xs text-white/70 flex items-center gap-2">
+                    {isRunning && <Loader2 className="h-3 w-3 animate-spin" />}
                     {buildStatus.currentStep}
                   </p>
                 )}
 
                 {/* Build Steps */}
-                <div className="space-y-3 mt-6">
+                <div className="space-y-2 mt-4">
                   <BuildStep
                     title="Contract Generated"
                     completed={buildStatus ? buildStatus.progress >= 20 : false}
@@ -335,147 +511,207 @@ export default function BuildPage() {
               </CardContent>
             </Card>
 
-            {/* Build Logs */}
-            <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Build Logs</h3>
-                
-                <div className="bg-black/50 rounded-lg p-4 font-mono text-xs max-h-[300px] overflow-y-auto">
-                  {buildStatus?.logs && buildStatus.logs.length > 0 ? (
-                    buildStatus.logs.map((log, index) => (
-                      <div key={index} className="text-green-400 mb-1">
-                        {log}
+            {/* Contract Artifacts */}
+            {isCompleted && buildStatus?.artifacts && (
+              <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Contract Artifacts</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowArtifacts(!showArtifacts)}
+                      className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                    >
+                      {showArtifacts ? 'Hide' : 'Show'} Details
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-white/60">Contract Name</p>
+                      <p className="text-white font-medium text-sm">{buildStatus.artifacts.contractName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60">Contract Type</p>
+                      <p className="text-white font-medium text-sm">{buildStatus.artifacts.contractType || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60">ABI Functions</p>
+                      <p className="text-white font-medium text-sm">{buildStatus.artifacts.abi?.length || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/60">Bytecode Length</p>
+                      <p className="text-white font-medium text-sm">{buildStatus.artifacts.bytecode?.length || 0} chars</p>
+                    </div>
+                  </div>
+
+                  {showArtifacts && (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs text-white/60 mb-2">ABI Preview</p>
+                        <div className="bg-black/30 rounded p-2 max-h-32 overflow-y-auto thin-scrollbar">
+                          <pre className="text-xs text-green-400 font-mono">
+                            {JSON.stringify(buildStatus.artifacts.abi?.slice(0, 3), null, 2)}
+                            {buildStatus.artifacts.abi?.length > 3 && '\n...'}
+                          </pre>
+                        </div>
                       </div>
-                    ))
+                      
+                      <div>
+                        <p className="text-xs text-white/60 mb-2">Bytecode Preview</p>
+                        <div className="bg-black/30 rounded p-2 max-h-20 overflow-y-auto thin-scrollbar">
+                          <pre className="text-xs text-blue-400 font-mono">
+                            {buildStatus.artifacts.bytecode?.substring(0, 100)}
+                            {buildStatus.artifacts.bytecode?.length > 100 && '...'}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+          </div>
+        </ResizablePanel>
+
+        <ResizableHandle className="hover:bg-primary transition-colors" />
+        
+        {/* Right Panel - Code Editor */}
+        <ResizablePanel
+          defaultSize={70}
+          minSize={50}
+        >
+          <Tabs className="h-full gap-y-0"
+            defaultValue="code"
+            value={tabsState}
+            onValueChange={(value) => setTabsState(value as "preview" | "code")}
+          >
+            <div className="w-full flex items-center p-2 border-b bg-sidebar">
+              <TabsList className="h-10 p-1 border rounded-full w-auto">
+                <TabsTrigger value="code" className="rounded-full h-8 px-3 flex items-center gap-2">
+                  <CodeIcon className="h-4 w-4" />
+                  <span>Code</span>
+                </TabsTrigger>
+              </TabsList>
+              <div className="ml-auto flex items-center gap-x-2">
+                <Button
+                  onClick={() => router.push(`/projects/${projectId}/deploy`)}
+                  disabled={!buildStatus?.artifacts?.sourceCode}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                >
+                  <Rocket className="h-4 w-4 mr-2" />
+                  Deploy Contract
+                </Button>
+                
+                <Button
+                  onClick={handleDownloadArtifacts}
+                  disabled={!buildStatus?.artifacts}
+                  variant="outline"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Artifacts
+                </Button>
+                
+                <Button
+                  onClick={handleRunTests}
+                  disabled={!buildStatus?.artifacts?.sourceCode}
+                  variant="outline"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Run Tests
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/projects/${projectId}/save-codebase`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          files: createFileStructure()
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Codebase saved manually:', result);
+                        alert('Codebase saved successfully!');
+                      } else {
+                        const error = await response.json();
+                        console.error('❌ Failed to save codebase:', error);
+                        alert('Failed to save codebase');
+                      }
+                    } catch (error) {
+                      console.error('❌ Error saving codebase:', error);
+                      alert('Error saving codebase');
+                    }
+                  }}
+                  variant="outline"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Save Codebase
+                </Button>
+              </div>
+            </div>
+            
+            <TabsContent value="code" className="min-h-0">
+              <ResizablePanelGroup direction="vertical" className="h-full">
+                {/* File Explorer */}
+                <ResizablePanel defaultSize={70} minSize={40} maxSize={85}>
+                  {isLoadingFiles ? (
+                    <div className="h-full flex items-center justify-center bg-black/20">
+                      <div className="text-center">
+                        <Loader2 className="h-8 w-8 animate-spin text-white/60 mx-auto mb-2" />
+                        <p className="text-white/60 text-sm">Loading files from E2B sandbox...</p>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="text-white/40">Waiting for logs...</div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Side - 60% - Code Preview */}
-          <div className="lg:col-span-3">
-            <Card className="border-white/10 bg-white/8 backdrop-blur h-full">
-              <CardContent className="p-6 h-full flex flex-col">
-                {/* Tabs */}
-                <div className="flex gap-2 mb-4">
-                  <Button
-                    variant={activeTab === 'source' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setActiveTab('source')}
-                    className={activeTab === 'source' ? 'bg-blue-500 text-white' : 'text-white/70'}
-                  >
-                    <Code2 className="h-4 w-4 mr-2" />
-                    Source Code
-                  </Button>
-                  <Button
-                    variant={activeTab === 'abi' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setActiveTab('abi')}
-                    disabled={!buildStatus?.artifacts?.abi}
-                    className={activeTab === 'abi' ? 'bg-blue-500 text-white' : 'text-white/70'}
-                  >
-                    <FileJson className="h-4 w-4 mr-2" />
-                    ABI
-                  </Button>
-                  <Button
-                    variant={activeTab === 'bytecode' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setActiveTab('bytecode')}
-                    disabled={!buildStatus?.artifacts?.bytecode}
-                    className={activeTab === 'bytecode' ? 'bg-blue-500 text-white' : 'text-white/70'}
-                  >
-                    <FileCode className="h-4 w-4 mr-2" />
-                    Bytecode
-                  </Button>
-                </div>
-
-                {/* Editor */}
-                <div className="flex-1 border border-white/15 rounded-lg overflow-hidden bg-black/20 backdrop-blur-sm">
-                  {activeTab === 'source' && (
-                    <Editor
-                      height="100%"
-                      defaultLanguage="sol"
-                      value={sourceCode || '// Generating contract...'}
-                      onChange={handleSourceCodeChange}
-                      theme="vs-dark"
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        readOnly: false, // EDITABLE!
-                        padding: { top: 16, bottom: 16 },
-                      }}
+                    <FileExplorer 
+                      files={createFileStructure()} 
+                      onFileChange={handleFileChange}
+                      editable={true}
                     />
                   )}
-                  {activeTab === 'abi' && buildStatus?.artifacts?.abi && (
-                    <Editor
-                      height="100%"
-                      defaultLanguage="json"
-                      value={JSON.stringify(buildStatus.artifacts.abi, null, 2)}
-                      theme="vs-dark"
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        readOnly: true,
-                        padding: { top: 16, bottom: 16 },
-                      }}
-                    />
-                  )}
-                  {activeTab === 'bytecode' && buildStatus?.artifacts?.bytecode && (
-                    <Editor
-                      height="100%"
-                      defaultLanguage="plaintext"
-                      value={buildStatus.artifacts.bytecode}
-                      theme="vs-dark"
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 12,
-                        readOnly: true,
-                        wordWrap: 'on',
-                        padding: { top: 16, bottom: 16 },
-                      }}
-                    />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex flex-wrap gap-4">
-          <Button
-            onClick={() => router.push(`/projects/${projectId}/deploy`)}
-            disabled={!buildStatus?.artifacts?.sourceCode}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
-          >
-            <Rocket className="h-4 w-4 mr-2" />
-            Deploy Contract
-          </Button>
-          
-          <Button
-            onClick={handleDownloadArtifacts}
-            disabled={!buildStatus?.artifacts}
-            variant="outline"
-            className="border-white/15 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download Artifacts
-          </Button>
-          
-          <Button
-            onClick={handleRunTests}
-            disabled={!buildStatus?.artifacts?.sourceCode}
-            variant="outline"
-            className="border-white/15 bg-white/5 text-white hover:bg-white/10 backdrop-blur-sm"
-          >
-            <Play className="h-4 w-4 mr-2" />
-            Run Tests
-          </Button>
-        </div>
-      </div>
+                </ResizablePanel>
+                
+                <ResizableHandle className="hover:bg-primary transition-colors" />
+                
+                {/* Build Logs Terminal */}
+                <ResizablePanel defaultSize={30} minSize={15} maxSize={60}>
+                  <div className="h-full flex flex-col bg-black/50">
+                    <div className="p-3 border-b border-white/10">
+                      <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Build Logs
+                      </h3>
+                    </div>
+                    <div className="flex-1 p-3 font-mono text-xs overflow-y-auto ultra-thin-scrollbar bg-black/50">
+                      {buildStatus?.logs && buildStatus.logs.length > 0 ? (
+                        buildStatus.logs.map((log, index) => (
+                          <div key={index} className="text-green-400 mb-1">
+                            {log}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-white/40">Waiting for logs...</div>
+                      )}
+                    </div>
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </TabsContent>
+          </Tabs>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }

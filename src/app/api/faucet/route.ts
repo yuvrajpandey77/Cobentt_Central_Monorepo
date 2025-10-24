@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 const faucetSchema = z.object({
   address: z.string().min(1, 'Address is required'),
   network: z.enum(['sepolia', 'polygon-mumbai', 'arbitrum-sepolia', 'optimism-sepolia']),

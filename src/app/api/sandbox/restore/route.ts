@@ -3,6 +3,9 @@ import prisma from "@/lib/db";
 import { Sandbox } from "@e2b/code-interpreter";
 import { SANDBOX_TIMEOUT } from "@/inngest/types";
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { fragmentId } = await req.json();

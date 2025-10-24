@@ -370,13 +370,22 @@ function validateContractSyntax(contractCode: string): { valid: boolean; errors:
   
   // Check for constructor syntax (OpenZeppelin v5 requires msg.sender for Ownable)
   if (contractCode.includes('Ownable') && contractCode.includes('constructor')) {
-    const constructorSection = contractCode.substring(
-      contractCode.indexOf('constructor'),
-      contractCode.indexOf('}', contractCode.indexOf('constructor'))
-    );
+    const constructorStart = contractCode.indexOf('constructor');
+    const constructorBodyStart = contractCode.indexOf('{', constructorStart);
+    // Find the matching closing brace for the constructor body
+    let braceCount = 1;
+    let constructorEnd = constructorBodyStart + 1;
+    while (braceCount > 0 && constructorEnd < contractCode.length) {
+      if (contractCode[constructorEnd] === '{') braceCount++;
+      if (contractCode[constructorEnd] === '}') braceCount--;
+      constructorEnd++;
+    }
+    
+    const constructorSection = contractCode.substring(constructorStart, constructorEnd);
     
     // If using Ownable, should have Ownable(msg.sender) or Ownable(initialOwner)
-    if (!constructorSection.includes('Ownable(')) {
+    // Check for Ownable initialization in the full contract since it might be on initialization list
+    if (!constructorSection.includes('Ownable(') && !contractCode.includes('Ownable(msg.sender)') && !contractCode.includes('Ownable(initialOwner)')) {
       errors.push('Ownable contract requires explicit owner initialization in constructor');
     }
   }
@@ -490,235 +499,198 @@ export const generateContract = inngest.createFunction(
       });
     });
 
-    // Simple compilation test in E2B
-    const compilationResult = await step.run("compile-contract", async () => {
-      await updateBuildProgress(buildJobId, 30, 'Testing contract compilation...', 'Setting up E2B sandbox');
+    // Create E2B sandbox
+    const sandboxId = await step.run("create-e2b-sandbox", async () => {
+      await updateBuildProgress(buildJobId, 30, 'Creating E2B sandbox...', 'Initializing Foundry environment');
       
-      let sandbox;
       try {
-        sandbox = await Sandbox.create("cogerphereailabsbeta1");
-        await updateBuildProgress(buildJobId, 40, 'Sandbox ready', 'Installing Foundry');
+        const sandbox = await Sandbox.create("solidity-foundry-template");
+        await updateBuildProgress(buildJobId, 40, 'Sandbox created', 'E2B sandbox ready with Foundry');
+        return sandbox.sandboxId;
       } catch (error) {
         throw new Error(`Failed to create E2B sandbox: ${error instanceof Error ? error.message : 'Check E2B_API_KEY'}`);
       }
+    });
+
+    // Verify environment setup
+    await step.run("verify-environment", async () => {
+      await updateBuildProgress(buildJobId, 45, 'Verifying environment...', 'Checking Foundry and OpenZeppelin');
       
       try {
-        // Install Foundry with comprehensive error handling
-        console.log('Installing Foundry...');
-        let foundryInstall;
+        const sandbox = await Sandbox.connect(sandboxId);
         
-        try {
-          foundryInstall = await sandbox.commands.run("curl -L https://foundry.paradigm.xyz | bash");
-          console.log('Foundry install result:', { exitCode: foundryInstall.exitCode, stdout: foundryInstall.stdout.substring(0, 200), stderr: foundryInstall.stderr.substring(0, 200) });
-        } catch (error) {
-          console.log('Foundry installation failed, trying alternative approach...');
-          // Try alternative installation method
-          foundryInstall = await sandbox.commands.run("bash -c 'curl -L https://foundry.paradigm.xyz | bash'");
-          console.log('Foundry install (alternative) result:', { exitCode: foundryInstall.exitCode, stdout: foundryInstall.stdout.substring(0, 200), stderr: foundryInstall.stderr.substring(0, 200) });
+        // Verify OpenZeppelin installation using absolute path
+        console.log('🔍 Verifying OpenZeppelin installation...');
+        const openzeppelinCheck = await sandbox.commands.run("export PATH=\"$PATH:$HOME/.foundry/bin\" && ls -la /home/user/hello_template/lib/openzeppelin-contracts/contracts/ | head -5");
+        console.log('OpenZeppelin check result:', { exitCode: openzeppelinCheck.exitCode, stdout: openzeppelinCheck.stdout, stderr: openzeppelinCheck.stderr });
+        
+        if (openzeppelinCheck.exitCode !== 0) {
+          throw new Error(`OpenZeppelin verification failed: ${openzeppelinCheck.stderr}`);
         }
         
-        // Check what was actually installed
-        console.log('Checking Foundry installation...');
-        const checkFoundryDir = await sandbox.commands.run("ls -la ~/.foundry/bin/ 2>/dev/null || echo 'Foundry bin directory not found'");
-        console.log('Foundry bin directory:', { exitCode: checkFoundryDir.exitCode, stdout: checkFoundryDir.stdout, stderr: checkFoundryDir.stderr });
+        // Verify remappings using absolute path
+        console.log('🔍 Verifying remappings...');
+        const remappingsCheck = await sandbox.commands.run("export PATH=\"$PATH:$HOME/.foundry/bin\" && cat /home/user/hello_template/remappings.txt");
+        console.log('Remappings check result:', { exitCode: remappingsCheck.exitCode, stdout: remappingsCheck.stdout, stderr: remappingsCheck.stderr });
         
-        // Check if forge exists (more reliable than foundryup)
-        const checkForge = await sandbox.commands.run("ls -la ~/.foundry/bin/forge 2>/dev/null || echo 'forge not found'");
-        console.log('Forge check result:', { exitCode: checkForge.exitCode, stdout: checkForge.stdout, stderr: checkForge.stderr });
-        
-        // If forge doesn't exist, try to install it manually
-        if (checkForge.exitCode !== 0 || checkForge.stdout.includes('not found')) {
-          console.log('Forge not found, attempting manual installation...');
-          try {
-            // Try to run foundryup if it exists
-            const foundryupCheck = await sandbox.commands.run("ls -la ~/.foundry/bin/foundryup 2>/dev/null || echo 'foundryup not found'");
-            if (!foundryupCheck.stdout.includes('not found')) {
-              console.log('Running foundryup...');
-              const foundryup = await sandbox.commands.run("bash -c 'export PATH=$PATH:~/.foundry/bin && ~/.foundry/bin/foundryup'");
-              console.log('Foundryup result:', { exitCode: foundryup.exitCode, stdout: foundryup.stdout.substring(0, 200), stderr: foundryup.stderr.substring(0, 200) });
-            }
-          } catch (error) {
-            console.log('Foundryup failed, continuing without it...');
-          }
+        if (remappingsCheck.exitCode !== 0) {
+          throw new Error(`Remappings verification failed: ${remappingsCheck.stderr}`);
         }
         
-        // Final check for forge
-        const finalForgeCheck = await sandbox.commands.run("ls -la ~/.foundry/bin/forge 2>/dev/null || echo 'forge still not found'");
-        console.log('Final forge check:', { exitCode: finalForgeCheck.exitCode, stdout: finalForgeCheck.stdout, stderr: finalForgeCheck.stderr });
-        
-        if (finalForgeCheck.stdout.includes('still not found')) {
-          console.log('Forge installation failed, but continuing with compilation attempt...');
-        }
-        
-        await updateBuildProgress(buildJobId, 50, 'Foundry installed', 'Creating project');
-        
-        // Create simple project
-        console.log('Creating project...');
-        const mkdirResult = await sandbox.commands.run("mkdir -p test_project/src");
-        console.log('Mkdir result:', { exitCode: mkdirResult.exitCode, stdout: mkdirResult.stdout, stderr: mkdirResult.stderr });
-        
-        await updateBuildProgress(buildJobId, 60, 'Project created', 'Installing dependencies');
-        
-        // Install OpenZeppelin via npm (simpler)
-        console.log('Installing OpenZeppelin...');
-        const npmInit = await sandbox.commands.run("bash -c 'cd test_project && npm init -y'");
-        console.log('NPM init result:', { exitCode: npmInit.exitCode, stdout: npmInit.stdout.substring(0, 200), stderr: npmInit.stderr.substring(0, 200) });
-        
-        const npmInstall = await sandbox.commands.run("bash -c 'cd test_project && npm install @openzeppelin/contracts@^5.0.0'");
-        console.log('NPM install result:', { exitCode: npmInstall.exitCode, stdout: npmInstall.stdout.substring(0, 200), stderr: npmInstall.stderr.substring(0, 200) });
-        
-        if (npmInstall.exitCode !== 0) {
-          throw new Error(`OpenZeppelin installation failed: ${npmInstall.stderr || npmInstall.stdout}`);
-        }
-        
-        // Write remappings
-        console.log('Writing remappings...');
-        await sandbox.files.write("test_project/remappings.txt", "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/");
-        
-        // Write contract
+        await updateBuildProgress(buildJobId, 50, 'Environment verified', 'Foundry and OpenZeppelin ready');
+      } catch (error) {
+        console.error('Environment verification failed:', error);
+        throw new Error(`Environment verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    });
+
+    // Write contract to file
+    await step.run("write-contract-file", async () => {
+      await updateBuildProgress(buildJobId, 55, 'Writing contract to file...', 'Saving contract code');
+      
+      try {
+        const sandbox = await Sandbox.connect(sandboxId);
         const contractName = tokenName?.replace(/\s+/g, '') || 'Token';
         console.log('Writing contract:', contractName);
-        await sandbox.files.write(`test_project/src/${contractName}.sol`, contractCode);
-        await updateBuildProgress(buildJobId, 70, 'Contract written', 'Compiling...');
         
-        // Compile with multiple forge path attempts
-        console.log('Compiling with forge...');
-        let forgeBuild;
+        // Log the contract code for debugging
+        console.log('=== CONTRACT CODE TO COMPILE ===');
+        console.log(contractCode);
+        console.log('=== END CONTRACT CODE ===');
         
-        // Try different forge paths
-        const forgePaths = [
-          '~/.foundry/bin/forge',
-          '/home/user/.foundry/bin/forge',
-          'forge', // In case it's in PATH
-        ];
+        // Write to absolute path
+        await sandbox.files.write(`/home/user/hello_template/src/${contractName}.sol`, contractCode);
         
-        let forgePath = forgePaths[0]; // Default to first path
-        
-        for (const path of forgePaths) {
-          try {
-            const checkForge = await sandbox.commands.run(`bash -c 'test -f ${path} && echo "found" || echo "not found"'`);
-            if (checkForge.stdout.includes('found')) {
-              forgePath = path;
-              console.log(`Found forge at: ${path}`);
-              break;
-            }
-          } catch (error) {
-            console.log(`Path ${path} not accessible, trying next...`);
-          }
-        }
-        
+        // Verify the contract was written correctly
         try {
-          forgeBuild = await sandbox.commands.run(`bash -c 'cd test_project && ${forgePath} build'`);
-          console.log('Forge build result:', { exitCode: forgeBuild.exitCode, stdout: forgeBuild.stdout.substring(0, 500), stderr: forgeBuild.stderr.substring(0, 500) });
-        } catch (error) {
-          console.log('Forge build failed, trying alternative approach...');
-          try {
-            // Try with explicit PATH
-            forgeBuild = await sandbox.commands.run(`bash -c 'cd test_project && export PATH=$PATH:~/.foundry/bin && forge build'`);
-            console.log('Forge build (alternative) result:', { exitCode: forgeBuild.exitCode, stdout: forgeBuild.stdout.substring(0, 500), stderr: forgeBuild.stderr.substring(0, 500) });
-          } catch (altError) {
-            console.log('Alternative forge build also failed, will try solc fallback...');
-            // Create a dummy result to continue to solc fallback
-            forgeBuild = { exitCode: 1, stdout: '', stderr: 'Forge not available' };
+          const writtenContract = await sandbox.files.read(`/home/user/hello_template/src/${contractName}.sol`);
+          console.log('Contract verification - first 200 chars:', writtenContract.substring(0, 200));
+          if (writtenContract !== contractCode) {
+            console.error('Contract file mismatch! Written contract differs from generated contract.');
+          } else {
+            console.log('✅ Contract file written correctly');
           }
+        } catch (verifyError) {
+          console.error('Failed to verify contract file:', verifyError);
         }
+        
+        await updateBuildProgress(buildJobId, 60, 'Contract file written', 'Contract saved to sandbox');
+      } catch (error) {
+        console.error('Failed to write contract file:', error);
+        throw new Error(`Failed to write contract file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    });
+
+    // Compile with forge
+    await step.run("compile-with-forge", async () => {
+      await updateBuildProgress(buildJobId, 65, 'Compiling with forge...', 'Running forge build');
+      
+      try {
+        const sandbox = await Sandbox.connect(sandboxId);
+        
+        // Compile with forge using absolute path
+        console.log('Compiling with forge...');
+        const forgeBuild = await sandbox.commands.run("export PATH=\"$PATH:$HOME/.foundry/bin\" && cd /home/user/hello_template && forge build");
+        console.log('Forge build result:', { 
+          exitCode: forgeBuild.exitCode, 
+          stdout: forgeBuild.stdout.substring(0, 1000), 
+          stderr: forgeBuild.stderr.substring(0, 1000) 
+        });
         
         if (forgeBuild.exitCode !== 0) {
-          console.error('Compilation failed:', forgeBuild.stderr);
-          // Don't throw error immediately, try to continue with what we have
-          console.log('Forge compilation failed, but continuing to check if artifacts exist...');
+          console.error('Forge compilation failed:');
+          console.error('STDOUT:', forgeBuild.stdout);
+          console.error('STDERR:', forgeBuild.stderr);
+          throw new Error(`Forge compilation failed: ${forgeBuild.stderr}`);
         }
         
-        await updateBuildProgress(buildJobId, 80, 'Compilation successful', 'Extracting artifacts');
+        await updateBuildProgress(buildJobId, 80, 'Compilation successful', 'Forge build completed');
+      } catch (error) {
+        console.error('Forge compilation error:', error);
+        throw error;
+      }
+    });
+
+    // Extract artifacts
+    const compilationResult = await step.run("extract-artifacts", async () => {
+      await updateBuildProgress(buildJobId, 85, 'Extracting artifacts...', 'Reading ABI and bytecode');
+      
+      try {
+        const sandbox = await Sandbox.connect(sandboxId);
         
-        // Try to read artifact, fallback to solc if forge failed
-        console.log('Reading artifact...');
+        // Read Foundry artifacts
+        console.log('Reading Foundry artifacts...');
         let abi = [];
         let bytecode = '';
         
-        try {
-          const artifactPath = `test_project/out/${contractName}.sol/${contractName}.json`;
-          const artifactContent = await sandbox.files.read(artifactPath);
-          const artifact = JSON.parse(artifactContent);
-          
-          abi = artifact.abi || [];
-          bytecode = artifact.bytecode?.object ? '0x' + artifact.bytecode.object : '';
-          
-          if (!abi.length || !bytecode) {
-            throw new Error('No valid artifacts found');
-          }
-        } catch (error) {
-          console.log('Forge artifacts not found, trying solc fallback...');
-          
-          // Fallback to solc compilation
+        // Check what files exist in the out directory using absolute path
+        console.log('Checking out directory structure...');
+        const outDirContents = await sandbox.commands.run("find /home/user/hello_template/out -name '*.json' -type f");
+        console.log('Found artifact files:', outDirContents.stdout);
+        
+        const contractName = tokenName?.replace(/\s+/g, '') || 'Token';
+        
+        // Try multiple possible artifact paths using absolute paths
+        const possiblePaths = [
+          `/home/user/hello_template/out/${contractName}.sol/${contractName}.json`,
+          `/home/user/hello_template/out/${contractName}.json`,
+          `/home/user/hello_template/out/src/${contractName}.sol/${contractName}.json`,
+          `/home/user/hello_template/out/${contractName}.sol/${contractName}.sol/${contractName}.json`,
+        ];
+        
+        let artifactContent = null;
+        let artifactPath = null;
+        
+        for (const path of possiblePaths) {
           try {
-            console.log('Installing solc...');
-            const solcInstall = await sandbox.commands.run("bash -c 'cd test_project && npm install solc@0.8.20'");
-            console.log('Solc install result:', { exitCode: solcInstall.exitCode, stdout: solcInstall.stdout.substring(0, 200), stderr: solcInstall.stderr.substring(0, 200) });
-            
-            console.log('Compiling with solc...');
-            const solcCompile = await sandbox.commands.run(`bash -c 'cd test_project && npx solc --abi --bin --optimize --base-path . --include-path node_modules src/${contractName}.sol'`);
-            console.log('Solc compile result:', { exitCode: solcCompile.exitCode, stdout: solcCompile.stdout.substring(0, 500), stderr: solcCompile.stderr.substring(0, 500) });
-            
-            if (solcCompile.exitCode === 0) {
-              // Parse solc output
-              const output = solcCompile.stdout;
-              const abiMatch = output.match(/"abi":\s*(\[.*?\])/);
-              const bytecodeMatch = output.match(/"bytecode":\s*"([^"]+)"/);
-              
-              if (abiMatch && bytecodeMatch) {
-            abi = JSON.parse(abiMatch[1]);
-                bytecode = '0x' + bytecodeMatch[1];
-                console.log('Solc compilation successful');
-              } else {
-                console.error('Failed to parse solc output:', output);
-                throw new Error('Failed to parse solc output');
-          }
-        } else {
-              console.error('Solc compilation failed:', solcCompile.stderr);
-              throw new Error('Solc compilation failed');
-            }
-          } catch (solcError) {
-            console.error('Solc fallback also failed:', solcError);
-            // Don't throw error, just log and continue with empty artifacts
-            console.log('All compilation methods failed, but contract code is still available for review');
-            abi = [];
-            bytecode = '';
+            console.log(`Trying artifact path: ${path}`);
+            artifactContent = await sandbox.files.read(path);
+            artifactPath = path;
+            console.log(`Successfully read artifact from: ${path}`);
+            break;
+          } catch (pathError) {
+            console.log(`Path ${path} not found, trying next...`);
           }
         }
         
-        // If compilation failed but we have contract code, save it anyway for user review
+        if (!artifactContent) {
+          throw new Error('No Foundry artifact file found in any expected location');
+        }
+        
+        const artifact = JSON.parse(artifactContent);
+        console.log('Foundry artifact structure:', JSON.stringify(artifact, null, 2).substring(0, 1000));
+        
+        // Extract ABI - try multiple possible locations
+        abi = artifact.abi || artifact.contracts?.[`${contractName}.sol:${contractName}`]?.abi || [];
+        
+        // Extract bytecode - try multiple possible locations and formats
+        bytecode = '';
+        if (artifact.bytecode?.object) {
+          bytecode = artifact.bytecode.object.startsWith('0x') ? artifact.bytecode.object : '0x' + artifact.bytecode.object;
+        } else if (artifact.bytecode) {
+          bytecode = artifact.bytecode.startsWith('0x') ? artifact.bytecode : '0x' + artifact.bytecode;
+        } else if (artifact.contracts?.[`${contractName}.sol:${contractName}`]?.bytecode?.object) {
+          bytecode = artifact.contracts[`${contractName}.sol:${contractName}`].bytecode.object.startsWith('0x') 
+            ? artifact.contracts[`${contractName}.sol:${contractName}`].bytecode.object 
+            : '0x' + artifact.contracts[`${contractName}.sol:${contractName}`].bytecode.object;
+        } else if (artifact.contracts?.[`${contractName}.sol:${contractName}`]?.bytecode) {
+          bytecode = artifact.contracts[`${contractName}.sol:${contractName}`].bytecode.startsWith('0x') 
+            ? artifact.contracts[`${contractName}.sol:${contractName}`].bytecode 
+            : '0x' + artifact.contracts[`${contractName}.sol:${contractName}`].bytecode;
+        }
+        
+        console.log(`Extracted ABI length: ${abi.length}, Bytecode length: ${bytecode.length}`);
+        
         if (!abi.length || !bytecode) {
-          console.log('Compilation failed, but saving contract code for user review...');
-          // Save the contract code even if compilation failed
-          await prisma.buildJob.update({
-            where: { id: buildJobId },
-            data: {
-              status: 'FAILED',
-              progress: 0,
-              currentStep: 'Compilation failed - contract code available for review',
-              artifacts: {
-                error: 'Compilation failed - Foundry and solc both unavailable',
-                sourceCode: contractCode,
-                contractCode: contractCode,
-                contractName: tokenName?.replace(/\s+/g, '') || 'Token',
-                contractType: contractType,
-                compilationFailed: true,
-                compilationError: 'Both Foundry and solc compilation failed in E2B environment',
-              },
-            },
-          });
-          
-          // Don't throw error, return empty artifacts but keep contract code
-          return { abi: [], bytecode: '', contractName: tokenName?.replace(/\s+/g, '') || 'Token' };
+          throw new Error(`No valid Foundry artifacts found - ABI: ${abi.length} items, Bytecode: ${bytecode.length} chars`);
         }
         
-        await updateBuildProgress(buildJobId, 90, 'Artifacts extracted', 'Compilation complete');
+        await updateBuildProgress(buildJobId, 90, 'Artifacts extracted successfully', 'ABI and bytecode ready');
         
         return { abi, bytecode, contractName };
         
       } catch (error) {
-        console.error('Compilation error:', error);
+        console.error('Failed to extract artifacts:', error);
         
         // Save error but keep contract code visible
         await prisma.buildJob.update({
@@ -742,28 +714,60 @@ export const generateContract = inngest.createFunction(
       }
     });
 
+    // Cleanup sandbox
+    await step.run("cleanup-sandbox", async () => {
+      try {
+        const sandbox = await Sandbox.connect(sandboxId);
+        await sandbox.kill();
+        console.log('✅ Sandbox cleaned up successfully');
+      } catch (error) {
+        console.error('Failed to cleanup sandbox:', error);
+        // Don't throw error for cleanup failure
+      }
+    });
+
     // Save successful compilation results
     await step.run("save-successful-build", async () => {
+      console.log('💾 Saving compilation results to database...');
+      console.log('📦 Compilation result:', {
+        abiLength: compilationResult.abi?.length || 0,
+        bytecodeLength: compilationResult.bytecode?.length || 0,
+        contractName: compilationResult.contractName,
+        hasABI: !!compilationResult.abi,
+        hasBytecode: !!compilationResult.bytecode
+      });
+      
+      const artifactsToSave = {
+        abi: compilationResult.abi,
+        bytecode: compilationResult.bytecode,
+        sourceCode: contractCode,
+        contractName: compilationResult.contractName,
+        contractType: contractType,
+        tool: 'foundry',
+        compilationSuccessful: true,
+        // Remove preview flag since compilation succeeded
+        preview: false,
+      };
+      
+      console.log('💾 Artifacts to save:', {
+        abiLength: artifactsToSave.abi?.length || 0,
+        bytecodeLength: artifactsToSave.bytecode?.length || 0,
+        contractName: artifactsToSave.contractName,
+        contractType: artifactsToSave.contractType
+      });
+      
       await prisma.buildJob.update({
         where: { id: buildJobId },
         data: {
           status: 'COMPLETED',
           progress: 100,
           currentStep: 'Build complete! Ready to deploy.',
-          artifacts: {
-            abi: compilationResult.abi,
-            bytecode: compilationResult.bytecode,
-            sourceCode: contractCode,
-            contractName: compilationResult.contractName,
-            contractType: contractType,
-            tool: 'foundry',
-            compilationSuccessful: true,
-            // Remove preview flag since compilation succeeded
-            preview: false,
-          },
+          artifacts: artifactsToSave,
         },
       });
-      await updateBuildProgress(buildJobId, 100, 'Build complete! Ready to deploy.', '✅ Contract compiled successfully and ready for deployment');
+      
+      console.log('✅ Successfully saved artifacts to database');
+      await updateBuildProgress(buildJobId, 100, 'Build complete! Ready to deploy.', '✅ Contract compiled successfully with ABI and bytecode extracted');
     });
 
     return {
@@ -946,10 +950,11 @@ function generateERC20Contract(name: string, symbol: string, supply: string, dec
   if (permit) inheritance.push('ERC20Permit');
   if (accessControl || mintable) inheritance.push('Ownable');
 
-  // Build constructor
+  // Build constructor (OpenZeppelin v5 syntax)
   const constructorParams = permit ? `ERC20Permit("${name}")` : '';
   const constructorBody = `
-        _mint(msg.sender, ${supply} * 10**${decimals});`;
+        _mint(msg.sender, ${supply} * 10**${decimals});
+    `;
 
   // Build additional functions
   let additionalFunctions = '';
@@ -975,8 +980,8 @@ function generateERC20Contract(name: string, symbol: string, supply: string, dec
   }
 
   // Override _update if pausable (required for Pausable in OZ v5)
-  const updateOverride = pausable ? `
-    
+  const updateOverride = pausable
+    ? `
     function _update(address from, address to, uint256 value)
         internal
         override(ERC20${pausable ? ', ERC20Pausable' : ''})
@@ -984,7 +989,7 @@ function generateERC20Contract(name: string, symbol: string, supply: string, dec
         super._update(from, to, value);
     }` : '';
 
-  // Build constructor initialization
+  // Build constructor initialization (OpenZeppelin v5 syntax)
   const constructorInit = [];
   constructorInit.push(`ERC20("${name}", "${symbol}")`);
   if (accessControl || mintable) constructorInit.push('Ownable(msg.sender)');
@@ -1259,31 +1264,19 @@ export const testContract = inngest.createFunction(
       
       let sandbox;
       try {
-        sandbox = await Sandbox.create("cogerphereailabsbeta1");
-        await updateTestProgress(20, 'Sandbox ready', 'Installing Foundry for testing');
+        sandbox = await Sandbox.create("solidity-foundry-template");
+        await updateTestProgress(20, 'Sandbox ready', 'Using pre-configured Foundry environment for testing');
       } catch (error) {
         throw new Error(`Failed to create E2B sandbox: ${error instanceof Error ? error.message : 'Check E2B_API_KEY'}`);
       }
 
       try {
-        // Install Foundry
-        console.log('Installing Foundry for testing...');
-        const foundryInstall = await sandbox.commands.run("bash -c 'curl -L https://foundry.paradigm.xyz | bash'");
-        console.log('Foundry install result:', { exitCode: foundryInstall.exitCode, stdout: foundryInstall.stdout.substring(0, 200), stderr: foundryInstall.stderr.substring(0, 200) });
+        // Navigate to hello_template project (pre-configured with Foundry and OpenZeppelin)
+        console.log('📦 Using pre-configured hello_template project for testing...');
+        await sandbox.commands.run("cd /home/user/hello_template");
 
-        await updateTestProgress(30, 'Foundry installed', 'Creating test project');
-
-        // Create test project
-        console.log('Creating test project...');
-        await sandbox.commands.run("mkdir -p test_project/src test_project/test");
-        await sandbox.commands.run("bash -c 'cd test_project && npm init -y'");
-        await sandbox.commands.run("bash -c 'cd test_project && npm install @openzeppelin/contracts@^5.0.0'");
-
-        // Write remappings
-        await sandbox.files.write("test_project/remappings.txt", "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/");
-
-        // Write contract
-        await sandbox.files.write(`test_project/src/${contractName}.sol`, contractCode);
+        // Write contract to src/ directory
+        await sandbox.files.write(`src/${contractName}.sol`, contractCode);
 
         await updateTestProgress(40, 'Contract written', 'Creating test file');
 
@@ -1334,27 +1327,14 @@ contract ${contractName}Test is Test {
     }
 }`;
 
-        await sandbox.files.write(`test_project/test/${contractName}.t.sol`, testCode);
+        await sandbox.files.write(`test/${contractName}.t.sol`, testCode);
 
         await updateTestProgress(50, 'Test file created', 'Running tests');
 
         // Run tests
         console.log('Running tests...');
-        let forgeTest;
-        
-        try {
-          forgeTest = await sandbox.commands.run("bash -c 'cd test_project && ~/.foundry/bin/forge test --json'");
+        const forgeTest = await sandbox.commands.run("export PATH=\"$PATH:$HOME/.foundry/bin\" && forge test --json");
           console.log('Forge test result:', { exitCode: forgeTest.exitCode, stdout: forgeTest.stdout.substring(0, 500), stderr: forgeTest.stderr.substring(0, 500) });
-        } catch (error) {
-          console.log('Forge test failed, trying alternative approach...');
-          try {
-            forgeTest = await sandbox.commands.run("bash -c 'cd test_project && export PATH=$PATH:~/.foundry/bin && forge test --json'");
-            console.log('Forge test (alternative) result:', { exitCode: forgeTest.exitCode, stdout: forgeTest.stdout.substring(0, 500), stderr: forgeTest.stderr.substring(0, 500) });
-          } catch (altError) {
-            console.log('Alternative forge test also failed...');
-            forgeTest = { exitCode: 1, stdout: '', stderr: 'Forge test not available' };
-          }
-        }
 
         await updateTestProgress(80, 'Tests completed', 'Parsing results');
 
