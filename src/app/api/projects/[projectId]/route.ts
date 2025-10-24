@@ -6,11 +6,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const resolvedParams: any = (params as any)?.then ? await (params as any) : params;
-    const { projectId } = resolvedParams as { projectId: string };
+    const { projectId } = await params;
     const project = await prisma.project.findUnique({
       where: {
         id: projectId,
@@ -31,6 +30,19 @@ export async function GET(
         { status: 404 }
       );
     }
+
+    console.log('🔍 Project API - returning project:', {
+      projectId: project.id,
+      projectName: project.name,
+      contractAddress: project.contractAddress,
+      buildJobsCount: project.buildJobs?.length || 0,
+      latestBuildJob: project.buildJobs?.[0] ? {
+        id: project.buildJobs[0].id,
+        status: project.buildJobs[0].status,
+        contractAddress: project.buildJobs[0].contractAddress,
+        transactionHash: project.buildJobs[0].transactionHash
+      } : null
+    });
 
     return NextResponse.json(project);
   } catch (error) {

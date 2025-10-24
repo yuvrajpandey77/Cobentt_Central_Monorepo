@@ -7,7 +7,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,7 +70,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
             variant="ghost"
             size="sm"
             onClick={toggleSidebar}
-            className="h-8 w-8 p-0 hover:bg-primary/10 hover:scale-110 transition-all duration-300 rounded-lg flex-shrink-0"
+            className="h-8 w-8 p-0 hover:bg-primary/10 hover:scale-105 transition-all duration-200 ease-out rounded-lg flex-shrink-0 focus:ring-2 focus:ring-primary/20 focus:outline-none"
           >
             {isCollapsed ? (
               <PanelLeft className="h-4 w-4 text-primary" />
@@ -91,7 +91,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
                 placeholder="Search projects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 text-sm bg-card/40 border border-border/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-300 backdrop-blur-sm"
+                className="w-full pl-10 pr-3 py-2 text-sm bg-card/40 border border-border/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 ease-out backdrop-blur-sm hover:border-border/30"
               />
             </div>
 
@@ -99,7 +99,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
             <div className="space-y-2">
               <Button
                 variant="ghost"
-                className="w-full justify-start text-left h-9 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+                className="w-full justify-start text-left h-9 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none"
               >
                 <Layout className="w-4 h-4 mr-2" />
                 Templates
@@ -108,7 +108,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
               <Link href="/all-projects">
                 <Button
                   variant="ghost"
-                  className="w-full justify-between text-left h-9 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-300"
+                  className="w-full justify-between text-left h-9 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none"
                 >
                   <div className="flex items-center">
                     <FolderOpen className="w-4 h-4 mr-2" />
@@ -135,7 +135,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
             </div>
 
             <div 
-              className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar min-w-0"
+              className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden thin-scrollbar min-w-0"
             >
             {isLoading && (
               <div className="space-y-3 px-1">
@@ -167,16 +167,18 @@ export const Sidebar = ({ className }: SidebarProps) => {
               </div>
             )}
 
-            {!isLoading && filteredProjects?.map((project: any, index: number) => (
+            {!isLoading && filteredProjects?.map((project: any, index: number) => {
+              const isSmartContract = project.projectType === 'SMART_CONTRACT' || project.contractType;
+              return (
               <Link
                 key={project.id}
-                href={`/projects/${project.id}`}
+                href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}
                 className="block group"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <div className="bg-gradient-to-r from-card/40 via-card/30 to-card/40 hover:from-card/60 hover:via-card/50 hover:to-card/60 border border-border/20 hover:border-primary/40 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] backdrop-blur-sm p-3 min-w-0">
+                <div className="bg-gradient-to-r from-card/40 via-card/30 to-card/40 hover:from-card/60 hover:via-card/50 hover:to-card/60 border border-border/20 hover:border-primary/40 rounded-lg transition-all duration-200 ease-out hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01] backdrop-blur-sm p-3 min-w-0 focus-within:ring-2 focus-within:ring-primary/20">
                   <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors duration-300 min-w-0">
+                    <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors duration-200 ease-out min-w-0">
                       {project.name}
                     </h3>
                     <div className="text-xs text-muted-foreground truncate min-w-0">
@@ -185,16 +187,46 @@ export const Sidebar = ({ className }: SidebarProps) => {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
             </div>
           </div>
         )}
 
-        {/* Create New Project Button */}
+        {/* Action Buttons */}
         {!isCollapsed && (
-          <div className="mt-auto pt-4 border-t border-border/20 flex-shrink-0">
+          <div className="mt-auto pt-4 border-t border-border/20 flex-shrink-0 space-y-2">
+            <Link href="/dapp-studio" className="block">
+              <Button 
+                className="w-full bg-gradient-to-r from-blue-500/20 via-blue-500/15 to-purple-500/20 hover:from-blue-500/30 hover:via-blue-500/25 hover:to-purple-500/30 text-blue-300 border border-blue-400/30 hover:border-blue-400/50 shadow-lg hover:shadow-blue-500/20 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                size="sm"
+              >
+                <Code2 className="w-3.5 h-3.5 mr-2" />
+                DApp Studio
+              </Button>
+            </Link>
+            <Link href="/docs" className="block">
+              <Button 
+                variant="outline"
+                className="w-full bg-gradient-to-r from-gray-500/10 via-gray-500/5 to-gray-500/10 hover:from-gray-500/20 hover:via-gray-500/15 hover:to-gray-500/20 text-gray-300 border border-gray-400/20 hover:border-gray-400/40 shadow-lg hover:shadow-gray-500/10 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-gray-500/20 focus:outline-none"
+                size="sm"
+              >
+                <Layout className="w-3.5 h-3.5 mr-2" />
+                Documentation
+              </Button>
+            </Link>
+            <Link href="/customDesigns" className="block">
+              <Button 
+                variant="outline"
+                className="w-full bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-pink-500/10 hover:from-purple-500/20 hover:via-purple-500/15 hover:to-pink-500/20 text-purple-300 border border-purple-400/20 hover:border-purple-400/40 shadow-lg hover:shadow-purple-500/10 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
+                size="sm"
+              >
+                <FolderOpen className="w-3.5 h-3.5 mr-2" />
+                Custom Designs
+              </Button>
+            </Link>
             <Button 
-              className="w-full bg-gradient-to-r from-primary/20 via-primary/15 to-secondary/20 hover:from-primary/30 hover:via-primary/25 hover:to-secondary/30 text-primary border border-primary/30 hover:border-primary/50 shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm"
+              className="w-full bg-gradient-to-r from-primary/20 via-primary/15 to-secondary/20 hover:from-primary/30 hover:via-primary/25 hover:to-secondary/30 text-primary border border-primary/30 hover:border-primary/50 shadow-lg hover:shadow-primary/20 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-primary/20 focus:outline-none"
               size="sm"
             >
               <Plus className="w-3.5 h-3.5 mr-2" />

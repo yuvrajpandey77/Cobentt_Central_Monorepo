@@ -14,14 +14,26 @@ interface DeployStepProps {
   contractABI: any[];
   contractBytecode: string;
   constructorArgs?: any[];
+  projectId?: string;
+  buildJobId?: string;
 }
 
-export function DeployStep({ onNext, onBack, contractABI, contractBytecode, constructorArgs = [] }: DeployStepProps) {
+export function DeployStep({ onNext, onBack, contractABI, contractBytecode, constructorArgs = [], projectId, buildJobId }: DeployStepProps) {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Debug logging
+  console.log('🔍 DeployStep received props:', {
+    contractABI: contractABI,
+    contractBytecode: contractBytecode,
+    abiLength: contractABI?.length || 0,
+    bytecodeLength: contractBytecode?.length || 0,
+    hasABI: !!contractABI,
+    hasBytecode: !!contractBytecode
+  });
 
   const { deployContract, data: hash, error: writeError, isPending } = useDeployContract();
   
@@ -68,23 +80,33 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
             console.log('Contract deployed at:', contractAddress);
             console.log('Transaction hash:', hash);
             
-            // Optional: Save to database via API
-            // This could be done in a separate step or automatically
-            /*
-            try {
-              await fetch(`/api/projects/${projectId}/deploy`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  buildJobId: 'current-build-job-id', // You'd pass this as prop
-                  contractAddress,
-                  transactionHash: hash,
-                }),
-              });
-            } catch (saveError) {
-              console.error('Failed to save deployment to database:', saveError);
+            // Save to database via API
+            if (projectId && buildJobId) {
+              try {
+                console.log('💾 Saving deployment to database...', { projectId, buildJobId, contractAddress, transactionHash: hash });
+                
+                const response = await fetch(`/api/projects/${projectId}/deploy`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    buildJobId,
+                    contractAddress,
+                    transactionHash: hash,
+                  }),
+                });
+                
+                if (response.ok) {
+                  console.log('✅ Successfully saved deployment to database');
+                } else {
+                  const errorData = await response.json();
+                  console.error('❌ Failed to save deployment:', errorData);
+                }
+              } catch (saveError) {
+                console.error('❌ Failed to save deployment to database:', saveError);
+              }
+            } else {
+              console.warn('⚠️ Missing projectId or buildJobId, cannot save deployment to database');
             }
-            */
           } else {
             console.error('No contract address in receipt');
             setError('Failed to extract contract address from transaction');
@@ -194,7 +216,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                         variant="ghost"
                         size="sm"
                         onClick={() => window.open(`https://etherscan.io/tx/${hash}`, '_blank')}
-                        className="text-white/60 hover:text-white"
+                        className="text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -221,14 +243,14 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                 variant="outline"
                 onClick={onBack}
                 disabled={isDeploying}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/20 hover:text-black transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
               >
                 Back
               </Button>
               <Button
                 onClick={handleDeploy}
                 disabled={isDeploying || !contractABI || !contractBytecode}
-                className="bg-blue-500 text-white hover:bg-blue-600"
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 ease-out focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
               >
                 {isDeploying ? (
                   <>
@@ -265,7 +287,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                   variant="ghost"
                   size="sm"
                   onClick={() => window.open(`https://etherscan.io/address/${deployedAddress}`, '_blank')}
-                  className="text-white/60 hover:text-white"
+                  className="text-white/60 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
@@ -276,13 +298,13 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
               <Button
                 variant="outline"
                 onClick={onBack}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/20 hover:text-black transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
               >
                 Back
               </Button>
               <Button
                 onClick={onNext}
-                className="bg-green-500 text-white hover:bg-green-600"
+                className="bg-green-500 text-white hover:bg-green-600 transition-all duration-200 ease-out focus:ring-2 focus:ring-green-500/20 focus:outline-none"
               >
                 Continue to Verification
               </Button>

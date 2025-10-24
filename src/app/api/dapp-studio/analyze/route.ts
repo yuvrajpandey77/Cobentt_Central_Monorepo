@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { openai } from '@inngest/agent-kit';
 import { buildPrompt } from '@/lib/prompts';
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const { prompt: userPrompt } = await request.json();

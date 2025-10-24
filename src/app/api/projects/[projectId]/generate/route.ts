@@ -3,6 +3,9 @@ import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 const generateContractSchema = z.object({
   projectId: z.string(),
   contractType: z.enum(['ERC20', 'ERC721', 'ERC1155', 'PAYMENT_SPLITTER', 'CUSTOM']),

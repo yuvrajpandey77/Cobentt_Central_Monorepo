@@ -171,7 +171,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
               )}
             </div>
             <div className="flex flex-col gap-3 md:w-72">
-              <Button variant="outline" onClick={onBack} disabled={createDapp.isPending} className="border-white/30 text-white hover:bg-white/10">
+              <Button variant="outline" onClick={onBack} disabled={createDapp.isPending} className="border-white/30 text-white hover:bg-white/20 hover:text-black">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to editor
               </Button>
               <Button 
@@ -191,7 +191,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
                   </>
                 )}
               </Button>
-              <Button variant="secondary" onClick={handleCopy} className="justify-between bg-white/10 text-white hover:bg-white/20">
+              <Button variant="secondary" onClick={handleCopy} className="justify-between bg-white/10 text-white hover:bg-white/20 hover:text-black">
                 <span>{copyState === "copied" ? "Config copied to clipboard" : "Copy config JSON"}</span>
                 <Clipboard className="h-4 w-4" />
               </Button>

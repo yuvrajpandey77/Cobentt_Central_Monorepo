@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
+// Force dynamic rendering
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export async function GET(
   request: NextRequest,
-  // In app router, `params` is a plain object, not a Promise
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    // Support both Next.js behaviors: params as object or as Promise (dev warnings)
-    const resolvedParams: any = (params as any)?.then ? await (params as any) : params;
-    const { projectId } = resolvedParams as { projectId: string };
+    const { projectId } = await params;
     
     // Get the latest build job for this project
     const buildJob = await prisma.buildJob.findFirst({
       where: {
         projectId: projectId,
-        type: 'GENERATE', // Only get generation jobs
+        type: 'GENERATE',
       },
       orderBy: {
         createdAt: 'desc',
@@ -38,7 +37,7 @@ export async function GET(
       try {
         logsArray = JSON.parse(buildJob.logs);
       } catch {
-        logsArray = [buildJob.logs]; // If not JSON, treat as single log
+        logsArray = [buildJob.logs];
       }
     }
 

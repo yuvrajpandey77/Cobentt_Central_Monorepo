@@ -464,7 +464,7 @@ const PageShell = () => {
                             variant="ghost"
                             size="sm"
                             onClick={handleReset}
-                            className="text-white/70 hover:text-white hover:bg-white/10"
+                            className="text-white/70 hover:text-black hover:bg-white/20"
                           >
                             Start Over
                           </Button>

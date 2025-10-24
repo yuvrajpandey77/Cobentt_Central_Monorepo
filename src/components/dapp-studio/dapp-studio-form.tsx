@@ -644,7 +644,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
             variant="outline"
             onClick={goBack}
             disabled={step === 0}
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-white/20 text-white hover:bg-white/20 hover:text-black"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Previous
           </Button>

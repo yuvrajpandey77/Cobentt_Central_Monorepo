@@ -110,7 +110,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full justify-between border-white/20 text-white hover:bg-white/10"
+                      className="w-full justify-between border-white/20 text-white hover:bg-white/20 hover:text-black"
                       onClick={() => window.open('https://faucets.chain.link/', '_blank')}
                     >
                       <span>Chainlink Faucets</span>
@@ -119,7 +119,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full justify-between border-white/20 text-white hover:bg-white/10"
+                      className="w-full justify-between border-white/20 text-white hover:bg-white/20 hover:text-black"
                       onClick={() => window.open('https://faucet.quicknode.com/', '_blank')}
                     >
                       <span>QuickNode Faucet</span>
@@ -134,7 +134,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
               <Button
                 variant="outline"
                 onClick={onBack}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/20 hover:text-black"
               >
                 Back
               </Button>

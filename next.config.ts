@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
     // Explicitly set the project root so Next doesn't pick the parent folder
     root: process.cwd(),
   },
+  // Ensure API routes are treated as dynamic
+  output: 'standalone',
+  // Move serverComponentsExternalPackages to the correct location
+  serverExternalPackages: ['@prisma/client'],
 };
 
 export default nextConfig;

@@ -1,65 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
-  --background: oklch(0.9900 0 0);
-  --foreground: oklch(0 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0 0 0);
-  --popover: oklch(0.9900 0 0);
-  --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0 0 0);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9400 0 0);
-  --secondary-foreground: oklch(0 0 0);
-  --muted: oklch(0.9700 0 0);
-  --muted-foreground: oklch(0.4400 0 0);
-  --accent: oklch(0.9400 0 0);
-  --accent-foreground: oklch(0 0 0);
-  --destructive: oklch(0.6300 0.1900 23.0300);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9200 0 0);
-  --input: oklch(0.9400 0 0);
-  --ring: oklch(0 0 0);
-  --chart-1: oklch(0.8100 0.1700 75.3500);
-  --chart-2: oklch(0.5500 0.2200 264.5300);
-  --chart-3: oklch(0.7200 0 0);
-  --chart-4: oklch(0.9200 0 0);
-  --chart-5: oklch(0.5600 0 0);
-  --sidebar: oklch(0.9900 0 0);
-  --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0 0 0);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.9400 0 0);
-  --sidebar-accent-foreground: oklch(0 0 0);
-  --sidebar-border: oklch(0.9400 0 0);
-  --sidebar-ring: oklch(0 0 0);
-  --font-sans: Geist, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Geist Mono, monospace;
-  --radius: 0.5rem;
-  --shadow-x: 0px;
-  --shadow-y: 1px;
-  --shadow-blur: 2px;
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.18;
-  --shadow-color: hsl(0 0% 0%);
-  --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
-  --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
-  --shadow-sm: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
-  --shadow: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
-  --shadow-md: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 2px 4px -1px hsl(0 0% 0% / 0.18);
-  --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
-  --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
-  --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
-}
-
-
-.dark {
   --background: oklch(0 0 0);
   --foreground: oklch(1 0 0);
   --card: oklch(0.1400 0 0);
@@ -110,7 +52,11 @@
   --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
   --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
 }
+
+
 
 @theme inline {
   --color-background: var(--background);
@@ -193,55 +139,138 @@
     display: none;
   }
 
-  /* Custom scrollbar styles */
-  .custom-scrollbar {
+  /* Global dark scrollbar styles */
+  * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary) / 0.2) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
   }
   
-  .custom-scrollbar::-webkit-scrollbar {
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  *::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.35);
+  }
+  
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Thin scrollbar for build page and file explorer */
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar {
     width: 4px;
+    height: 4px;
   }
   
-  .custom-scrollbar::-webkit-scrollbar-track {
+  .thin-scrollbar::-webkit-scrollbar-track {
     background: transparent;
-    margin: 2px 0;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--primary) / 0.1),
-      hsl(var(--primary) / 0.3),
-      hsl(var(--primary) / 0.1)
-    );
     border-radius: 2px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 0.5px solid hsl(var(--primary) / 0.1);
   }
   
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--primary) / 0.2),
-      hsl(var(--primary) / 0.5),
-      hsl(var(--primary) / 0.2)
-    );
-    border-color: hsl(var(--primary) / 0.2);
-    transform: scaleX(1.2);
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    border: 0.5px solid rgba(255, 255, 255, 0.05);
   }
   
-  .custom-scrollbar::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--primary) / 0.3),
-      hsl(var(--primary) / 0.7),
-      hsl(var(--primary) / 0.3)
-    );
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.08);
   }
   
-  .custom-scrollbar::-webkit-scrollbar-corner {
+  .thin-scrollbar::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  /* Ultra-thin scrollbar for compact areas */
+  .ultra-thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  }
+  
+  .ultra-thin-scrollbar::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+  
+  .ultra-thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 1px;
+  }
+  
+  .ultra-thin-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 1px;
+    transition: all 0.2s ease;
+  }
+  
+  .ultra-thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  .ultra-thin-scrollbar::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  .ultra-thin-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Monaco Editor scrollbar styling */
+  .monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-radius: 2px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  .monaco-editor .monaco-scrollable-element > .scrollbar > .slider:active {
+    background: rgba(255, 255, 255, 0.3) !important;
+  }
+  
+  .monaco-editor .monaco-scrollable-element > .scrollbar > .slider > .thumb {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-radius: 2px !important;
+  }
+  
+  .monaco-editor .monaco-scrollable-element > .scrollbar > .slider > .thumb:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  .monaco-editor .monaco-scrollable-element > .scrollbar > .slider > .thumb:active {
+    background: rgba(255, 255, 255, 0.3) !important;
   }
 }
 

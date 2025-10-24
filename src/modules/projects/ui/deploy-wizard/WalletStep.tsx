@@ -58,7 +58,7 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
               <Button
                 variant="outline"
                 onClick={() => disconnect()}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/20 hover:text-black"
               >
                 Disconnect
               </Button>
@@ -84,7 +84,7 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
               <Button
                 variant="outline"
                 onClick={onBack}
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-white/20 text-white hover:bg-white/20 hover:text-black"
               >
                 Back
               </Button>

@@ -1,6 +1,9 @@
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
 
+// Ensure this API route is always dynamic (avoid static path generation attempts)
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ projectId: string }> }

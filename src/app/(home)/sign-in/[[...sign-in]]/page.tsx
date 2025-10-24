@@ -1,12 +1,10 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { useTheme } from "@/hooks/use-theme";
 import { dark } from "@clerk/themes";
 
     
 export default function Page() {
-    const theme = useTheme();
     return (
         <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 relative">
             <div className="absolute inset-0 bg-black/60" />
@@ -14,7 +12,7 @@ export default function Page() {
             <div className="flex items-center justify-center px-6 py-12 lg:px-10 relative z-10">
                 <div className="w-full max-w-md" >
                     <SignIn routing="path" path="/sign-in" appearance={{
-                        baseTheme: theme === "dark" ? dark : undefined,
+                        baseTheme: dark,
                     }} />
                 </div>
             </div>
