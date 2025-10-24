@@ -157,11 +157,7 @@ export default function PricingPage() {
                 </div>
                 
                 <Button 
-                  className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] h-12 text-lg font-semibold ${
-                    plan.buttonVariant === 'secondary' 
-                      ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' 
-                      : ''
-                  }`}
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] h-12 text-lg font-semibold border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
                 >
                   {plan.buttonText}
                 </Button>

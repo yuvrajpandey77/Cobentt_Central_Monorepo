@@ -171,13 +171,13 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
               )}
             </div>
             <div className="flex flex-col gap-3 md:w-72">
-              <Button variant="outline" onClick={onBack} disabled={createDapp.isPending} className="border-white/30 text-white hover:bg-white/20 hover:text-black">
+              <Button variant="outline" onClick={onBack} disabled={createDapp.isPending} className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to editor
               </Button>
               <Button 
                 onClick={handleDeploy}
                 disabled={createDapp.isPending}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20 hover:from-blue-700 hover:to-blue-800"
+                className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
               >
                 {createDapp.isPending ? (
                   <>
@@ -191,7 +191,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
                   </>
                 )}
               </Button>
-              <Button variant="secondary" onClick={handleCopy} className="justify-between bg-white/10 text-white hover:bg-white/20 hover:text-black">
+              <Button variant="secondary" onClick={handleCopy} className="justify-between border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none">
                 <span>{copyState === "copied" ? "Config copied to clipboard" : "Copy config JSON"}</span>
                 <Clipboard className="h-4 w-4" />
               </Button>

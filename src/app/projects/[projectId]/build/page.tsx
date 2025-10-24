@@ -599,7 +599,7 @@ forge test
                 <Button
                   onClick={() => router.push(`/projects/${projectId}/deploy`)}
                   disabled={!buildStatus?.artifacts?.sourceCode}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
                 >
                   <Rocket className="h-4 w-4 mr-2" />
                   Deploy Contract

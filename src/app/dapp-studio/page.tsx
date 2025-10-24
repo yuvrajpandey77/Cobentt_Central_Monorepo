@@ -534,7 +534,7 @@ const PageShell = () => {
                   Review Documentation
                 </Link>
                 <span className="text-white/40">/</span>
-                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800">
+                <Button className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none">
                   Contact Support
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

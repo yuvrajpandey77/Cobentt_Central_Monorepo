@@ -97,22 +97,36 @@ export const Sidebar = ({ className }: SidebarProps) => {
 
             {/* Navigation Buttons */}
             <div className="space-y-2">
+              <Link href="/dapp-studio">
+                <Button
+                  variant="ghost"
+                  className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
+                >
+                  <div className="flex items-center">
+                    <Code2 className="w-4 h-4 !mr-2 !shrink-0" />
+                    <span>DApp Studio</span>
+                  </div>
+                </Button>
+              </Link>
+              
               <Button
                 variant="ghost"
-                className="w-full justify-start text-left h-9 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
               >
-                <Layout className="w-4 h-4 mr-2" />
-                Templates
+                <div className="flex items-center">
+                  <Layout className="w-4 h-4 !mr-2 !shrink-0" />
+                  <span>Templates</span>
+                </div>
               </Button>
               
               <Link href="/all-projects">
                 <Button
                   variant="ghost"
-                  className="w-full justify-between text-left h-9 px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  className="w-full !justify-between h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
                 >
                   <div className="flex items-center">
-                    <FolderOpen className="w-4 h-4 mr-2" />
-                    All Projects
+                    <FolderOpen className="w-4 h-4 !mr-2 !shrink-0" />
+                    <span>All Projects</span>
                   </div>
                   <div className="text-xs text-muted-foreground bg-gradient-to-r from-primary/20 to-secondary/20 px-2 py-1 rounded-full border border-primary/20">
                     {projects?.length || 0}
@@ -127,9 +141,9 @@ export const Sidebar = ({ className }: SidebarProps) => {
         {!isCollapsed && (
           <div className="flex-1 flex flex-col min-h-0 min-w-0">
             {/* Recently Made Header */}
-            <div className="flex items-center gap-2 mb-4 px-1">
-              <Clock className="w-4 h-4 text-primary/60" />
-              <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider">
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <Clock className="w-3.5 h-3.5 text-primary/50" />
+              <h3 className="text-xs font-medium text-foreground/70 uppercase tracking-wider">
                 Recently Made
               </h3>
             </div>
@@ -151,8 +165,8 @@ export const Sidebar = ({ className }: SidebarProps) => {
             )}
             {!isLoading && projects?.length === 0 && (
               <div className="text-center py-8">
-                <div className="w-12 h-12 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                  <FolderOpen className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <FolderOpen className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="text-sm font-medium mb-1 text-foreground">No projects yet</h3>
                 <p className="text-xs text-muted-foreground">
@@ -173,7 +187,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
               <Link
                 key={project.id}
                 href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}
-                className="block group"
+                className="block group p-1"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="bg-gradient-to-r from-card/40 via-card/30 to-card/40 hover:from-card/60 hover:via-card/50 hover:to-card/60 border border-border/20 hover:border-primary/40 rounded-lg transition-all duration-200 ease-out hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01] backdrop-blur-sm p-3 min-w-0 focus-within:ring-2 focus-within:ring-primary/20">
@@ -196,42 +210,12 @@ export const Sidebar = ({ className }: SidebarProps) => {
         {/* Action Buttons */}
         {!isCollapsed && (
           <div className="mt-auto pt-4 border-t border-border/20 flex-shrink-0 space-y-2">
-            <Link href="/dapp-studio" className="block">
-              <Button 
-                className="w-full bg-gradient-to-r from-blue-500/20 via-blue-500/15 to-purple-500/20 hover:from-blue-500/30 hover:via-blue-500/25 hover:to-purple-500/30 text-blue-300 border border-blue-400/30 hover:border-blue-400/50 shadow-lg hover:shadow-blue-500/20 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
-                size="sm"
-              >
-                <Code2 className="w-3.5 h-3.5 mr-2" />
-                DApp Studio
-              </Button>
-            </Link>
-            <Link href="/docs" className="block">
-              <Button 
-                variant="outline"
-                className="w-full bg-gradient-to-r from-gray-500/10 via-gray-500/5 to-gray-500/10 hover:from-gray-500/20 hover:via-gray-500/15 hover:to-gray-500/20 text-gray-300 border border-gray-400/20 hover:border-gray-400/40 shadow-lg hover:shadow-gray-500/10 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-gray-500/20 focus:outline-none"
-                size="sm"
-              >
-                <Layout className="w-3.5 h-3.5 mr-2" />
-                Documentation
-              </Button>
-            </Link>
-            <Link href="/customDesigns" className="block">
-              <Button 
-                variant="outline"
-                className="w-full bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-pink-500/10 hover:from-purple-500/20 hover:via-purple-500/15 hover:to-pink-500/20 text-purple-300 border border-purple-400/20 hover:border-purple-400/40 shadow-lg hover:shadow-purple-500/10 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-purple-500/20 focus:outline-none"
-                size="sm"
-              >
-                <FolderOpen className="w-3.5 h-3.5 mr-2" />
-                Custom Designs
-              </Button>
-            </Link>
-            <Button 
-              className="w-full bg-gradient-to-r from-primary/20 via-primary/15 to-secondary/20 hover:from-primary/30 hover:via-primary/25 hover:to-secondary/30 text-primary border border-primary/30 hover:border-primary/50 shadow-lg hover:shadow-primary/20 transition-all duration-200 ease-out hover:scale-[1.01] backdrop-blur-sm focus:ring-2 focus:ring-primary/20 focus:outline-none"
-              size="sm"
+            <button 
+              className="w-full rounded-full border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none flex items-center justify-center gap-2 h-8 px-3 text-sm font-medium [color:white] hover:[color:white]"
             >
-              <Plus className="w-3.5 h-3.5 mr-2" />
+              <Plus className="w-3.5 h-3.5" />
               New Project
-            </Button>
+            </button>
           </div>
         )}
       </div>
