@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -90,24 +91,24 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black">
       {/* Header Section */}
       <div className="container mx-auto px-4 py-20">
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold mb-6">
+          <h1 className="text-6xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight">
             Pricing
           </h1>
-          <p className="text-2xl text-muted-foreground mb-12">Start for free. Upgrade as you go.</p>
+          <p className="text-2xl text-white/70 mb-12">Start for free. Upgrade as you go.</p>
           
           {/* Toggle */}
           <div className="flex justify-center mb-8">
-            <div className="bg-card rounded-xl p-2 flex border">
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-2 flex border border-white/15 ring-1 ring-white/10">
               <button
                 onClick={() => setIsYearly(false)}
                 className={`px-8 py-3 rounded-lg transition-all font-medium ${
                   !isYearly 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-white text-black' 
+                    : 'text-white/70 hover:text-white'
                 }`}
               >
                 Monthly
@@ -116,8 +117,8 @@ export default function PricingPage() {
                 onClick={() => setIsYearly(true)}
                 className={`px-8 py-3 rounded-lg transition-all font-medium ${
                   isYearly 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-white text-black' 
+                    : 'text-white/70 hover:text-white'
                 }`}
               >
                 Yearly
@@ -125,45 +126,43 @@ export default function PricingPage() {
             </div>
           </div>
           
-          <p className="text-lg font-semibold text-primary">Save 10% on a yearly subscription.</p>
+          <p className="text-lg font-semibold text-white">Save 10% on a yearly subscription.</p>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           {pricingPlans.map((plan, index) => (
-            <Card key={index} className="relative flex flex-col">
+            <Card key={index} className="relative flex flex-col border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
               {plan.popular && (
-                <Badge className="absolute -top-4 right-6 px-4 py-2 rounded-full text-sm font-semibold">
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-full text-sm font-semibold bg-white/10 text-white border-white/20 backdrop-blur-sm z-10">
                   POPULAR
                 </Badge>
               )}
               
               <CardHeader className="text-center pb-20 pt-8 flex-shrink-0 relative h-64">
-                <h3 className="text-3xl font-bold mb-4">{plan.name}</h3>
+                <h3 className="text-3xl font-bold mb-4 text-white">{plan.name}</h3>
                 <div className="mb-6">
-                  <div className="text-5xl font-bold mb-2">
+                  <div className="text-5xl font-bold mb-2 text-white">
                     {plan.price}
                   </div>
                   {plan.description && (
-                    <div className="text-sm text-muted-foreground whitespace-pre-line">
+                    <div className="text-sm text-white/70 whitespace-pre-line">
                       {plan.description}
                     </div>
                   )}
                   {plan.customDescription && (
-                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                    <p className="text-sm text-white/70 mt-3 leading-relaxed">
                       {plan.customDescription}
                     </p>
                   )}
                 </div>
                 
-                <Button 
-                  className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] h-12 text-lg font-semibold ${
-                    plan.buttonVariant === 'secondary' 
-                      ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' 
-                      : ''
-                  }`}
+                <Button asChild
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%-3rem)] h-12 text-lg font-semibold border-white/15 bg-white/5 text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
                 >
-                  {plan.buttonText}
+                  <Link href={plan.name === "Enterprise" ? "/customDesigns/support" : "/sign-up"}>
+                    {plan.buttonText}
+                  </Link>
                 </Button>
               </CardHeader>
 
@@ -171,11 +170,11 @@ export default function PricingPage() {
                 <ul className="space-y-4 flex-1">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-muted-foreground leading-relaxed break-words">
+                      <Check className="h-5 w-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-white/70 leading-relaxed break-words">
                         {feature}
                         {feature.includes("roll over") && (
-                          <Info className="h-3 w-3 inline ml-1 text-muted-foreground" />
+                          <Info className="h-3 w-3 inline ml-1 text-white/70" />
                         )}
                       </span>
                     </li>

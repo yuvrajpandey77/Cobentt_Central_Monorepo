@@ -14,7 +14,6 @@ import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
 import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 
 const STORAGE_KEY = "cogy.home.mode";
@@ -27,6 +26,7 @@ const PageContent = () => {
     const trpc = useTRPC();
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const [mode, setMode] = useState<BuilderMode>("app");
+    const [projectType, setProjectType] = useState<"webapp" | "contract">("webapp");
 
     useEffect(() => {
         const stored = window.localStorage.getItem(STORAGE_KEY) as BuilderMode | null;
@@ -46,7 +46,8 @@ const PageContent = () => {
         // Redirect to DApp Studio with the prompt
         // The DApp Studio page will handle the analysis and show the form
         return new Promise<void>((resolve) => {
-            router.push(`/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`);
+            const url = `/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`;
+            router.push(url);
             // Resolve after a short delay to allow the loading state to be visible
             setTimeout(() => resolve(), 100);
         });
@@ -59,7 +60,10 @@ const PageContent = () => {
         isFetchingNextPage,
         isLoading,
     } = useInfiniteQuery({
-        ...trpc.projects.getAll.infiniteQueryOptions({ limit: 20 }),
+        ...trpc.projects.getAll.infiniteQueryOptions({ 
+            limit: 20,
+            projectType: projectType
+        }),
         getNextPageParam: (lastPage: any) => lastPage.nextCursor,
     });
 
@@ -162,8 +166,8 @@ const PageContent = () => {
                             {/* Subtitle */}
                             <p className="mt-2 text-lg text-white/20 mb-4 max-w-xl mx-auto ">
                                 {mode === "app" 
-                                    ? "Describe your app idea and watch Cogy build it for you in minutes."
-                                    : "Describe your smart contract and let AI generate the perfect configuration."}
+                                    ? "Describe your app idea and watch Clox build it for you in minutes."
+                                    : "Describe your smart contract and let AI generate it."}
                             </p>
 
                             {/* Project Form */}
@@ -174,16 +178,11 @@ const PageContent = () => {
                                 />
 
                                 <div className="flex flex-col items-center justify-center gap-4">
-                                    <ToggleGroup
-                                        type="single"
-                                        value={mode}
-                                        onValueChange={handleModeChange}
-                                        className="flex overflow-hidden rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur"
-                                    >
-                                        <ToggleGroupItem
-                                            value="app"
+                                    <div className="flex gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur">
+                                        <button
+                                            onClick={() => handleModeChange("app")}
                                             className={cn(
-                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition",
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
                                                 mode === "app"
                                                     ? "bg-primary/90 text-primary-foreground shadow-lg"
                                                     : "hover:bg-white/10",
@@ -191,11 +190,11 @@ const PageContent = () => {
                                         >
                                             <Sparkles className="h-4 w-4" />
                                             Build Dapp
-                                        </ToggleGroupItem>
-                                        <ToggleGroupItem
-                                            value="contract"
+                                        </button>
+                                        <button
+                                            onClick={() => handleModeChange("contract")}
                                             className={cn(
-                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition",
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
                                                 mode === "contract"
                                                     ? "bg-primary/90 text-primary-foreground shadow-lg"
                                                     : "hover:bg-white/10",
@@ -203,17 +202,9 @@ const PageContent = () => {
                                         >
                                             <Code2 className="h-4 w-4" />
                                             Smart Contract
-                                        </ToggleGroupItem>
-                                    </ToggleGroup>
+                                        </button>
+                                    </div>
                                     <div className="flex flex-col items-center gap-2 text-center">
-                                        <Badge variant="secondary" className="rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold uppercase tracking-wider text-white/80">
-                                            {mode === "app" ? "Full App" : "Smart Contract"}
-                                        </Badge>
-                                        <p className="text-sm text-white/60">
-                                            {mode === "app"
-                                                ? "Describe your full-stack idea and let Cogy assemble UI, APIs, and infrastructure."
-                                                : "Describe your smart contract and AI will pre-fill the configuration for you to review."}
-                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -225,11 +216,43 @@ const PageContent = () => {
                 {/* Projects Grid Section */}
                 <section className="py-16 bg-black/10 backdrop-blur-sm">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-12 rounded-2xl">
-                            <h2 className="text-3xl font-bold mb-4 text-white">
-                                Community Projects
-                            </h2>
-                            <p className="text-lg text-white/80 max-w-2xl mx-auto">
+                        <div className="mb-12 rounded-2xl">
+                            {/* Header with centered title and right-aligned toggle */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex-1"></div> {/* Spacer */}
+                                <h2 className="text-3xl font-bold text-white text-center flex-1">
+                                    Community Projects
+                                </h2>
+                                <div className="flex-1 flex justify-end"> {/* Right-aligned toggle */}
+                                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-1">
+                                        <button
+                                            onClick={() => setProjectType("webapp")}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
+                                                projectType === "webapp"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Code2 className="h-4 w-4" />
+                                            Web Apps
+                                        </button>
+                                        <button
+                                            onClick={() => setProjectType("contract")}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
+                                                projectType === "contract"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Zap className="h-4 w-4" />
+                                            Smart Contracts
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-lg text-white/80 max-w-2xl mx-auto text-center">
                                 Explore amazing projects built by our community using Cogerphere
                             </p>
                         </div>
@@ -267,10 +290,10 @@ const PageContent = () => {
                             <div className="text-center py-12">
                                 <Code2 className="w-16 h-16 text-white/40 mx-auto mb-4" />
                                 <h3 className="text-xl font-semibold text-white/80 mb-2">
-                                    No projects yet
+                                    No {projectType === "webapp" ? "web apps" : "smart contracts"} yet
                                 </h3>
                                 <p className="text-white/60">
-                                    Be the first to create a project and share it with the community!
+                                    Be the first to create a {projectType === "webapp" ? "web app" : "smart contract"} and share it with the community!
                                 </p>
                             </div>
                         )}

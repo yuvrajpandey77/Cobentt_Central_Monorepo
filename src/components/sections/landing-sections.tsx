@@ -93,7 +93,7 @@ export const CTASection = () => {
             <Button 
               size="lg" 
               onClick={scrollToForm}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 transition-all duration-200 ease-out hover:scale-105 hover:shadow-lg focus:ring-2 focus:ring-primary/20 focus:outline-none"
+              className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm text-lg px-8 py-6 transition-all duration-200 ease-out hover:scale-105 focus:ring-2 focus:ring-white/20 focus:outline-none"
             >
               <Sparkles className="h-5 w-5 mr-2" />
               Start Building Now

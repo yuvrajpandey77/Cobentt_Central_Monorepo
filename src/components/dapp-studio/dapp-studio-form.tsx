@@ -660,7 +660,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                 Generate Contract
               </Button>
             ) : (
-              <Button type="button" onClick={goNext} className="bg-blue-500 text-white hover:bg-blue-600">
+              <Button type="button" onClick={goNext} className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}

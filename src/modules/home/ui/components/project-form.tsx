@@ -179,8 +179,8 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                     id="main-project-form"
                     onSubmit={form.handleSubmit(onSubmit)} 
                     className={cn(
-                        "relative border border-white/40 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
-                        isFocused && "border-white/60 shadow-2xl ring-2 ring-white/30",
+                        "relative border border-white/20 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                        isFocused && "border-white/40 shadow-2xl ring-1 ring-white/20",
                     )}
                 >
                     <FormField
@@ -221,20 +221,25 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                     {/* Ideas Section */}
                     {showIdeas && (
                         <div className="px-5 pb-3">
-                            <div className="p-4 bg-white/15 backdrop-blur-sm rounded-lg border border-white/30 shadow-lg">
-                                <div className="flex flex-wrap gap-2">
+                            <div className="p-6 bg-gradient-to-br from-white/20 via-white/15 to-white/10 backdrop-blur-md rounded-xl border border-white/40 shadow-2xl">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse"></div>
+                                    <h3 className="text-sm font-semibold text-white/90">Quick Ideas</h3>
+                                    <div className="flex-1 h-px bg-gradient-to-r from-white/30 to-transparent"></div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
                                         <Button
                                             key={template.title}
                                             variant="outline"
                                             size="sm"
-                                            className="h-8 px-3 text-xs bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 transition-all duration-200 ease-out hover:scale-105 backdrop-blur-sm text-gray-800 font-medium shadow-sm focus:ring-2 focus:ring-white/20 focus:outline-none"
+                                            className="h-10 px-4 text-sm bg-gradient-to-r from-white/25 to-white/15 hover:from-white/40 hover:to-white/25 border border-white/40 hover:border-white/60 transition-all duration-300 ease-out hover:scale-[1.02] backdrop-blur-sm text-white font-medium shadow-lg hover:shadow-xl focus:ring-2 focus:ring-white/30 focus:outline-none group"
                                             onClick={() => {
                                                 onSelect(template.prompt);
                                             }}
                                         >
-                                            <span className="mr-1 text-sm">{template.emoji}</span>
-                                            {template.title}
+                                            <span className="mr-2 text-base group-hover:scale-110 transition-transform duration-200">{template.emoji}</span>
+                                            <span className="truncate">{template.title}</span>
                                         </Button>
                                     ))}
                                 </div>
@@ -245,10 +250,8 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                     {/* Build Button Section */}
                     <div className="px-5 py-3">
                         <div className="flex items-center justify-between">
-                            <div className="text-sm text-white/80 font-mono">
-                                <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-white/40 bg-white/20 px-2 text-sm font-mono font-medium text-white/90">
-                                    Ctrl + Enter
-                                </kbd>
+                            <div className="text-xs text-white/60">
+                                Press <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded border border-white/30">Ctrl + Enter</kbd> to build
                             </div>
                             <div className="flex items-center gap-3">
                                 <Button
@@ -258,8 +261,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                     onClick={() => setShowIdeas(!showIdeas)}
                                     className="text-white/80 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                                 >
-                                    <LightbulbIcon className="size-4 mr-1" />
-                                    Ideas
+                                    <LightbulbIcon className="size-4" />
                                     {showIdeas ? (
                                         <ChevronUpIcon className="size-4 ml-1" />
                                     ) : (
@@ -276,15 +278,9 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                     )}
                                 >
                                     {isPending || isAnalyzingContract ? (
-                                        <>
-                                            <Loader2Icon className="size-3 animate-spin mr-1" />
-                                            {mode === "contract" ? "Analyzing..." : "Building..."}
-                                        </>
+                                        <Loader2Icon className="size-4 animate-spin" />
                                     ) : (
-                                        <>
-                                            <ArrowUp className="size-3 mr-1" />
-                                            {mode === "contract" ? "Analyze" : "Build"}
-                                        </>
+                                        <ArrowUp className="size-4" />
                                     )}
                                 </Button>
                             </div>

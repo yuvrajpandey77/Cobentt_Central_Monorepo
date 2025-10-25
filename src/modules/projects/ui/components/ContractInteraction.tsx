@@ -31,6 +31,29 @@ import { type Abi, type AbiFunction, type AbiParameter } from 'viem';
 type FunctionArgs = Record<string, string>;
 type ExecutionResult = { message: string; timestamp: string };
 
+// ReadMore component for long text
+function ReadMore({ text, maxLength = 200 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  if (text.length <= maxLength) {
+    return <span className="break-words whitespace-pre-wrap">{text}</span>;
+  }
+  
+  const displayText = isExpanded ? text : text.substring(0, maxLength) + '...';
+  
+  return (
+    <div className="break-words whitespace-pre-wrap">
+      {displayText}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="ml-2 text-blue-400 hover:text-blue-300 underline text-sm"
+      >
+        {isExpanded ? 'Read Less' : 'Read More'}
+      </button>
+    </div>
+  );
+}
+
 const getInputKey = (input: AbiParameter, index: number) =>
   input.name && input.name.length > 0 ? input.name : `arg${index}`;
 
@@ -267,41 +290,55 @@ export function ContractInteraction({
 
         <div className="space-y-3">
       {error && (
-            <Alert variant="destructive" className="border-red-500/40 bg-red-500/10">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle className="text-sm font-semibold text-red-200">Error</AlertTitle>
-              <AlertDescription className="text-sm text-white/80">{error}</AlertDescription>
+            <Alert variant="destructive" className="border-red-500/40 bg-red-500/10 w-full max-w-full max-h-48 overflow-hidden">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <div className="flex-1 min-w-0 max-h-44 overflow-y-auto">
+                <AlertTitle className="text-sm font-semibold text-red-200 mb-2">Error</AlertTitle>
+                <AlertDescription className="text-sm text-white/80">
+                  <ReadMore text={error} maxLength={150} />
+                </AlertDescription>
+              </div>
           </Alert>
       )}
 
       {success && (
-            <Alert className="border-emerald-500/40 bg-emerald-500/10">
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertTitle className="text-sm font-semibold text-emerald-200">Success</AlertTitle>
-              <AlertDescription className="text-sm text-white/80">{success}</AlertDescription>
+            <Alert className="border-emerald-500/40 bg-emerald-500/10 w-full max-w-full max-h-48 overflow-hidden">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              <div className="flex-1 min-w-0 max-h-44 overflow-y-auto">
+                <AlertTitle className="text-sm font-semibold text-emerald-200 mb-2">Success</AlertTitle>
+                <AlertDescription className="text-sm text-white/80">
+                  <ReadMore text={success} maxLength={150} />
+                </AlertDescription>
+              </div>
           </Alert>
       )}
 
       {isConfirming && (
-            <Alert className="border-blue-500/40 bg-blue-500/10">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <AlertTitle className="text-sm font-semibold text-blue-200">Transaction pending</AlertTitle>
-              <AlertDescription className="text-sm text-white/80">Awaiting block confirmation...</AlertDescription>
+            <Alert className="border-blue-500/40 bg-blue-500/10 w-full max-w-full">
+              <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <AlertTitle className="text-sm font-semibold text-blue-200">Transaction pending</AlertTitle>
+                <AlertDescription className="text-sm text-white/80 break-words whitespace-pre-wrap overflow-wrap-anywhere word-break-break-all max-w-full">
+                  Awaiting block confirmation...
+                </AlertDescription>
+              </div>
           </Alert>
       )}
 
       {isConfirmed && hash && (
-            <Alert className="border-emerald-500/40 bg-emerald-500/10">
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertTitle className="text-sm font-semibold text-emerald-200">Transaction confirmed</AlertTitle>
-              <AlertDescription className="text-sm text-white/80">
-                <button
-                  onClick={() => window.open(`${explorerUrl}/tx/${hash}`, '_blank')}
-                  className="inline-flex items-center gap-2 text-emerald-100 underline-offset-4 hover:underline"
-                >
-                  View on explorer <ExternalLink className="h-3.5 w-3.5" />
-                </button>
-            </AlertDescription>
+            <Alert className="border-emerald-500/40 bg-emerald-500/10 w-full max-w-full">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <AlertTitle className="text-sm font-semibold text-emerald-200">Transaction confirmed</AlertTitle>
+                <AlertDescription className="text-sm text-white/80 break-words whitespace-pre-wrap overflow-wrap-anywhere word-break-break-all max-w-full">
+                  <button
+                    onClick={() => window.open(`${explorerUrl}/tx/${hash}`, '_blank')}
+                    className="inline-flex items-center gap-2 text-emerald-100 underline-offset-4 hover:underline"
+                  >
+                    View on explorer <ExternalLink className="h-3.5 w-3.5" />
+                  </button>
+                </AlertDescription>
+              </div>
           </Alert>
           )}
         </div>
@@ -658,11 +695,11 @@ function FunctionCard({
       </div>
 
       {result && (
-        <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3">
-          <p className="text-xs font-semibold text-emerald-200">Result</p>
-          <pre className="mt-2 max-h-40 overflow-y-auto rounded-lg bg-black/40 p-3 text-[11px] leading-5 text-emerald-100 thin-scrollbar">
-            {JSON.stringify(result, null, 2)}
-          </pre>
+        <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 w-full max-w-full max-h-64 overflow-hidden">
+          <p className="text-xs font-semibold text-emerald-200 mb-2">Result</p>
+          <div className="max-h-56 overflow-y-auto rounded-lg bg-black/40 p-3 text-[11px] leading-5 text-emerald-100 thin-scrollbar">
+            <ReadMore text={JSON.stringify(result, null, 2)} maxLength={300} />
+          </div>
         </div>
       )}
     </div>

@@ -10,85 +10,125 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { cn } from "@/lib/utils";
-import { DappStudioForm, type DappStudioFormValues } from "@/components/dapp-studio/dapp-studio-form";
-import { DappStudioPreview } from "@/components/dapp-studio/dapp-studio-preview";
-import { Input } from "@/components/ui/input";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 import {
   Sparkles,
-  Rocket,
+  ArrowUp,
+  Loader2,
   Code2,
   Shield,
   Zap,
+  Rocket,
   Layers,
-  ArrowRight,
-  ArrowUp,
-  Loader2,
+  Gem,
+  Coins,
+  Wallet,
   Lightbulb,
 } from "lucide-react";
 
-const featureCards = [
+const smartContractFeatures = [
   {
     icon: Code2,
-    title: "Production Ready",
-    description: "Audited templates with best practices baked in for every deployment.",
+    title: "Production Ready Templates",
+    description: "Audited smart contract templates with industry best practices built-in for secure deployments.",
+    color: "text-blue-400",
   },
   {
     icon: Shield,
-    title: "Secure by Design",
-    description: "Automatic verification, access control presets, and upgrade-safe flows.",
+    title: "Security First",
+    description: "Automatic verification, access control presets, and upgrade-safe patterns for maximum security.",
+    color: "text-green-400",
   },
   {
     icon: Zap,
-    title: "Fast Iteration",
-    description: "Iterate in minutes. Deploy to testnets, preview the scaffold, and ship.",
+    title: "Multi-Chain Support",
+    description: "Deploy to Ethereum, Polygon, Arbitrum, Optimism, and Solana with one configuration.",
+    color: "text-purple-400",
+  },
+  {
+    icon: Rocket,
+    title: "Instant Deployment",
+    description: "From idea to deployed contract in minutes with automated compilation and verification.",
+    color: "text-orange-400",
+  },
+];
+
+const contractTypes = [
+  {
+    icon: Coins,
+    title: "ERC-20 Tokens",
+    description: "Fungible tokens for currencies, rewards, and utility tokens",
+    examples: ["Loyalty programs", "Gaming currencies", "Governance tokens"],
+  },
+  {
+    icon: Gem,
+    title: "ERC-721 NFTs",
+    description: "Non-fungible tokens for unique digital assets",
+    examples: ["Digital art", "Collectibles", "Digital identity"],
+  },
+  {
+    icon: Layers,
+    title: "ERC-1155 Multi-Tokens",
+    description: "Hybrid tokens supporting both fungible and non-fungible assets",
+    examples: ["Game items", "Trading cards", "Multi-asset collections"],
+  },
+  {
+    icon: Wallet,
+    title: "Payment Splitters",
+    description: "Automated revenue sharing and payment distribution",
+    examples: ["Royalty splits", "Team payments", "Revenue sharing"],
   },
 ];
 
 const workflowSteps = [
   {
     title: "Describe",
-    description: "Tell us what you want to build in plain English.",
+    description: "Tell us what you want to build in plain English",
     icon: Sparkles,
   },
   {
-    title: "Review",
-    description: "AI pre-fills the config. Customize as needed.",
+    title: "Configure",
+    description: "AI pre-fills the configuration, customize as needed",
     icon: Layers,
   },
   {
     title: "Deploy",
-    description: "Fund the wallet, deploy, verify, and bind your scaffold automatically.",
+    description: "Deploy, verify, and get your contract address instantly",
     icon: Rocket,
   },
 ];
 
 const examplePrompts = [
-  { emoji: "🎨", text: "NFT collection for digital artwork with royalties" },
-  { emoji: "🏆", text: "Loyalty token for my coffee shop rewards program" },
-  { emoji: "🎮", text: "Gaming token with staking and rewards" },
-  { emoji: "🏛️", text: "Governance token for my DAO with voting" },
-  { emoji: "💎", text: "Multi-token standard for game items (ERC-1155)" },
-  { emoji: "💰", text: "Payment splitter for revenue sharing" },
+  "NFT collection for digital artwork with royalties",
+  "Loyalty token for my coffee shop rewards program", 
+  "Gaming token with staking and rewards mechanism",
+  "Governance token for my DAO with voting capabilities",
+  "Multi-token standard for in-game items (ERC-1155)",
+  "Payment splitter contract for revenue sharing"
 ];
 
 const PageShell = () => {
   const { isCollapsed } = useSidebar();
-  const [step, setStep] = useState<"prompt" | "form" | "preview">("prompt");
   const [prompt, setPrompt] = useState("");
-  const [formData, setFormData] = useState<DappStudioFormValues | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [suggestedConfig, setSuggestedConfig] = useState<Partial<DappStudioFormValues> | null>(null);
+  const [isProcessingUrlPrompt, setIsProcessingUrlPrompt] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Check URL for prompt parameter
+  // Check for prompt in URL parameters and auto-process it
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const urlPrompt = searchParams.get('prompt');
+    
     if (urlPrompt) {
       setPrompt(urlPrompt);
-      // Automatically analyze the prompt from URL
-      analyzePrompt(urlPrompt);
+      setIsProcessingUrlPrompt(true);
+      // Show loading state and automatically analyze the prompt from landing page
+      setIsAnalyzing(true);
+      // Add a small delay to show the loading state
+      setTimeout(() => {
+        analyzePrompt(urlPrompt);
+      }, 500);
     }
   }, []);
 
@@ -96,180 +136,15 @@ const PageShell = () => {
     setIsAnalyzing(true);
     
     try {
-      // Call AI API with full Dapp Builder context
-      const response = await fetch('/api/dapp-studio/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: userPrompt }),
-      });
-
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to analyze prompt');
-        } else {
-          const text = await response.text();
-          console.error('API returned non-JSON response:', text.substring(0, 200));
-          throw new Error('AI analysis service unavailable. Using fallback pattern matching.');
-        }
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Success response is not JSON:', text.substring(0, 200));
-        throw new Error('Invalid response format');
-      }
-
-      const { config, success } = await response.json();
-
-      if (!success || !config) {
-        throw new Error('Invalid AI response');
-      }
-
-      // Merge AI config with defaults
-      const finalConfig: Partial<DappStudioFormValues> = {
-        blockchain: config.blockchain || 'ethereum',
-        contractType: config.contractType || 'erc20',
-        tokenName: config.tokenName || 'My Token',
-        tokenSymbol: config.tokenSymbol || 'MTK',
-        tokenSupply: config.tokenSupply || '1000000',
-        decimals: config.decimals || '18',
-        network: config.network || 'testnet',
-        features: config.features || [],
-        autoVerify: true,
-      };
-
-      console.log('✅ AI Analysis Result:', config.reasoning);
-      toast.success('AI analyzed your prompt!', {
-        description: config.reasoning || 'Configuration generated successfully',
-      });
-      
-      setSuggestedConfig(finalConfig as DappStudioFormValues);
-      setStep("form");
-      setIsAnalyzing(false);
-      return;
+      // Navigate to the form page with the prompt
+      const encodedPrompt = encodeURIComponent(userPrompt);
+      const formUrl = `/dapp-studio/form?prompt=${encodedPrompt}`;
+      window.location.href = formUrl;
     } catch (error) {
-      console.error('⚠️ AI analysis failed, falling back to pattern matching:', error);
-      toast.warning('AI unavailable - Using smart pattern matching', {
-        description: 'Your configuration will still be generated using our pattern matching system.',
-      });
-      
-      // FALLBACK: Pattern matching if AI fails
-      const lowerPrompt = userPrompt.toLowerCase();
-      let config: Partial<DappStudioFormValues> = {
-        network: "testnet",
-        autoVerify: true,
-        generateFrontend: true,
-        optimizeBuild: true,
-        includeArtifacts: true,
-        runStaticAnalysis: true,
-        runUnitTests: true,
-        features: [],
-      };
-
-      // Detect blockchain
-      if (lowerPrompt.includes("solana")) {
-        config.blockchain = "solana";
-      } else if (lowerPrompt.includes("polygon")) {
-        config.blockchain = "polygon";
-      } else if (lowerPrompt.includes("arbitrum")) {
-        config.blockchain = "arbitrum";
-      } else if (lowerPrompt.includes("optimism")) {
-        config.blockchain = "optimism";
-      } else {
-        config.blockchain = "ethereum";
-      }
-
-      // Detect contract type
-      if (lowerPrompt.includes("nft") || lowerPrompt.includes("artwork") || lowerPrompt.includes("collectible")) {
-        config.contractType = "erc721";
-        config.tokenName = "My NFT Collection";
-        config.tokenSymbol = "NFT";
-        config.tokenSupply = "10000";
-        config.decimals = "0";
-        config.features = ["mintable", "burnable"];
-      } else if (lowerPrompt.includes("multi") || lowerPrompt.includes("1155") || lowerPrompt.includes("game item")) {
-        config.contractType = "erc1155";
-        config.tokenName = "Multi Token";
-        config.tokenSymbol = "MULTI";
-        config.tokenSupply = "1000000";
-        config.decimals = "0";
-        config.features = ["mintable"];
-      } else if (lowerPrompt.includes("payment") || lowerPrompt.includes("split") || lowerPrompt.includes("revenue")) {
-        config.contractType = "payment-splitter";
-        config.tokenName = "Payment Splitter";
-        config.tokenSymbol = "SPLIT";
-        config.tokenSupply = "0";
-        config.decimals = "18";
-      } else {
-        // Default to ERC-20 token
-        config.contractType = "erc20";
-        
-        // Extract potential token name
-        if (lowerPrompt.includes("loyalty")) {
-          config.tokenName = "Loyalty Token";
-          config.tokenSymbol = "LOYAL";
-        } else if (lowerPrompt.includes("governance") || lowerPrompt.includes("dao")) {
-          config.tokenName = "Governance Token";
-          config.tokenSymbol = "GOV";
-          config.features = ["mintable", "pausable", "access-control"];
-        } else if (lowerPrompt.includes("gaming") || lowerPrompt.includes("game")) {
-          config.tokenName = "Gaming Token";
-          config.tokenSymbol = "GAME";
-        } else {
-          config.tokenName = "My Token";
-          config.tokenSymbol = "TKN";
-        }
-        
-        config.tokenSupply = "1000000";
-        config.decimals = "18";
-        config.features = ["mintable", "burnable"];
-      }
-
-      // Detect features
-      if (lowerPrompt.includes("staking") || lowerPrompt.includes("rewards")) {
-        config.features = [...(config.features || []), "mintable"];
-      }
-      if (lowerPrompt.includes("pause") || lowerPrompt.includes("emergency")) {
-        config.features = [...(config.features || []), "pausable"];
-      }
-      if (lowerPrompt.includes("governance") || lowerPrompt.includes("voting")) {
-        config.features = [...(config.features || []), "access-control"];
-      }
-      if (lowerPrompt.includes("upgrade")) {
-        config.features = [...(config.features || []), "upgradeable"];
-      }
-      if (lowerPrompt.includes("gasless") || lowerPrompt.includes("permit")) {
-        config.features = [...(config.features || []), "permit"];
-      }
-
-      // Remove duplicates
-      config.features = [...new Set(config.features)];
-
-      setSuggestedConfig(config);
+      console.error('Error navigating to form:', error);
+      toast.error('Failed to navigate to form. Please try again.');
       setIsAnalyzing(false);
-      setStep("form");
     }
-  };
-
-  const handleSubmit = (data: DappStudioFormValues) => {
-    setFormData(data);
-    setStep("preview");
-  };
-
-  const handleReset = () => {
-    setStep("prompt");
-    setPrompt("");
-    setFormData(null);
-    setSuggestedConfig(null);
-  };
-
-  const handleBackToForm = () => {
-    setStep("form");
   };
 
   return (
@@ -283,52 +158,173 @@ const PageShell = () => {
       >
         <Header />
         <main className="relative z-0">
+          {/* Loading overlay when processing prompt from URL */}
+          {isAnalyzing && prompt && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-8 max-w-md mx-4">
+                <div className="flex flex-col items-center space-y-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-white" />
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-white mb-2">Processing Your Request</h3>
+                    <p className="text-white/70 text-sm mb-4">
+                      Analyzing your smart contract requirements...
+                    </p>
+                    <div className="bg-white/10 rounded-lg p-3">
+                      <p className="text-white/80 text-sm italic">
+                        "{prompt}"
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <section className="relative overflow-hidden pt-24 pb-16">
             <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="text-center max-w-3xl mx-auto"
+                className="text-center max-w-4xl mx-auto"
               >
                 <Badge className="mb-6 inline-flex items-center gap-2 border border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 px-4 py-1.5 text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
                   <Sparkles className="h-4 w-4 text-amber-300" />
-                  Dapp Studio Beta 0.1
+                  Professional Smart Contract Development
                 </Badge>
-                <h1 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
-                  {step === "prompt" ? "Describe Your Smart Contract" : "Review & Customize"}
+                <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
+                  Build & Deploy Smart Contracts
                 </h1>
-                <p className="mt-4 text-lg text-white/70">
-                  {step === "prompt" 
-                    ? "Tell us what you want to build, and our AI will intelligently configure your smart contract."
-                    : step === "form"
-                    ? "AI has pre-filled the configuration based on your description. Review and customize as needed."
-                    : "Review your configuration before deploying to the blockchain."
-                  }
+                <p className="mt-4 text-lg text-white/70 max-w-3xl mx-auto">
+                  Create production-ready smart contracts in minutes. Our AI-powered platform handles everything from code generation to deployment and verification.
                 </p>
-                {step === "prompt" && (
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-white/60">
                     <span>AI-powered configuration</span>
                     <span>•</span>
-                  <span>Multi-chain support</span>
+                  <span>Multi-chain deployment</span>
                   <span>•</span>
-                    <span>Production-ready templates</span>
+                  <span>Automatic verification</span>
                 </div>
-                )}
               </motion.div>
 
-              {step === "prompt" && (
-              <div className="mt-16 grid gap-6 md:grid-cols-3">
-                {featureCards.map((feature) => (
+              {/* Main Input Section - Only show if not processing URL prompt */}
+              {!isProcessingUrlPrompt && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="mt-16 max-w-3xl mx-auto"
+                >
+                <div className={cn(
+                    "relative border border-white/20 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                    isFocused && "border-white/40 shadow-2xl ring-1 ring-white/20",
+                )}>
+                  <div className="relative">
+                    <TextareaAutosize
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      minRows={1}
+                      maxRows={6}
+                      className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white placeholder:text-white/60 cursor-text"
+                      placeholder=""
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                          e.preventDefault();
+                          analyzePrompt(prompt);
+                        }
+                      }}
+                    />
+                    {!prompt && !isFocused && (
+                      <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text flex items-center">
+                        <div className="text-base text-white/60 text-left w-full">
+                          Describe your smart contract idea...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="px-5 py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-white/60">
+                        Press <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded border border-white/30">Ctrl + Enter</kbd> to generate
+                      </div>
+                      <Button
+                        onClick={() => analyzePrompt(prompt)}
+                        disabled={!prompt.trim() || isAnalyzing}
+                        className={cn(
+                          "h-10 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none",
+                          (!prompt.trim() || isAnalyzing) && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        {isAnalyzing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ArrowUp className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Example Prompts */}
+                <div className="mt-8 space-y-3">
+                  <div className="flex items-center gap-2 text-white/60">
+                    <Lightbulb className="h-4 w-4" />
+                    <span className="text-sm font-medium">Try these examples:</span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {examplePrompts.map((example, idx) => (
+                      <motion.button
+                        key={idx}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        onClick={() => setPrompt(example)}
+                        className="group text-left p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
+                      >
+                        <p className="text-sm text-white/80 group-hover:text-white transition-colors">
+                          {example}
+                        </p>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+              )}
+            </div>
+          </section>
+
+          {/* Features Section - Only show if not processing URL prompt */}
+          {!isProcessingUrlPrompt && (
+          <section className="relative z-10 pb-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+                className="text-center mb-16"
+              >
+                <h2 className="text-2xl font-semibold text-white md:text-3xl">Why Choose Our Platform</h2>
+                <p className="mt-4 text-white/60 max-w-2xl mx-auto">
+                  Professional-grade smart contract development with enterprise security and deployment automation.
+                </p>
+              </motion.div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {smartContractFeatures.map((feature, index) => (
                   <motion.div
                     key={feature.title}
                     initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
                   >
                     <Card className="h-full border-white/15 bg-white/8 backdrop-blur-md">
                       <CardContent className="space-y-4 p-6 text-left text-white">
-                        <feature.icon className="h-8 w-8 text-emerald-300" />
+                        <feature.icon className={`h-8 w-8 ${feature.color}`} />
                         <div className="space-y-2">
                           <h3 className="text-lg font-semibold">{feature.title}</h3>
                           <p className="text-sm text-white/70">{feature.description}</p>
@@ -338,159 +334,62 @@ const PageShell = () => {
                   </motion.div>
                 ))}
               </div>
-              )}
             </div>
           </section>
+          )}
 
+          {/* Contract Types Section - Only show if not processing URL prompt */}
+          {!isProcessingUrlPrompt && (
           <section className="relative z-10 pb-24">
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-              <AnimatePresence mode="wait" initial={false}>
-                {step === "prompt" && (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                viewport={{ once: true }}
+                className="text-center mb-16"
+              >
+                <h2 className="text-2xl font-semibold text-white md:text-3xl">Supported Contract Types</h2>
+                <p className="mt-4 text-white/60 max-w-2xl mx-auto">
+                  Deploy any type of smart contract with our comprehensive template library.
+                </p>
+              </motion.div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {contractTypes.map((contract, index) => (
                   <motion.div
-                    key="prompt"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4 }}
-                    className="space-y-6"
+                    key={contract.title}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
                   >
-                    {/* Prompt Input Card */}
-                    <Card className="border-white/15 bg-white/8 backdrop-blur-md">
-                      <CardContent className="p-6">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-white/80 mb-2">
-                            <Sparkles className="h-5 w-5 text-amber-300" />
-                            <span className="text-sm font-medium">Describe your smart contract</span>
+                    <Card className="h-full border-white/15 bg-white/8 backdrop-blur-md">
+                      <CardContent className="space-y-4 p-6 text-left text-white">
+                        <contract.icon className="h-8 w-8 text-blue-400" />
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold">{contract.title}</h3>
+                          <p className="text-sm text-white/70">{contract.description}</p>
+                          <div className="space-y-2">
+                            <p className="text-xs text-white/50 font-medium">Common use cases:</p>
+                            <div className="space-y-1">
+                              {contract.examples.map((example) => (
+                                <p key={example} className="text-xs text-white/60">• {example}</p>
+                              ))}
                           </div>
-                          <TextareaAutosize
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            placeholder="e.g., I want to create a loyalty token for my coffee shop with rewards..."
-                            minRows={3}
-                            maxRows={8}
-                            className="w-full resize-none border border-white/20 rounded-lg bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
-                          />
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-white/50">
-                              <kbd className="px-2 py-1 bg-white/10 rounded text-white/70">Ctrl</kbd> + <kbd className="px-2 py-1 bg-white/10 rounded text-white/70">Enter</kbd> to continue
-                            </span>
-                            <Button
-                              onClick={() => analyzePrompt(prompt)}
-                              disabled={!prompt.trim() || isAnalyzing}
-                              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
-                            >
-                              {isAnalyzing ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Analyzing...
-                                </>
-                              ) : (
-                                <>
-                                  Generate Config
-                                  <ArrowRight className="h-4 w-4 ml-2" />
-                                </>
-                              )}
-                            </Button>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-
-                    {/* Example Prompts */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-white/60">
-                        <Lightbulb className="h-4 w-4" />
-                        <span className="text-sm font-medium">Try these examples:</span>
-                      </div>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        {examplePrompts.map((example, idx) => (
-                          <motion.button
-                            key={idx}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            onClick={() => setPrompt(example.text)}
-                            className="group text-left p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all"
-                          >
-                            <div className="flex items-start gap-3">
-                              <span className="text-2xl">{example.emoji}</span>
-                              <p className="text-sm text-white/80 group-hover:text-white transition-colors">
-                                {example.text}
-                              </p>
-                            </div>
-                          </motion.button>
+                  </motion.div>
                         ))}
                       </div>
                     </div>
-                  </motion.div>
-                )}
-
-                {step === "form" && suggestedConfig && (
-                  <motion.div
-                    key="form"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4 }}
-                    className="space-y-6"
-                  >
-                    {/* User's Original Prompt */}
-                    <Card className="border-white/15 bg-white/8 backdrop-blur-md">
-                      <CardContent className="p-6">
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-white/80">
-                            <Sparkles className="h-5 w-5 text-amber-300" />
-                            <span className="text-sm font-medium">Your Description</span>
-                          </div>
-                          <p className="text-white text-lg leading-relaxed px-2">
-                            &quot;{prompt}&quot;
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* AI Suggestion Banner */}
-                    <Card className="border-white/15 bg-white/8 backdrop-blur-md">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <Sparkles className="h-5 w-5 text-amber-300 mt-0.5" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-white mb-1">AI Configuration Applied</p>
-                            <p className="text-xs text-white/60 mt-2">
-                              We&apos;ve analyzed your description and pre-filled the form with smart defaults. Review and customize any fields below.
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleReset}
-                            className="text-white/70 hover:text-black hover:bg-white/20"
-                          >
-                            Start Over
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <DappStudioForm onSubmit={handleSubmit} defaultValues={suggestedConfig as DappStudioFormValues} />
-                  </motion.div>
-                )}
-
-                {step === "preview" && formData && (
-                  <motion.div
-                    key="preview"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <DappStudioPreview data={formData} onBack={handleBackToForm} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
           </section>
+          )}
 
+          {/* Workflow Section - Only show if not processing URL prompt */}
+          {!isProcessingUrlPrompt && (
           <section className="border-t border-white/10 bg-black/10 backdrop-blur-sm py-16">
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               <motion.div
@@ -498,27 +397,30 @@ const PageShell = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
-                className="text-center"
+                className="text-center mb-16"
               >
-                <h2 className="text-3xl font-semibold text-white md:text-4xl">Shipping Smart Contracts Should Be Easy</h2>
-                <p className="mt-4 text-white/60">
-                  Follow a guided flow that handles code generation, compilation, deployment, and verification. Your
-                  frontend scaffold keeps up automatically.
+                <h2 className="text-2xl font-semibold text-white md:text-3xl">Simple 3-Step Process</h2>
+                <p className="mt-4 text-white/60 max-w-2xl mx-auto">
+                  From idea to deployed contract in minutes, not hours.
                 </p>
               </motion.div>
 
-              <div className="mt-12 grid gap-6 md:grid-cols-3">
-                {workflowSteps.map((step) => (
+              <div className="grid gap-6 md:grid-cols-3">
+                {workflowSteps.map((step, index) => (
                   <motion.div
                     key={step.title}
                     initial={{ opacity: 0, y: 16 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
                     viewport={{ once: true }}
                   >
                     <Card className="h-full border-white/15 bg-white/8 backdrop-blur-md">
-                      <CardContent className="space-y-4 p-6 text-white">
-                        <step.icon className="h-8 w-8 text-sky-300" />
+                      <CardContent className="space-y-4 p-6 text-white text-center">
+                        <div className="flex justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 border border-white/20">
+                            <step.icon className="h-6 w-6 text-blue-400" />
+                          </div>
+                        </div>
                         <div className="space-y-2">
                           <h3 className="text-xl font-semibold">{step.title}</h3>
                           <p className="text-sm text-white/70">{step.description}</p>
@@ -528,19 +430,11 @@ const PageShell = () => {
                   </motion.div>
                 ))}
               </div>
-
-              <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-                <Link href="/docs" className="text-sm text-white/60 transition hover:text-white">
-                  Review Documentation
-                </Link>
-                <span className="text-white/40">/</span>
-                <Button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800">
-                  Contact Support
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </section>
+          )}
+
+
         </main>
       </div>
     </div>

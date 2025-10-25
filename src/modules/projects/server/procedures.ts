@@ -50,13 +50,18 @@ export const projectsRouter = createTRPCRouter({
         .input(z.object({
             limit: z.number().min(1).max(20).default(20),
             cursor: z.string().nullish(),
+            projectType: z.enum(['webapp', 'contract']).optional(),
         }))
         .query(async ({ input }) => {
-            const { limit, cursor } = input;
+            const { limit, cursor, projectType } = input;
+            
+            // Map frontend values to database values
+            const dbProjectType = projectType === 'webapp' ? 'WEBSITE' : 'DAPP';
             
             const projects = await prisma.project.findMany({
                 take: limit + 1, // Take one extra to check if there are more
                 cursor: cursor ? { id: cursor } : undefined,
+                where: projectType ? { projectType: dbProjectType } : {},
                 orderBy: {
                     updatedAt: "desc",
                 },
