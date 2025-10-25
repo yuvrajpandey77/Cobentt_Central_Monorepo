@@ -46,7 +46,8 @@ const PageContent = () => {
         // Redirect to DApp Studio with the prompt
         // The DApp Studio page will handle the analysis and show the form
         return new Promise<void>((resolve) => {
-            router.push(`/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`);
+            const url = `/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`;
+            router.push(url);
             // Resolve after a short delay to allow the loading state to be visible
             setTimeout(() => resolve(), 100);
         });
@@ -204,14 +205,6 @@ const PageContent = () => {
                                         </button>
                                     </div>
                                     <div className="flex flex-col items-center gap-2 text-center">
-                                        <Badge variant="secondary" className="rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold uppercase tracking-wider text-white/80">
-                                            {mode === "app" ? "Full App" : "Smart Contract"}
-                                        </Badge>
-                                        <p className="text-sm text-white/60">
-                                            {mode === "app"
-                                                ? "Describe your full-stack idea and let Cogy assemble UI, APIs, and infrastructure."
-                                                : "Describe your smart contract and AI will pre-fill the configuration for you to review."}
-                                        </p>
                                     </div>
                                 </div>
                             </div>

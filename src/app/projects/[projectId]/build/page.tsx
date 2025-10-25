@@ -25,6 +25,7 @@ import {
   ExternalLink,
   EyeIcon,
   CodeIcon,
+  Zap,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { FileExplorer } from '@/components/file-explorer';
@@ -380,8 +381,9 @@ forge test
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => router.push('/')}
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Projects
@@ -521,7 +523,7 @@ forge test
                       variant="outline"
                       size="sm"
                       onClick={() => setShowArtifacts(!showArtifacts)}
-                      className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                      className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
                     >
                       {showArtifacts ? 'Hide' : 'Show'} Details
                     </Button>
@@ -596,36 +598,79 @@ forge test
                 </TabsTrigger>
               </TabsList>
               <div className="ml-auto flex items-center gap-x-2">
-                <Button
-                  onClick={() => router.push(`/projects/${projectId}/deploy`)}
-                  disabled={!buildStatus?.artifacts?.sourceCode}
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
-                >
-                  <Rocket className="h-4 w-4 mr-2" />
-                  Deploy Contract
-                </Button>
+                {/* Only show Deploy button if contract hasn't been deployed yet */}
+                {!project?.contractAddress && (
+                  <div className="flex flex-col items-end">
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`/projects/${projectId}/deploy`)}
+                      disabled={!buildStatus?.artifacts?.sourceCode}
+                      className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
+                      title={!buildStatus?.artifacts?.sourceCode ? "Build the contract first to enable deployment" : "Deploy your smart contract to the blockchain"}
+                    >
+                      <Rocket className="h-4 w-4 mr-2" />
+                      Deploy Contract
+                    </Button>
+                    {!buildStatus?.artifacts?.sourceCode && (
+                      <span className="text-xs text-white/50 mt-1">Build required first</span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Show deployment status if contract is deployed */}
+                {project?.contractAddress && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-500/10 border border-green-500/20">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                      <span className="text-xs text-green-300 font-medium">Deployed</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(`https://etherscan.io/address/${project.contractAddress}`, '_blank')}
+                        className="text-green-300 hover:text-green-200 h-5 w-5 p-0"
+                        title="View contract on Etherscan"
+                      >
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </Button>
+                      <span className="text-xs text-green-400/70 font-mono">
+                        {project.contractAddress.slice(0, 4)}...{project.contractAddress.slice(-3)}
+                      </span>
+                    </div>
+                    
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`/projects/${projectId}/contract`)}
+                      className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
+                      title="Interact with your deployed contract"
+                    >
+                      <Zap className="h-4 w-4 mr-2" />
+                      Interact with Contract
+                    </Button>
+                  </div>
+                )}
                 
                 <Button
+                  size="sm"
                   onClick={handleDownloadArtifacts}
                   disabled={!buildStatus?.artifacts}
-                  variant="outline"
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Artifacts
                 </Button>
                 
                 <Button
+                  size="sm"
                   onClick={handleRunTests}
                   disabled={!buildStatus?.artifacts?.sourceCode}
-                  variant="outline"
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Run Tests
                 </Button>
                 
                 <Button
+                  size="sm"
                   onClick={async () => {
                     try {
                       const response = await fetch(`/api/projects/${projectId}/save-codebase`, {
@@ -652,8 +697,7 @@ forge test
                       alert('Error saving codebase');
                     }
                   }}
-                  variant="outline"
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Save Codebase

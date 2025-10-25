@@ -18,6 +18,7 @@ interface ProjectCardProps {
     updatedAt: Date;
     projectType?: string;
     contractType?: string;
+    contractAddress?: string;
     messages: Array<{
       id: string;
       content: string;
@@ -65,7 +66,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           {/* Enhanced hover overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out flex items-center justify-center">
             <Link href={`/projects/${project.id}/build`}>
-              <Button size="sm" className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-white border border-blue-400/40 hover:border-blue-400/60 backdrop-blur-sm transition-all duration-200 ease-out shadow-lg">
+              <Button size="sm" className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 text-white hover:text-black border border-blue-400/40 hover:border-blue-400/60 backdrop-blur-sm transition-all duration-200 ease-out shadow-lg">
                 <Eye className="w-3 h-3 mr-1" />
                 View Project
               </Button>
@@ -80,8 +81,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             {project.name}
           </CardTitle>
           
-          {/* Enhanced Action Button */}
-          <div className="mt-auto">
+          {/* Enhanced Action Button with Deployment Status */}
+          <div className="mt-auto space-y-2">
+            {/* Deployment Status */}
+            {project.contractAddress ? (
+              <div className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-md bg-green-500/10 border border-green-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
+                <span className="text-xs text-green-300 font-medium">Deployed</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-1.5 px-2 py-1 rounded-md bg-orange-500/10 border border-orange-500/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+                <span className="text-xs text-orange-300 font-medium">Not Deployed</span>
+              </div>
+            )}
+            
             <Link href={`/projects/${project.id}/contract`}>
               <Button 
                 size="sm" 

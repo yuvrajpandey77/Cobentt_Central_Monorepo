@@ -83,128 +83,107 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <Card className="border-white/15 bg-white/8 backdrop-blur-md text-white">
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="text-2xl font-semibold">Deployment Preview</CardTitle>
-            <p className="text-sm text-white/60">
-              Review your configuration before triggering the deployment pipeline.
-            </p>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <CheckCircle2 className="h-6 w-6 text-green-400" />
+            <h1 className="text-3xl font-semibold text-white">Configuration Review</h1>
           </div>
-          <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-200">
-            <CheckCircle2 className="mr-2 h-4 w-4" /> Preflight Ready
-          </Badge>
-        </CardHeader>
+          <p className="text-white/70 max-w-2xl mx-auto">
+            Review your smart contract configuration before generation. All settings look good to proceed.
+          </p>
+        </div>
 
-        <CardContent className="space-y-8">
-          <div className="grid gap-6 md:grid-cols-2">
-            {previewSections.map((section) => (
-              <div key={section.field} className="rounded-lg border border-white/10 bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-wide text-white/50">{section.label}</p>
-                <p className="mt-2 text-sm font-medium capitalize text-white">
-                  {String(data[section.field as keyof DappStudioFormValues])}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center gap-2 text-sm text-white/70">
-              <Sparkles className="h-4 w-4 text-amber-300" /> Modules enabled
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(data.features?.length ? data.features : Object.keys(featureLabels)).map((feature) => (
-                <Badge key={feature} variant="outline" className="border-white/20 bg-white/5 text-white/80">
-                  {featureLabels[feature] ?? feature}
-                </Badge>
+        {/* Main Configuration Card */}
+        <Card className="border-white/20 bg-white/5 backdrop-blur-md">
+          <CardContent className="p-8">
+            <div className="grid gap-6 md:grid-cols-2">
+              {previewSections.map((section) => (
+                <div key={section.field} className="space-y-2">
+                  <p className="text-sm text-white/60 font-medium">{section.label}</p>
+                  <p className="text-white font-semibold capitalize">
+                    {String(data[section.field as keyof DappStudioFormValues])}
+                  </p>
+                </div>
               ))}
-              {!(data.features?.length) && (
-                <span className="text-xs text-white/40">Features can be toggled in the previous step.</span>
-              )}
             </div>
-          </div>
 
-          <Separator className="bg-white/10" />
+            {data.features?.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <p className="text-sm font-medium text-white">Enabled Features</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {data.features.map((feature) => (
+                    <Badge key={feature} className="bg-white/10 text-white border-white/20 text-sm px-3 py-1">
+                      {featureLabels[feature] ?? feature}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-lg border border-white/10 bg-white/5 p-5">
-              <div className="flex items-center gap-3">
-                <Code2 className="h-5 w-5 text-sky-300" />
-                <p className="text-sm font-medium">Code Generation</p>
-              </div>
-              <p className="mt-3 text-xs text-white/60">
-                Solidity / Anchor templates will be rendered with your metadata and modules.
-              </p>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-5">
-              <div className="flex items-center gap-3">
-                <Shield className="h-5 w-5 text-emerald-300" />
-                <p className="text-sm font-medium">Verification</p>
-              </div>
-              <p className="mt-3 text-xs text-white/60">
-                Contract verification is {data.autoVerify ? "enabled" : "disabled"}. Metadata pushed post-deploy.
-              </p>
-            </div>
-            <div className="rounded-lg border border-white/10 bg-white/5 p-5">
-              <div className="flex items-center gap-3">
-                <Rocket className="h-5 w-5 text-blue-300" />
-                <p className="text-sm font-medium">Scaffold</p>
-              </div>
-              <p className="mt-3 text-xs text-white/60">
-                {data.generateFrontend
-                  ? "Next.js dapp package will include ABI hooks, deployment receipt, and environment wiring."
-                  : "Frontend scaffold generation has been skipped for this run."}
-              </p>
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button 
+            variant="outline" 
+            onClick={onBack} 
+            disabled={createDapp.isPending} 
+            className="border-white/20 bg-white/5 text-white hover:bg-white hover:text-black transition-all duration-200"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> 
+            Back to Configuration
+          </Button>
+          
+          <Button 
+            onClick={handleDeploy}
+            disabled={createDapp.isPending}
+            className="bg-white text-black hover:bg-gray-100 transition-all duration-200 shadow-lg"
+          >
+            {createDapp.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating Contract...
+              </>
+            ) : (
+              <>
+                Generate Smart Contract
+                <Rocket className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
 
-          <div className="flex flex-col gap-6 rounded-lg border border-white/10 bg-white/5 p-6 md:flex-row md:items-start md:justify-between">
-            <div className="space-y-2 text-sm text-white/70">
-              <p>
-                By continuing you acknowledge that deployment will consume network fees. Ensure your connected wallet
-                is funded and unlocked.
-              </p>
-              {data.includeTests && (
-                <p className="text-white/60">
-                  Foundry test suite will be bundled with scenarios for each enabled module.
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-3 md:w-72">
-              <Button variant="outline" onClick={onBack} disabled={createDapp.isPending} className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to editor
-              </Button>
-              <Button 
-                onClick={handleDeploy}
-                disabled={createDapp.isPending}
-                className="border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
-              >
-                {createDapp.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Project...
-                  </>
-                ) : (
-                  <>
-                    Generate Contract
-                    <Rocket className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
-              <Button variant="secondary" onClick={handleCopy} className="justify-between border-white/15 bg-white/5 text-white hover:bg-white/20 hover:text-black backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none">
-                <span>{copyState === "copied" ? "Config copied to clipboard" : "Copy config JSON"}</span>
-                <Clipboard className="h-4 w-4" />
-              </Button>
-              <Button asChild variant="ghost" className="justify-between text-white/70 hover:text-white">
-                <Link href="/docs/deployments/overview">
-                  View deployment guide
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Additional Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button 
+            variant="ghost" 
+            onClick={handleCopy} 
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            <Clipboard className="mr-2 h-4 w-4" />
+            {copyState === "copied" ? "Copied!" : "Copy Configuration"}
+          </Button>
+          
+          <Button asChild variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10">
+            <Link href="/docs/deployments/overview">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              View Documentation
+            </Link>
+          </Button>
+        </div>
+
+        {/* Info Note */}
+        <div className="text-center">
+          <p className="text-sm text-white/50">
+            Contract generation will create your smart contract template and prepare it for deployment.
+          </p>
+        </div>
+      </div>
     </motion.div>
   );
 };

@@ -233,24 +233,25 @@ function ContractPageContent() {
                 <div className="flex flex-wrap items-center gap-3">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => router.back()}
-                    className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-black"
+                    className="h-6 px-2 text-xs border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    <ArrowLeft className="mr-1 h-3 w-3" />
                     Back
                   </Button>
 
                   <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <Badge className="border-emerald-400/50 bg-emerald-400/15 px-3 py-1 text-emerald-100">
-                      <CheckCircle2 className="mr-1 h-4 w-4" />
+                    <Badge className="h-6 px-2 py-0 text-xs border-emerald-400/50 bg-emerald-400/15 text-emerald-100">
+                      <CheckCircle2 className="mr-1 h-3 w-3" />
                       Deployed
                     </Badge>
-                    <Badge className="border-blue-400/40 bg-blue-500/15 px-3 py-1 text-blue-100">
-                      <Shield className="mr-1 h-4 w-4" />
+                    <Badge className="h-6 px-2 py-0 text-xs border-blue-400/40 bg-blue-500/15 text-blue-100">
+                      <Shield className="mr-1 h-3 w-3" />
                       {project.contractType}
                     </Badge>
-                    <Badge className="border-white/20 bg-white/10 px-3 py-1 text-white/70">
-                      <Globe className="mr-1 h-4 w-4" />
+                    <Badge className="h-6 px-2 py-0 text-xs border-white/20 bg-white/10 text-white/70">
+                      <Globe className="mr-1 h-3 w-3" />
                       {networkLabel}
                     </Badge>
                   </div>
@@ -286,17 +287,17 @@ function ContractPageContent() {
                       size="icon"
                       variant="ghost"
                       onClick={() => copyToClipboard(contractAddress)}
-                      className="h-9 w-9 text-white/70 hover:bg-white/20 hover:text-black"
+                      className="h-7 w-7 text-white/70 hover:bg-white/20 hover:text-black"
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-3 w-3" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => window.open(`${getExplorerUrl()}/address/${contractAddress}`, '_blank')}
-                      className="h-9 w-9 text-white/70 hover:bg-white/20 hover:text-black"
+                      className="h-7 w-7 text-white/70 hover:bg-white/20 hover:text-black"
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>

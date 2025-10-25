@@ -293,7 +293,7 @@ export const FileExplorer = ({ files, onFileChange, editable = true }: FileExplo
                                    <Hint text="Edit file" side="bottom">
                                        <Button variant="outline" size="sm"
                                            onClick={handleEdit}
-                                           className="h-7 w-7 p-0"
+                                           className="h-7 w-7 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
                                        >
                                            <Edit3 className="h-3 w-3" />
                                        </Button>
@@ -304,7 +304,7 @@ export const FileExplorer = ({ files, onFileChange, editable = true }: FileExplo
                                        <Hint text="Save changes" side="bottom">
                                            <Button variant="outline" size="sm"
                                                onClick={handleSave}
-                                               className="h-7 w-7 p-0 text-green-600 hover:text-green-700"
+                                               className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/20"
                                            >
                                                <Save className="h-3 w-3" />
                                            </Button>
@@ -312,7 +312,7 @@ export const FileExplorer = ({ files, onFileChange, editable = true }: FileExplo
                                        <Hint text="Cancel editing" side="bottom">
                                            <Button variant="outline" size="sm"
                                                onClick={handleCancel}
-                                               className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                                               className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/20"
                                            >
                                                ×
                                            </Button>
@@ -323,7 +323,7 @@ export const FileExplorer = ({ files, onFileChange, editable = true }: FileExplo
                                    <Button variant="outline" size="sm"
                                        onClick={handleCopy}
                                        disabled={copied}
-                                       className="h-7 w-7 p-0"
+                                       className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
                                    >
                                        {copied ? <CopyCheckIcon className="h-3 w-3" /> : <CopyIcon className="h-3 w-3" />}
                                    </Button>
