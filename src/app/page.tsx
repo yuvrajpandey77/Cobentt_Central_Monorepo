@@ -9,7 +9,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { ProjectForm } from "@/modules/home/ui/components/project-form";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
-import { Footer } from "@/components/sections/landing-sections";
+import { Footer } from "@/components/layout/footer";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
 import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2 } from "lucide-react";
@@ -99,7 +99,7 @@ const PageContent = () => {
         return () => observer.disconnect();
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
     
-    return (
+  return (
         <div className="min-h-screen flex">
             {/* Sidebar - Fixed Full Height */}
             <Sidebar className="hidden lg:block fixed left-0 top-0 h-screen z-50" />
@@ -156,12 +156,12 @@ const PageContent = () => {
                                     <circle cx="12" cy="12" r="2.2" fill="white" opacity="0.85" />
                                 </svg>
                                 <span className="text-xs font-semibold tracking-wide text-white/90 leading-none align-middle">Beta 0.1</span>
-                            </div>
-
+        </div>
+        
                             {/* Main Heading */}
                             <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
                                 Build your Dapp with Clox
-                            </h1>
+            </h1>
                             
                             {/* Subtitle */}
                             <p className="mt-2 text-lg text-white/20 mb-4 max-w-xl mx-auto ">
@@ -203,14 +203,14 @@ const PageContent = () => {
                                             <Code2 className="h-4 w-4" />
                                             Smart Contract
                                         </button>
-                                    </div>
+                  </div>
                                     <div className="flex flex-col items-center gap-2 text-center">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
 
                 {/* Projects Grid Section */}
@@ -222,7 +222,7 @@ const PageContent = () => {
                                 <div className="flex-1"></div> {/* Spacer */}
                                 <h2 className="text-3xl font-bold text-white text-center flex-1">
                                     Community Projects
-                                </h2>
+                </h2>
                                 <div className="flex-1 flex justify-end"> {/* Right-aligned toggle */}
                                     <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-1">
                                         <button
@@ -249,28 +249,28 @@ const PageContent = () => {
                                             <Zap className="h-4 w-4" />
                                             Smart Contracts
                                         </button>
-                                    </div>
-                                </div>
-                            </div>
+                  </div>
+                </div>
+              </div>
                             <p className="text-lg text-white/80 max-w-2xl mx-auto text-center">
                                 Explore amazing projects built by our community using Cogerphere
-                            </p>
-                        </div>
-                        
+            </p>
+          </div>
+
                         {isLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <ProjectCardSkeleton key={i} />
                                 ))}
-                            </div>
+              </div>
                         ) : projects && projects.length > 0 ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {projects.map((project: any) => (
                                         <ProjectCard key={project.id} project={project} />
                                     ))}
-                                </div>
-                                
+            </div>
+
                                 {/* Load more trigger */}
                                 <div ref={loadMoreRef} className="mt-8 text-center">
                                     {isFetchingNextPage ? (
@@ -278,24 +278,24 @@ const PageContent = () => {
                                             {Array.from({ length: 3 }).map((_, i) => (
                                                 <ProjectCardSkeleton key={i} />
                                             ))}
-                                        </div>
+              </div>
                                     ) : hasNextPage ? (
                                         <p className="text-white/40 text-sm">Scroll down to load more projects</p>
                                     ) : (
                                         <p className="text-white/40 text-sm">You've reached the end!</p>
                                     )}
-                                </div>
+            </div>
                             </>
                         ) : (
                             <div className="text-center py-12">
                                 <Code2 className="w-16 h-16 text-white/40 mx-auto mb-4" />
                                 <h3 className="text-xl font-semibold text-white/80 mb-2">
                                     No {projectType === "webapp" ? "web apps" : "smart contracts"} yet
-                                </h3>
+              </h3>
                                 <p className="text-white/60">
                                     Be the first to create a {projectType === "webapp" ? "web app" : "smart contract"} and share it with the community!
                                 </p>
-                            </div>
+            </div>
                         )}
                     </div>
                 </section>

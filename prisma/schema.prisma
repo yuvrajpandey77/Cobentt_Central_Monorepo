@@ -37,6 +37,11 @@ model Project {
   decimals String?
   features String[] // Array of enabled features like ["mintable", "burnable"]
   buildJobs BuildJob[]
+  
+  // NEW: Store enhanced AI configuration
+  aiConfiguration Json? // Store full EnhancedContractConfig
+  gasOptimizations String[] // AI-suggested optimizations
+  securityNotes String[] // AI security recommendations
 }
 
 enum MessageRole {

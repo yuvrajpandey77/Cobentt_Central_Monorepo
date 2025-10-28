@@ -6,6 +6,14 @@ import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { SANDBOX_TIMEOUT } from "./types";
+import { EnhancedContractConfig } from '@/types/contract-config';
+import { 
+  generateContractWithIteration, 
+  ContractGenerationResult,
+  refineContractWithForgeErrors,
+  parseForgeOutput,
+  ForgeErrorInfo
+} from './ai-contract-generator';
 // Screenshot capture deps loaded dynamically to avoid type and runtime issues when unavailable
 
 
@@ -325,7 +333,7 @@ async function updateBuildProgress(buildJobId: string, progress: number, current
 }
 
 // Helper function to validate contract syntax before compilation
-function validateContractSyntax(contractCode: string): { valid: boolean; errors: string[] } {
+function validateContractSyntax(contractCode: string, isAIGenerated: boolean = false): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
   // Check for SPDX license identifier
@@ -390,18 +398,95 @@ function validateContractSyntax(contractCode: string): { valid: boolean; errors:
     }
   }
   
+  // Enhanced validation for AI-generated code
+  if (isAIGenerated) {
+    // Additional checks for AI-generated code
+    errors.push(...checkSecurityPatterns(contractCode));
+    errors.push(...checkGasOptimizations(contractCode));
+    errors.push(...checkAccessControls(contractCode));
+    errors.push(...checkReentrancyGuards(contractCode));
+  }
+  
   return {
     valid: errors.length === 0,
     errors,
   };
 }
 
-// Contract Generation Function
+// Security pattern checks for AI-generated code
+function checkSecurityPatterns(contractCode: string): string[] {
+  const errors: string[] = [];
+  
+  // Check for dangerous patterns
+  if (contractCode.includes('selfdestruct')) {
+    errors.push('selfdestruct is not allowed in generated code');
+  }
+  
+  if (contractCode.includes('delegatecall')) {
+    errors.push('delegatecall is not allowed in generated code');
+  }
+  
+  // Check for proper access controls
+  const hasAccessControl = contractCode.includes('onlyOwner') || 
+                          contractCode.includes('onlyRole') || 
+                          contractCode.includes('require(msg.sender');
+  
+  if (contractCode.includes('function') && !hasAccessControl) {
+    errors.push('Functions should include proper access controls');
+  }
+  
+  return errors;
+}
+
+// Gas optimization checks
+function checkGasOptimizations(contractCode: string): string[] {
+  const errors: string[] = [];
+  
+  // Check for unchecked blocks where appropriate
+  const hasUnchecked = contractCode.includes('unchecked');
+  const hasLoops = contractCode.includes('for (') || contractCode.includes('while (');
+  
+  if (hasLoops && !hasUnchecked) {
+    errors.push('Consider using unchecked blocks for gas optimization in loops');
+  }
+  
+  return errors;
+}
+
+// Access control checks
+function checkAccessControls(contractCode: string): string[] {
+  const errors: string[] = [];
+  
+  // Check for proper error handling
+  if (contractCode.includes('function') && !contractCode.includes('require')) {
+    errors.push('Functions should include proper validation with require statements');
+  }
+  
+  return errors;
+}
+
+// Reentrancy guard checks
+function checkReentrancyGuards(contractCode: string): string[] {
+  const errors: string[] = [];
+  
+  // Check for external calls without reentrancy protection
+  const hasExternalCalls = contractCode.includes('.call(') || 
+                          contractCode.includes('.transfer(') || 
+                          contractCode.includes('.send(');
+  
+  if (hasExternalCalls && !contractCode.includes('ReentrancyGuard')) {
+    errors.push('Consider using ReentrancyGuard for external calls');
+  }
+  
+  return errors;
+}
+
+// AI-Only Contract Generation Function
 export const generateContract = inngest.createFunction(
   { id: "generate-contract" },
   { event: "contract/generate" },
   async ({ event, step }) => {
-    console.log('🎯 generateContract function called with event:', event);
+    console.log('🎯 AI Contract Generator called with event:', event);
     const { buildJobId, contractType, tokenName, tokenSymbol, tokenSupply, decimals, features } = event.data;
     
     // Check if this build job is already being processed
@@ -417,65 +502,106 @@ export const generateContract = inngest.createFunction(
         where: { id: buildJobId },
         data: { status: 'RUNNING' },
       });
-      await updateBuildProgress(buildJobId, 5, 'Starting contract generation...', 'Build job initiated');
+      await updateBuildProgress(buildJobId, 5, 'Starting AI contract generation...', 'Build job initiated');
     });
 
-    // Generate contract code based on type
-    const contractCode = await step.run("generate-contract-code", async () => {
-      await updateBuildProgress(buildJobId, 10, 'Generating contract from template...', `Creating ${contractType} contract`);
+    // Parse enhanced configuration
+    const enhancedConfig = await step.run("parse-configuration", async () => {
+      await updateBuildProgress(buildJobId, 10, 'Parsing configuration...', 'Analyzing user requirements');
       
-      let code: string;
-      switch (contractType) {
-        case 'ERC20':
-          code = generateERC20Contract(tokenName, tokenSymbol, tokenSupply, decimals, features);
-          break;
-        case 'ERC721':
-          code = generateERC721Contract(tokenName, tokenSymbol, features);
-          break;
-        case 'ERC1155':
-          code = generateERC1155Contract(tokenName, features);
-          break;
-        case 'PAYMENT_SPLITTER':
-          code = generatePaymentSplitterContract();
-          break;
-        case 'CUSTOM':
-          // For custom contracts, generate a basic ERC20 template as starting point
-          await updateBuildProgress(buildJobId, 12, 'Custom contract requested', 'Generating basic template');
-          code = generateERC20Contract(tokenName || 'CustomToken', tokenSymbol || 'CUSTOM', tokenSupply || '1000000', decimals || '18', features);
-          break;
-        default:
-          throw new Error(`Unsupported contract type: ${contractType}. Supported types: ERC20, ERC721, ERC1155, PAYMENT_SPLITTER, CUSTOM`);
+      let config: EnhancedContractConfig | null = null;
+      try {
+        console.log('🔍 Checking for enhanced configuration...');
+        console.log('Event data keys:', Object.keys(event.data));
+        console.log('aiConfiguration present:', !!event.data.aiConfiguration);
+        
+        if (event.data.aiConfiguration) {
+          config = event.data.aiConfiguration as EnhancedContractConfig;
+          console.log('✅ Enhanced configuration found:', JSON.stringify(config, null, 2));
+        } else {
+          console.log('❌ No enhanced configuration found, creating default config');
+          // Create default config from basic parameters
+          config = {
+            contractType: contractType.toLowerCase() as any,
+            tokenName: tokenName || 'Token',
+            tokenSymbol: tokenSymbol || 'TKN',
+            blockchain: 'ethereum',
+            network: 'testnet',
+            features: features || [],
+            customRequirements: {},
+            gasOptimizations: [],
+            securityRecommendations: [],
+            reasoning: 'Generated using AI-only approach'
+          };
+        }
+      } catch (error) {
+        console.log('❌ Error parsing enhanced configuration:', error);
+        throw new Error(`Configuration parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
       
-      await updateBuildProgress(buildJobId, 15, 'Contract generated, validating...', `Generated ${code.split('\n').length} lines of Solidity code`);
-      
-      // Validate contract syntax before compilation
-      const validation = validateContractSyntax(code);
-      if (!validation.valid) {
-        const errorMsg = `Contract validation failed:\n${validation.errors.join('\n')}`;
-        console.error('Contract validation errors:', validation.errors);
-        await updateBuildProgress(buildJobId, 0, 'Contract validation failed', errorMsg);
-        
-        await prisma.buildJob.update({
-          where: { id: buildJobId },
-          data: {
-            status: 'FAILED',
-            progress: 0,
-            currentStep: 'Contract validation failed',
-            artifacts: {
-              error: errorMsg,
-              validationErrors: validation.errors,
-              contractCode: code,
-            },
-          },
-        });
-        
-        throw new Error(errorMsg);
-      }
-      
-      await updateBuildProgress(buildJobId, 20, 'Contract validated successfully', '✓ Syntax check passed');
-      return code;
+      return config;
     });
+
+    // Update progress before AI generation
+    await step.run("update-progress-before-ai", async () => {
+      await updateBuildProgress(buildJobId, 15, 'Generating contract with GPT-5...', 'Using AI-only generation approach');
+    });
+
+    // Generate contract with AI using iterative refinement (outside step to avoid nesting)
+    const userPrompt = event.data.userPrompt || `Create a ${contractType} token called ${tokenName} with symbol ${tokenSymbol}`;
+      
+      console.log('📋 CONTRACT PARAMETERS:');
+      console.log('- contractType:', contractType);
+      console.log('- tokenName:', tokenName);
+      console.log('- tokenSymbol:', tokenSymbol);
+      console.log('- features:', features);
+      console.log('- userPrompt:', userPrompt);
+      
+    let generationResult: ContractGenerationResult;
+    try {
+      generationResult = await generateContractWithIteration(
+        userPrompt,
+        enhancedConfig,
+        3, // max iterations
+        [] // examples (can be expanded later)
+      );
+      
+      console.log('🎉 Contract generation successful!');
+      console.log('📊 Generation method:', generationResult.generationMethod);
+      console.log('🔄 Iterations used:', generationResult.iteration);
+      console.log('📈 Validation score:', generationResult.validationScore);
+      
+      await step.run("update-progress-after-ai", async () => {
+        await updateBuildProgress(buildJobId, 25, 'Contract generated successfully', `Generated using ${generationResult.generationMethod} (${generationResult.iteration} iterations, score: ${generationResult.validationScore}/100)`);
+      });
+      
+    } catch (error) {
+      console.error('❌ AI contract generation failed:', error);
+      
+      await step.run("handle-ai-generation-error", async () => {
+        await updateBuildProgress(buildJobId, 0, 'Contract generation failed', error instanceof Error ? error.message : 'Unknown error');
+          
+          await prisma.buildJob.update({
+            where: { id: buildJobId },
+            data: {
+              status: 'FAILED',
+              progress: 0,
+            currentStep: 'AI contract generation failed',
+              artifacts: {
+              error: error instanceof Error ? error.message : 'Unknown error',
+              contractCode: '',
+              contractName: tokenName?.replace(/\s+/g, '') || 'Token',
+              contractType: contractType,
+              generationFailed: true,
+            }
+          }
+        });
+      });
+      
+      throw error;
+    }
+
+    const contractCode = generationResult.contractCode;
 
     // Show contract code to user immediately (save to database for UI display)
     await step.run("save-contract-preview", async () => {
@@ -581,35 +707,192 @@ export const generateContract = inngest.createFunction(
       }
     });
 
-    // Compile with forge
-    await step.run("compile-with-forge", async () => {
-      await updateBuildProgress(buildJobId, 65, 'Compiling with forge...', 'Running forge build');
+    // Verify sandbox health before compilation
+    await step.run("verify-sandbox-health", async () => {
+      await updateBuildProgress(buildJobId, 63, 'Verifying sandbox...', 'Checking sandbox health');
       
       try {
         const sandbox = await Sandbox.connect(sandboxId);
+        const healthCheck = await sandbox.commands.run("echo 'healthy' && which forge");
         
-        // Compile with forge using absolute path
-        console.log('Compiling with forge...');
-        const forgeBuild = await sandbox.commands.run("export PATH=\"$PATH:$HOME/.foundry/bin\" && cd /home/user/hello_template && forge build");
-        console.log('Forge build result:', { 
-          exitCode: forgeBuild.exitCode, 
-          stdout: forgeBuild.stdout.substring(0, 1000), 
-          stderr: forgeBuild.stderr.substring(0, 1000) 
-        });
-        
-        if (forgeBuild.exitCode !== 0) {
-          console.error('Forge compilation failed:');
-          console.error('STDOUT:', forgeBuild.stdout);
-          console.error('STDERR:', forgeBuild.stderr);
-          throw new Error(`Forge compilation failed: ${forgeBuild.stderr}`);
+        if (healthCheck.exitCode !== 0) {
+          throw new Error('Sandbox health check failed - forge not found');
         }
         
-        await updateBuildProgress(buildJobId, 80, 'Compilation successful', 'Forge build completed');
+        console.log('✅ Sandbox is healthy and ready');
+        console.log('Forge location:', healthCheck.stdout);
+        await updateBuildProgress(buildJobId, 64, 'Sandbox verified', 'Environment ready for compilation');
       } catch (error) {
-        console.error('Forge compilation error:', error);
-        throw error;
+        console.error('❌ Sandbox health check failed:', error);
+        throw new Error(`Sandbox not responding: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
+
+    // Compile with forge (with retry loop for compilation failures)
+    let refinedContractCode = contractCode;
+    let compilationAttempts = 0;
+    const maxCompilationAttempts = 3;
+    interface ForgeBuildResult {
+      stdout: string;
+      stderr: string;
+      exitCode: number;
+    }
+    let lastForgeResult: ForgeBuildResult | null = null;
+    
+    await updateBuildProgress(buildJobId, 65, 'Compiling with forge...', 'Running forge build');
+    
+    const contractName = tokenName?.replace(/\s+/g, '') || 'Token';
+    
+    while (compilationAttempts < maxCompilationAttempts) {
+      compilationAttempts++;
+      console.log(`\n🔄 Compilation Attempt ${compilationAttempts}/${maxCompilationAttempts}`);
+      
+      try {
+        // Write the current contract code to the sandbox
+        await step.run(`write-contract-${compilationAttempts}`, async () => {
+        const sandbox = await Sandbox.connect(sandboxId);
+          await sandbox.files.write(`/home/user/hello_template/src/${contractName}.sol`, refinedContractCode);
+          console.log('✅ Contract file written/updated in sandbox');
+        });
+        
+        // Compile with forge
+        const stepResult = await step.run(`compile-attempt-${compilationAttempts}`, async () => {
+          const sandbox = await Sandbox.connect(sandboxId);
+          console.log('⚙️ Compiling with forge...');
+          let forgeBuild: ForgeBuildResult | null = null;
+          
+          try {
+            const result = await sandbox.commands.run("export PATH=\"$PATH:$HOME/.foundry/bin\" && cd /home/user/hello_template && forge build");
+            forgeBuild = {
+              exitCode: result.exitCode,
+              stdout: result.stdout,
+              stderr: result.stderr
+            };
+          } catch (error) {
+            // CommandExitError when forge fails - this is expected!
+            if (error instanceof Error && 'stdout' in error) {
+              forgeBuild = {
+                exitCode: 1,
+                stdout: (error as any).stdout || '',
+                stderr: (error as any).stderr || ''
+              };
+            } else {
+              throw error;
+            }
+          }
+          
+          if (!forgeBuild) {
+            throw new Error('Failed to get Forge build result');
+          }
+          
+        console.log('Forge build result:', { 
+          exitCode: forgeBuild.exitCode, 
+            stdout: forgeBuild.stdout.substring(0, 500), 
+            stderr: forgeBuild.stderr.substring(0, 500) 
+          });
+          
+          if (forgeBuild.exitCode === 0) {
+            // ✅ SUCCESS!
+            console.log('✅ Forge compilation successful!');
+            await updateBuildProgress(buildJobId, 80, 'Compilation successful', `Forge build completed on attempt ${compilationAttempts}`);
+          }
+          
+          return forgeBuild;
+        });
+        
+        lastForgeResult = stepResult;
+        
+        // Check if last compilation was successful
+        if (lastForgeResult) {
+          if (lastForgeResult.exitCode === 0) {
+            break; // Success!
+          }
+          
+          // FAILURE - Parse errors and refine OUTSIDE the step
+          console.error(`❌ Forge compilation failed on attempt ${compilationAttempts}`);
+          console.error('STDOUT:', lastForgeResult.stdout);
+          console.error('STDERR:', lastForgeResult.stderr);
+          
+          const forgeErrors = parseForgeOutput(lastForgeResult.stdout, lastForgeResult.stderr, lastForgeResult.exitCode);
+          console.log('📋 Parsed Forge errors:', forgeErrors.errors);
+          
+          if (compilationAttempts >= maxCompilationAttempts) {
+            // Out of retries
+            console.error('❌ Max compilation attempts reached');
+            throw new Error(`Forge compilation failed after ${maxCompilationAttempts} attempts: ${forgeErrors.errors.join(', ')}`);
+          }
+          
+          // Refine the contract based on Forge errors (wrapped in step for tracking)
+          console.log('🔧 Refining contract based on Forge errors...');
+          
+          refinedContractCode = await step.run(`refine-contract-attempt-${compilationAttempts}`, async () => {
+            // Update progress - AI refinement starting
+            await updateBuildProgress(
+              buildJobId, 
+              67 + (compilationAttempts * 3), 
+              'AI analyzing errors...', 
+              `Attempt ${compilationAttempts}: Sending errors to GPT-5 for analysis`
+            );
+            
+            console.log('🤖 Calling GPT-5 to refine contract...');
+            const refined = await refineContractWithForgeErrors(
+              refinedContractCode,
+              forgeErrors,
+              userPrompt,
+              enhancedConfig
+            );
+            
+            // Update progress - AI refinement complete
+            await updateBuildProgress(
+              buildJobId, 
+              70 + (compilationAttempts * 3), 
+              'Contract refined, retrying...', 
+              `Attempt ${compilationAttempts}: AI generated improved contract`
+            );
+            
+            console.log('✅ Contract refined. Ready to retry compilation...');
+            return refined;
+          });
+        }
+      } catch (error) {
+        console.error(`Compilation attempt ${compilationAttempts} error:`, error);
+        
+        // Update progress with error info
+        await updateBuildProgress(
+          buildJobId, 
+          65 + (compilationAttempts * 5), 
+          'Compilation attempt failed', 
+          `Attempt ${compilationAttempts}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        
+        if (compilationAttempts >= maxCompilationAttempts) {
+          // Final failure - update build job to FAILED
+          console.error('❌ All compilation attempts exhausted');
+          await prisma.buildJob.update({
+            where: { id: buildJobId },
+            data: {
+              status: 'FAILED',
+              progress: 0,
+              currentStep: 'Build failed after 3 compilation attempts',
+              artifacts: {
+                error: error instanceof Error ? error.message : 'Unknown error',
+                lastGeneratedCode: refinedContractCode,
+                totalAttempts: compilationAttempts,
+                compilationFailed: true,
+              },
+            },
+          });
+        throw error;
+      }
+        
+        // Retry with exponential backoff
+        const backoffMs = Math.min(1000 * Math.pow(2, compilationAttempts - 1), 10000);
+        console.log(`⏳ Waiting ${backoffMs}ms before retry attempt ${compilationAttempts + 1}...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        
+        console.log(`🔄 Continuing to attempt ${compilationAttempts + 1}...`);
+      }
+    }
 
     // Extract artifacts
     const compilationResult = await step.run("extract-artifacts", async () => {
@@ -925,277 +1208,10 @@ export const verifyContract = inngest.createFunction(
   },
 );
 
-// Helper functions for contract generation
-function generateERC20Contract(name: string, symbol: string, supply: string, decimals: string, features: string[]) {
-  const mintable = features.includes('mintable');
-  const burnable = features.includes('burnable');
-  const pausable = features.includes('pausable');
-  const accessControl = features.includes('access-control');
-  const permit = features.includes('permit');
+// All template generation functions removed - using AI-only generation
 
-  // Build imports
-  const imports = [
-    'import "@openzeppelin/contracts/token/ERC20/ERC20.sol";'
-  ];
-  
-  if (burnable) imports.push('import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";');
-  if (pausable) imports.push('import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";');
-  if (permit) imports.push('import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";');
-  if (accessControl || mintable) imports.push('import "@openzeppelin/contracts/access/Ownable.sol";');
-
-  // Build inheritance
-  const inheritance = ['ERC20'];
-  if (burnable) inheritance.push('ERC20Burnable');
-  if (pausable) inheritance.push('ERC20Pausable');
-  if (permit) inheritance.push('ERC20Permit');
-  if (accessControl || mintable) inheritance.push('Ownable');
-
-  // Build constructor (OpenZeppelin v5 syntax)
-  const constructorParams = permit ? `ERC20Permit("${name}")` : '';
-  const constructorBody = `
-        _mint(msg.sender, ${supply} * 10**${decimals});
-    `;
-
-  // Build additional functions
-  let additionalFunctions = '';
-  
-  if (mintable) {
-    additionalFunctions += `
-    
-    function mint(address to, uint256 amount) public onlyOwner {
-        _mint(to, amount);
-    }`;
-  }
-  
-  if (pausable) {
-    additionalFunctions += `
-    
-    function pause() public onlyOwner {
-        _pause();
-    }
-    
-    function unpause() public onlyOwner {
-        _unpause();
-    }`;
-  }
-
-  // Override _update if pausable (required for Pausable in OZ v5)
-  const updateOverride = pausable
-    ? `
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20${pausable ? ', ERC20Pausable' : ''})
-    {
-        super._update(from, to, value);
-    }` : '';
-
-  // Build constructor initialization (OpenZeppelin v5 syntax)
-  const constructorInit = [];
-  constructorInit.push(`ERC20("${name}", "${symbol}")`);
-  if (accessControl || mintable) constructorInit.push('Ownable(msg.sender)');
-  if (permit) constructorInit.push(`ERC20Permit("${name}")`);
-
-  return `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-${imports.join('\n')}
-
-contract ${name.replace(/\s+/g, '')} is ${inheritance.join(', ')} {
-    constructor()
-        ${constructorInit.join('\n        ')}
-    {${constructorBody}
-    }${additionalFunctions}${updateOverride}
-}`;
-}
-
-function generateERC721Contract(name: string, symbol: string, features: string[]) {
-  const mintable = features.includes('mintable');
-  const burnable = features.includes('burnable');
-  const pausable = features.includes('pausable');
-  const accessControl = features.includes('access-control');
-
-  // Build imports
-  const imports = [
-    'import "@openzeppelin/contracts/token/ERC721/ERC721.sol";',
-    'import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";'
-  ];
-  
-  if (burnable) imports.push('import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";');
-  if (pausable) imports.push('import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Pausable.sol";');
-  if (accessControl || mintable) imports.push('import "@openzeppelin/contracts/access/Ownable.sol";');
-
-  // Build inheritance
-  const inheritance = ['ERC721', 'ERC721URIStorage'];
-  if (burnable) inheritance.push('ERC721Burnable');
-  if (pausable) inheritance.push('ERC721Pausable');
-  if (accessControl || mintable) inheritance.push('Ownable');
-
-  // Build additional functions
-  let additionalFunctions = '';
-  
-  if (mintable) {
-    additionalFunctions += `
-    uint256 private _nextTokenId;
-    
-    function safeMint(address to, string memory uri) public onlyOwner {
-        uint256 tokenId = _nextTokenId++;
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
-    }`;
-  }
-  
-  if (pausable) {
-    additionalFunctions += `
-    
-    function pause() public onlyOwner {
-        _pause();
-    }
-    
-    function unpause() public onlyOwner {
-        _unpause();
-    }`;
-  }
-
-  // Required overrides for OpenZeppelin v5
-  const overrides = pausable ? `
-    
-    function _update(address to, uint256 tokenId, address auth)
-        internal
-        override(ERC721${pausable ? ', ERC721Pausable' : ''})
-        returns (address)
-    {
-        return super._update(to, tokenId, auth);
-    }
-    
-    function _increaseBalance(address account, uint128 value)
-        internal
-        override(ERC721${pausable ? ', ERC721Pausable' : ''})
-    {
-        super._increaseBalance(account, value);
-    }` : '';
-
-  // Build constructor initialization
-  const constructorInit721 = [];
-  constructorInit721.push(`ERC721("${name}", "${symbol}")`);
-  if (accessControl || mintable) constructorInit721.push('Ownable(msg.sender)');
-
-  return `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-${imports.join('\n')}
-
-contract ${name.replace(/\s+/g, '')} is ${inheritance.join(', ')} {
-    constructor()
-        ${constructorInit721.join('\n        ')}
-    {}${additionalFunctions}
-    
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
-    }
-    
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }${overrides}
-}`;
-}
-
-function generateERC1155Contract(name: string, features: string[]) {
-  const mintable = features.includes('mintable');
-  const burnable = features.includes('burnable');
-  const pausable = features.includes('pausable');
-  const accessControl = features.includes('access-control');
-
-  // Build imports
-  const imports = [
-    'import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";'
-  ];
-  
-  if (burnable) imports.push('import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";');
-  if (pausable) imports.push('import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";');
-  if (accessControl || mintable) imports.push('import "@openzeppelin/contracts/access/Ownable.sol";');
-
-  // Build inheritance
-  const inheritance = ['ERC1155'];
-  if (burnable) inheritance.push('ERC1155Burnable');
-  if (pausable) inheritance.push('ERC1155Pausable');
-  if (accessControl || mintable) inheritance.push('Ownable');
-
-  // Build additional functions
-  let additionalFunctions = '';
-  
-  if (mintable) {
-    additionalFunctions += `
-    
-    function mint(address to, uint256 id, uint256 amount, bytes memory data) public onlyOwner {
-        _mint(to, id, amount, data);
-    }
-    
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public onlyOwner {
-        _mintBatch(to, ids, amounts, data);
-    }`;
-  }
-  
-  if (pausable) {
-    additionalFunctions += `
-    
-    function pause() public onlyOwner {
-        _pause();
-    }
-    
-    function unpause() public onlyOwner {
-        _unpause();
-    }`;
-  }
-
-  // Required overrides for OpenZeppelin v5
-  const overrides = pausable ? `
-    
-    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
-        internal
-        override(ERC1155${pausable ? ', ERC1155Pausable' : ''})
-    {
-        super._update(from, to, ids, values);
-    }` : '';
-
-  // Build constructor initialization
-  const constructorInit1155 = [];
-  constructorInit1155.push('ERC1155("https://api.example.com/metadata/{id}.json")');
-  if (accessControl || mintable) constructorInit1155.push('Ownable(msg.sender)');
-
-  return `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-${imports.join('\n')}
-
-contract ${name.replace(/\s+/g, '')} is ${inheritance.join(', ')} {
-    constructor()
-        ${constructorInit1155.join('\n        ')}
-    {}${additionalFunctions}${overrides}
-}`;
-}
-
-function generatePaymentSplitterContract() {
-  return `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-
-import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
-
-contract PaymentSplitterContract is PaymentSplitter {
-    constructor(address[] memory payees, uint256[] memory shares_)
-        PaymentSplitter(payees, shares_)
-    {}
-}`;
-}
+// Helper functions for contract generation - REMOVED (using AI-only generation)
+// All template generation functions have been replaced with AI generation
 
 function extractABI(output: string): any[] {
   // Simple ABI extraction - in production, use proper JSON parsing

@@ -129,6 +129,12 @@ export const projectsRouter = createTRPCRouter({
             decimals: z.string().optional(),
             network: z.enum(['MAINNET', 'TESTNET']),
             features: z.array(z.string()).default([]),
+            // Enhanced configuration fields
+            aiConfiguration: z.any().optional(),
+            gasOptimizations: z.array(z.string()).default([]),
+            securityRecommendations: z.array(z.string()).default([]),
+            complexity: z.enum(['simple', 'moderate', 'complex']).optional(),
+            reasoning: z.string().optional(),
         }))
         .mutation(async ({ input, ctx }) => {
             console.log('🔥 createDapp mutation called with input:', input);
@@ -148,6 +154,10 @@ export const projectsRouter = createTRPCRouter({
                     decimals: input.decimals,
                     network: input.network,
                     features: input.features,
+                    // Enhanced configuration fields
+                    aiConfiguration: input.aiConfiguration,
+                    gasOptimizations: input.gasOptimizations,
+                    securityNotes: input.securityRecommendations,
                     messages: {
                         create: {
                             content: input.value,
@@ -187,6 +197,12 @@ export const projectsRouter = createTRPCRouter({
                     tokenSupply: input.tokenSupply,
                     decimals: input.decimals,
                     features: input.features,
+                    // Enhanced configuration fields
+                    aiConfiguration: input.aiConfiguration,
+                    gasOptimizations: input.gasOptimizations,
+                    securityRecommendations: input.securityRecommendations,
+                    complexity: input.complexity,
+                    reasoning: input.reasoning,
                 },
             });
 

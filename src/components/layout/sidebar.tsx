@@ -7,7 +7,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2 } from "lucide-react";
+import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,8 +36,75 @@ export const Sidebar = ({ className }: SidebarProps) => {
     });
   }, [projects, searchQuery]);
 
+  // Show placeholder sidebar for non-logged-in users
   if (!user) {
-    return null;
+    return (
+      <div className={cn(
+        "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 shadow-2xl transition-all duration-500 ease-in-out relative overflow-hidden",
+        isCollapsed ? "w-16" : "w-64",
+        className
+      )}>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/20 via-transparent to-secondary/20"></div>
+        </div>
+
+        <div className="px-3 py-4 h-full flex flex-col relative z-10">
+          {/* Header with Toggle Button */}
+          <div className={cn(
+            "flex items-center mb-6 flex-shrink-0",
+            isCollapsed ? "justify-center" : "justify-between"
+          )}>
+            {!isCollapsed && (
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+                  Create Something
+                </h2>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="h-8 w-8 p-0 hover:bg-primary/10 hover:scale-105 transition-all duration-200 ease-out rounded-lg flex-shrink-0 focus:ring-2 focus:ring-primary/20 focus:outline-none"
+            >
+              {isCollapsed ? (
+                <PanelLeft className="h-4 w-4 text-primary" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4 text-primary" />
+              )}
+            </Button>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center items-center">
+            {!isCollapsed && (
+              <div className="text-center p-6 space-y-4">
+                <div className="w-16 h-16 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <FolderOpen className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">Create Something</h3>
+                <p className="text-sm text-white/60 mb-6">
+                  Sign up to start building and save your projects
+                </p>
+                <Link href="/sign-up" className="w-full">
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+            )}
+            {isCollapsed && (
+              <div className="text-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                  <FolderOpen className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
