@@ -32,21 +32,33 @@ else
     exit 1
 fi
 
-# Verify OpenZeppelin installation
-echo "🔍 Verifying OpenZeppelin installation..."
-if [ -d "lib/openzeppelin-contracts" ]; then
-    echo "✅ OpenZeppelin contracts installed"
-else
-    echo "❌ OpenZeppelin contracts not found"
-    exit 1
-fi
+# Verify library installations
+echo "🔍 Verifying Solidity library installations..."
 
-# Verify remappings
-echo "🔍 Verifying remappings..."
-if grep -q "@openzeppelin/contracts" remappings.txt; then
-    echo "✅ Remappings configured"
+check_library() {
+    if [ -d "$1" ]; then
+        echo "✅ $2 installed"
+        return 0
+    else
+        echo "⚠️  $2 not found (may not be required)"
+        return 1
+    fi
+}
+
+check_library "lib/openzeppelin-contracts" "OpenZeppelin contracts"
+check_library "lib/openzeppelin-contracts-upgradeable" "OpenZeppelin upgradeable contracts"
+check_library "lib/openzeppelin-contracts/governance" "OpenZeppelin governance"
+check_library "lib/solmate" "Solmate library"
+check_library "lib/prb-math" "PRB Math"
+check_library "lib/v3-core" "Uniswap V3 Core"
+check_library "lib/v3-periphery" "Uniswap V3 Periphery"
+
+# Verify critical remappings
+echo "🔍 Verifying critical remappings..."
+if grep -q "@openzeppelin/contracts" remappings.txt && grep -q "@openzeppelin/contracts-upgradeable" remappings.txt; then
+    echo "✅ Critical remappings configured"
 else
-    echo "❌ Remappings not configured"
+    echo "❌ Critical remappings not configured properly"
     exit 1
 fi
 

@@ -59,6 +59,12 @@ const formSchema = z.object({
   runUnitTests: z.boolean().default(true),
   runIntegrationTests: z.boolean().default(false),
   generateCoverage: z.boolean().default(false),
+  // Enhanced configuration fields
+  aiConfiguration: z.any().optional(),
+  gasOptimizations: z.array(z.string()).default([]),
+  securityRecommendations: z.array(z.string()).default([]),
+  complexity: z.enum(["simple", "moderate", "complex"]).optional(),
+  reasoning: z.string().optional(),
 });
 
 export interface DappStudioFormValues extends z.infer<typeof formSchema> {}

@@ -45,13 +45,40 @@ RUN git config --global user.email "user@example.com" && \
 RUN export PATH="$PATH:$HOME/.foundry/bin" && \
     forge init --template https://github.com/foundry-rs/forge-template hello_template
 
-# Install OpenZeppelin using your preferred method (Approach #1)
+# Install comprehensive library ecosystem for all contract types
+# Note: Installing libraries sequentially to avoid dependency conflicts
+# Note: Governance contracts are included in openzeppelin-contracts/governance
 RUN export PATH="$PATH:$HOME/.foundry/bin" && \
     cd hello_template && \
-    forge install OpenZeppelin/openzeppelin-contracts@v5.0.0
+    forge install OpenZeppelin/openzeppelin-contracts@v5.0.0 && \
+    forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.0
 
-# Setup remappings.txt
-RUN cd hello_template && echo "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/" >> remappings.txt
+# Install Solmate (lightweight, modern Solidity library)
+RUN export PATH="$PATH:$HOME/.foundry/bin" && \
+    cd hello_template && \
+    forge install transmissions11/solmate@v7 || echo "Solmate installation skipped (optional)"
+
+# Install PRB Math for fixed-point arithmetic
+RUN export PATH="$PATH:$HOME/.foundry/bin" && \
+    cd hello_template && \
+    forge install PaulRBerg/prb-math@v3.1.0 || echo "PRB Math installation skipped (optional)"
+
+# Install Uniswap V3 for DeFi integration (optional but useful)
+RUN export PATH="$PATH:$HOME/.foundry/bin" && \
+    cd hello_template && \
+    forge install Uniswap/v3-core@1.0.0 || echo "Uniswap V3 Core installation skipped (optional)" && \
+    forge install Uniswap/v3-periphery@1.0.0 || echo "Uniswap V3 Periphery installation skipped (optional)"
+
+# Setup comprehensive remappings.txt
+# Note: Foundry doesn't support comments in remappings.txt
+# Only add remappings that exist to avoid errors
+RUN cd hello_template && \
+    echo "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/" >> remappings.txt && \
+    echo "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/" >> remappings.txt && \
+    ([ -d "lib/solmate" ] && echo "@solmate/=lib/solmate/src/" >> remappings.txt || true) && \
+    ([ -d "lib/prb-math" ] && echo "@prb/math/=lib/prb-math/src/" >> remappings.txt || true) && \
+    ([ -d "lib/v3-core" ] && echo "@uniswap/v3-core/=lib/v3-core/" >> remappings.txt || true) && \
+    ([ -d "lib/v3-periphery" ] && echo "@uniswap/v3-periphery/=lib/v3-periphery/" >> remappings.txt || true)
 
 # Copy and setup compilation script
 COPY compile_page.sh /compile_page.sh

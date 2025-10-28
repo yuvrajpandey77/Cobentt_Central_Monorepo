@@ -81,6 +81,12 @@ const PageShell = () => {
         network: config.network || 'testnet',
         features: config.features || [],
         autoVerify: true,
+        // Enhanced configuration fields
+        aiConfiguration: config.customRequirements || null,
+        gasOptimizations: config.gasOptimizations || [],
+        securityRecommendations: config.securityRecommendations || [],
+        complexity: config.complexity || 'simple',
+        reasoning: config.reasoning || '',
       };
 
       console.log('✅ AI Analysis Result:', config.reasoning);

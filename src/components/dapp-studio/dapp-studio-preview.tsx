@@ -58,6 +58,14 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
 
   const handleDeploy = async () => {
     console.log('🚀 handleDeploy called - creating project...');
+    console.log('📋 Enhanced config being passed:', {
+      aiConfiguration: data.aiConfiguration,
+      gasOptimizations: data.gasOptimizations,
+      securityRecommendations: data.securityRecommendations,
+      complexity: data.complexity,
+      reasoning: data.reasoning
+    });
+    
     await createDapp.mutateAsync({
       value: `Smart contract: ${data.tokenName}`, // Description
       blockchain: data.blockchain.toUpperCase() as any,
@@ -68,6 +76,12 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
       decimals: data.decimals,
       network: data.network.toUpperCase() as any,
       features: data.features || [],
+      // Enhanced configuration fields
+      aiConfiguration: data.aiConfiguration,
+      gasOptimizations: data.gasOptimizations,
+      securityRecommendations: data.securityRecommendations,
+      complexity: data.complexity,
+      reasoning: data.reasoning,
     });
   };
 

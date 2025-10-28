@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openai } from '@inngest/agent-kit';
 import { buildPrompt } from '@/lib/prompts';
+import { EnhancedContractConfig } from '@/types/contract-config';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -22,32 +23,81 @@ export async function POST(request: NextRequest) {
     // Call OpenAI with the context
     const model = openai({ model: 'gpt-4o' });
     
-    // Create the analysis request
-    const analysisPrompt = `${systemPrompt}
+    // Enhanced system prompt for detailed analysis
+    const enhancedSystemPrompt = `You are a blockchain expert. Analyze user requirements and provide detailed configuration including:
 
-Please analyze the following user request and provide a JSON configuration:
+1. Contract Type & Standard Features
+2. Custom Business Logic Requirements:
+   - Royalty systems (ERC-2981 compliance)
+   - Batch operations for gas efficiency
+   - Metadata management (IPFS, updatable, frozen)
+   - Access control patterns (roles, restrictions, whitelists)
+   - Economic features (staking, rewards, vesting, governance)
+
+3. Gas Optimization Suggestions
+4. Security Recommendations
+5. Implementation Reasoning
+
+Return enhanced JSON with customRequirements object.`;
+    
+    // Create the enhanced analysis request
+    const analysisPrompt = `${enhancedSystemPrompt}
+
+Please analyze the following user request and provide an enhanced JSON configuration:
 
 User Request: "${userPrompt}"
 
 Respond ONLY with valid JSON in this exact format (no markdown, no explanation):
 {
-  "blockchain": "ethereum" | "polygon" | "arbitrum" | "optimism" | "solana",
   "contractType": "erc20" | "erc721" | "erc1155" | "payment-splitter" | "custom",
   "tokenName": "string (required for tokens/NFTs)",
   "tokenSymbol": "string (3-5 chars, all caps)",
-  "tokenSupply": "string (number)",
-  "decimals": "string (0-18, typically 18 for tokens, 0 for NFTs)",
+  "blockchain": "ethereum" | "polygon" | "arbitrum" | "optimism" | "solana",
   "network": "testnet" | "mainnet",
   "features": ["mintable", "burnable", "pausable", "permit", "access-control", "upgradeable"],
-  "reasoning": "Brief explanation of your choices"
+  "customRequirements": {
+    "royaltySystem": {
+      "enabled": boolean,
+      "percentage": number (0-100),
+      "recipient": "contract_owner" | "creator" | "custom",
+      "customRecipient": "string (if custom)"
+    },
+    "batchOperations": {
+      "batchMint": boolean,
+      "batchTransfer": boolean,
+      "maxBatchSize": number
+    },
+    "metadataManagement": {
+      "ipfsStorage": boolean,
+      "updatableMetadata": boolean,
+      "baseURI": "string",
+      "freezeMetadata": boolean
+    },
+    "accessControl": {
+      "roles": ["string"],
+      "transferRestrictions": boolean,
+      "whitelist": boolean,
+      "mintingSchedule": "unlimited" | "capped" | "time-limited"
+    },
+    "economicFeatures": {
+      "staking": boolean,
+      "rewards": boolean,
+      "vesting": boolean,
+      "governance": boolean
+    }
+  },
+  "gasOptimizations": ["string"],
+  "securityRecommendations": ["string"],
+  "reasoning": "Detailed explanation of your analysis and choices"
 }
 
-Consider:
-- Recommend testnet for new/unaudited contracts
-- Recommend pausable + access-control for production tokens
-- Choose blockchain based on use case (Polygon for gaming/NFTs, Ethereum for DeFi)
-- Default to 18 decimals for ERC-20, 0 for NFTs
-- Suggest appropriate features based on security needs`;
+Analysis Guidelines:
+- Detect custom requirements like royalties, batch operations, metadata management
+- Suggest gas optimizations (batch operations, unchecked blocks, efficient storage)
+- Provide security recommendations (access controls, pausable, testnet first)
+- Consider blockchain-specific features (Polygon for gaming, Ethereum for DeFi)
+- Analyze complexity: simple (templates), moderate (modules), complex (AI generation)
+- Include reasoning for each custom requirement detected`;
 
     // Call the AI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -100,7 +150,7 @@ Consider:
       cleanedResponse = cleanedResponse.replace(/```\n?/g, '');
     }
 
-    const config = JSON.parse(cleanedResponse);
+    const config: EnhancedContractConfig = JSON.parse(cleanedResponse);
 
     // Validate the response has required fields
     if (!config.blockchain || !config.contractType) {
@@ -108,6 +158,19 @@ Consider:
         { error: 'Invalid AI response format' },
         { status: 500 }
       );
+    }
+
+    // Ensure customRequirements exists with proper structure
+    if (!config.customRequirements) {
+      config.customRequirements = {};
+    }
+
+    // Ensure arrays exist
+    if (!config.gasOptimizations) {
+      config.gasOptimizations = [];
+    }
+    if (!config.securityRecommendations) {
+      config.securityRecommendations = [];
     }
 
     return NextResponse.json({

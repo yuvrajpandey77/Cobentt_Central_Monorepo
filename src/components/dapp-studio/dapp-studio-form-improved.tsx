@@ -61,6 +61,12 @@ const formSchema = z.object({
   runUnitTests: z.boolean().default(true),
   runIntegrationTests: z.boolean().default(false),
   generateCoverage: z.boolean().default(false),
+  // Enhanced configuration fields
+  aiConfiguration: z.any().optional(),
+  gasOptimizations: z.array(z.string()).default([]),
+  securityRecommendations: z.array(z.string()).default([]),
+  complexity: z.enum(["simple", "moderate", "complex"]).optional(),
+  reasoning: z.string().optional(),
 });
 
 export interface DappStudioFormValues extends z.infer<typeof formSchema> {}
@@ -642,6 +648,105 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                   )}
                 </CardContent>
               </Card>
+
+              {/* Enhanced AI Analysis */}
+              {(form.watch("aiConfiguration") || form.watch("reasoning") || form.watch("complexity")) && (
+                <Card className="border-blue-400/20 bg-blue-500/5">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Sparkles className="h-5 w-5 text-blue-400" />
+                      <h4 className="text-lg font-semibold text-white">AI Analysis</h4>
+                      <Badge variant="outline" className="border-blue-400/30 bg-blue-500/10 text-blue-300">
+                        Enhanced
+                      </Badge>
+                    </div>
+                    
+                    {/* Complexity Level */}
+                    {form.watch("complexity") && (
+                      <div className="mb-4">
+                        <p className="text-xs text-white/60 mb-2">Complexity Level</p>
+                        <Badge 
+                          variant="outline" 
+                          className={`${
+                            form.watch("complexity") === 'simple' 
+                              ? 'border-green-400/30 bg-green-500/10 text-green-300'
+                              : form.watch("complexity") === 'moderate'
+                              ? 'border-yellow-400/30 bg-yellow-500/10 text-yellow-300'
+                              : 'border-red-400/30 bg-red-500/10 text-red-300'
+                          }`}
+                        >
+                          {form.watch("complexity")?.toUpperCase()}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {/* AI Reasoning */}
+                    {form.watch("reasoning") && (
+                      <div className="mb-4">
+                        <p className="text-xs text-white/60 mb-2">AI Reasoning</p>
+                        <p className="text-white/80 text-sm">{form.watch("reasoning")}</p>
+                      </div>
+                    )}
+                    
+                    {/* Gas Optimizations */}
+                    {form.watch("gasOptimizations")?.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs text-white/60 mb-2">Gas Optimizations</p>
+                        <div className="space-y-2">
+                          {form.watch("gasOptimizations").map((optimization, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <Zap className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-white/80 text-sm">{optimization}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Security Recommendations */}
+                    {form.watch("securityRecommendations")?.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs text-white/60 mb-2">Security Recommendations</p>
+                        <div className="space-y-2">
+                          {form.watch("securityRecommendations").map((recommendation, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <Shield className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-white/80 text-sm">{recommendation}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Custom Requirements */}
+                    {form.watch("aiConfiguration")?.customRequirements && (
+                      <div className="mb-4">
+                        <p className="text-xs text-white/60 mb-2">Custom Requirements Detected</p>
+                        <div className="space-y-2">
+                          {Object.entries(form.watch("aiConfiguration").customRequirements).map(([key, value]: [string, any]) => {
+                            if (value && typeof value === 'object' && Object.keys(value).length > 0) {
+                              return (
+                                <div key={key} className="flex items-start gap-2">
+                                  <Circle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="text-white/80 text-sm font-medium capitalize">
+                                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                                    </p>
+                                    <p className="text-white/60 text-xs">
+                                      {Object.entries(value).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Next Steps */}
               <div className="text-center space-y-2">
