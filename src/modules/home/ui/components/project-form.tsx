@@ -54,7 +54,11 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     const createProject = useMutation(trpc.projects.create.mutationOptions({
         onSuccess: (data) => {
             console.log("Project created successfully:", data);
+            // Invalidate project list
             queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            // Invalidate usage so token bar refreshes
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as any });
             setCreatedProjectId(data.id);
             setShowLoading(true);
             console.log("Loading screen should now be visible");
@@ -70,8 +74,11 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     const createDappProject = useMutation(trpc.projects.createDapp.mutationOptions({
         onSuccess: (data) => {
             console.log("Dapp project created successfully:", data);
+            // Invalidate project list
             queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
-            
+            // Invalidate usage so token bar refreshes
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as any });
             // Redirect to build page to show real-time progress
             router.push(`/projects/${data.id}/build`);
         },

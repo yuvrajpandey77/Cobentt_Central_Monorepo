@@ -5,6 +5,7 @@ import {
   buildValidationPrompt, 
   buildRefinementPrompt 
 } from '@/lib/contract-prompts';
+import { recordTokenUsage } from "@/lib/token-usage";
 
 export interface ContractGenerationResult {
   contractCode: string;
@@ -38,7 +39,7 @@ export async function generateCompleteContract(
   config: EnhancedContractConfig,
   examples?: string[]
 ): Promise<string> {
-  console.log('🤖 Generating complete contract with GPT-5...');
+  console.log('🤖 Generating complete contract with GPT-5 (Latest & Best)...');
   
   const prompt = buildContractGenerationPrompt(userPrompt, config, examples);
   
@@ -52,9 +53,9 @@ export async function generateCompleteContract(
       }),
     });
 
-    // Create timeout promise (4 minutes)
+    // Create timeout promise (10 minutes)
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('AI contract generation timeout after 4 minutes')), 240000)
+      setTimeout(() => reject(new Error('AI contract generation timeout after 10 minutes')), 600000)
     );
 
     // Race between AI call and timeout
@@ -177,9 +178,9 @@ export async function refineContract(
       }),
     });
 
-    // Create timeout promise (4 minutes)
+    // Create timeout promise (10 minutes)
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('AI contract refinement timeout after 4 minutes')), 240000)
+      setTimeout(() => reject(new Error('AI contract refinement timeout after 10 minutes')), 600000)
     );
 
     // Race between AI call and timeout
@@ -309,23 +310,40 @@ CONFIGURATION: ${JSON.stringify(config, null, 2)}
 
 OPENZEPPELIN V5 PATTERNS TO FOLLOW:
 
-1. **ERC721 + ERC721URIStorage Inheritance**:
+1. **REMOVED HOOKS - CRITICAL**:
+   - _afterTokenTransfer() was REMOVED in OpenZeppelin v5
+   - _beforeTokenTransfer() was REMOVED in OpenZeppelin v5
+   - Use _update() hook instead:
+     - For ERC20: function _update(address from, address to, uint256 amount) internal virtual override
+     - For ERC721: function _update(address to, uint256 tokenId, address auth) internal virtual override returns (address)
+   - These old hooks DO NOT EXIST and will cause "Function has override specified but does not override anything" errors
+
+2. **Ownable Constructor - CRITICAL**:
+   - OpenZeppelin v5 Ownable requires initialOwner parameter
+   - Correct: constructor() ERC20("Token", "TKN") Ownable(msg.sender) {}
+   - Correct: constructor() ERC721("NFT", "NFT") ERC721Burnable() Ownable(msg.sender) {}
+   - WRONG: constructor() ERC20("Token", "TKN") Ownable() {} - missing initialOwner!
+   - This causes "No arguments passed to the base constructor" error
+
+3. **ERC721 + ERC721URIStorage Inheritance**:
    - ERC721URIStorage ALREADY extends ERC721
    - NEVER manually override _burn() when using ERC721URIStorage
    - ERC721URIStorage handles _burn() internally
    - If you need to do cleanup, use events or separate functions, NOT _burn override
 
-2. **Override Specifications**:
+4. **Override Specifications**:
    - Only override functions marked as 'virtual' or 'override' in parent contracts
    - Use correct override syntax: override(Contract1, Contract2)
    - Check OpenZeppelin documentation for which functions can be overridden
 
-3. **Multiple Inheritance**:
+5. **Multiple Inheritance**:
    - When inheriting from multiple OpenZeppelin contracts, ensure you're overriding the RIGHT parent
    - Example: function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
    - The function exists in both, so specify BOTH in the override list
 
-4. **Common Mistakes to AVOID**:
+6. **Common Mistakes to AVOID**:
+   - DON'T use _afterTokenTransfer or _beforeTokenTransfer - they don't exist in v5!
+   - DON'T forget to pass msg.sender to Ownable() constructor
    - DON'T override _burn() when using ERC721URIStorage
    - DON'T specify wrong parent in override list
    - DON'T try to override non-virtual functions
@@ -357,22 +375,59 @@ Generate the FULL corrected contract code:
       description: "An expert Solidity developer specializing in OpenZeppelin v5 patterns",
       system: `You are an expert Solidity developer with deep knowledge of OpenZeppelin v5 inheritance patterns, Forge compilation, and gas optimization.
 
-CRITICAL RULES:
-1. NEVER override _burn() when using ERC721URIStorage - it handles it internally
-2. ONLY override functions marked as 'virtual' or 'override' in parent contracts
-3. Use correct override syntax with all applicable parent contracts
-4. Follow OpenZeppelin v5 documentation patterns exactly
-5. If a function already exists in an extension contract, DON'T try to reimplement it in your contract
+CRITICAL OPENZEPPELIN V5 RULES:
+1. ❌ NEVER use _afterTokenTransfer() or _beforeTokenTransfer() - they were REMOVED in v5
+2. ✅ ALWAYS use _update() hook instead:
+   - ERC20: function _update(address from, address to, uint256 amount) internal virtual override
+   - ERC721: function _update(address to, uint256 tokenId, address auth) internal virtual override returns (address)
+3. ✅ ALWAYS pass msg.sender to Ownable() constructor: Ownable(msg.sender)
+4. ❌ NEVER override _burn() when using ERC721URIStorage - it handles it internally
+5. ✅ ONLY override functions marked as 'virtual' or 'override' in parent contracts
+6. ✅ Use correct override syntax with all applicable parent contracts
+7. ✅ Follow OpenZeppelin v5 documentation patterns exactly
 
-When Forge says "Trying to override non-virtual function", it means you're trying to override a function that wasn't designed to be overridden. Either remove your override or find the correct function to override in the inheritance chain.
+COMMON ERROR FIXES:
+- Error: "Function has override specified but does not override anything" with _afterTokenTransfer
+  Fix: REMOVE _afterTokenTransfer completely, use _update() hook instead
 
-When Forge says "Invalid contract specified in override list", it means you listed a parent contract that doesn't have that function in its inheritance chain. Remove it from the override list.
+- Error: "No arguments passed to the base constructor" with Ownable
+  Fix: Change Ownable() to Ownable(msg.sender)
 
-When Forge says "Function needs to specify overridden contract X", it means you MUST add contract X to your override list. This commonly happens with supportsInterface() when you forget to include all parent contracts that also override that function.
+- Error: "Member '_afterTokenTransfer' not found"
+  Fix: REMOVE all calls to _afterTokenTransfer, it doesn't exist in v5
 
-Example fixes:
-- Error: "Function needs to specify overridden contract ERC721URIStorage"
-- Fix: Change override(ERC721, ERC2981, AccessControl) to override(ERC721, ERC721URIStorage, ERC2981, AccessControl)
+- Error: "Trying to override non-virtual function"
+  Fix: Remove your override or find the correct function to override in the inheritance chain
+
+- Error: "Invalid contract specified in override list"
+  Fix: Remove the contract from the override list if it doesn't have that function
+
+- Error: "Function needs to specify overridden contract X"
+  Fix: Add contract X to your override list (commonly happens with supportsInterface)
+
+EXAMPLE PATTERNS:
+
+✅ CORRECT ERC20 with Ownable:
+contract MyToken is ERC20, ERC20Burnable, Ownable {
+    constructor() ERC20("Token", "TKN") Ownable(msg.sender) {
+        _mint(msg.sender, 1000000 * 10**decimals());
+    }
+    
+    // Use _update, not _afterTokenTransfer or _beforeTokenTransfer
+    function _update(address from, address to, uint256 amount) internal virtual override {
+        super._update(from, to, amount);
+    }
+}
+
+✅ CORRECT ERC721 with Ownable:
+contract MyNFT is ERC721, ERC721URIStorage, Ownable {
+    constructor() ERC721("NFT", "NFT") Ownable(msg.sender) {}
+    
+    // Use _update, not _afterTokenTransfer or _beforeTokenTransfer
+    function _update(address to, uint256 tokenId, address auth) internal virtual override(ERC721) returns (address) {
+        return super._update(to, tokenId, auth);
+    }
+}
 
 Generate COMPLETE, CORRECTED contract code that will compile successfully with Forge.`,
       model: openai({
@@ -380,9 +435,9 @@ Generate COMPLETE, CORRECTED contract code that will compile successfully with F
       }),
     });
 
-    // Create timeout promise (4 minutes)
+    // Create timeout promise (10 minutes)
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('AI refinement timeout after 4 minutes')), 240000)
+      setTimeout(() => reject(new Error('AI refinement timeout after 10 minutes')), 600000)
     );
 
     // Race between AI call and timeout

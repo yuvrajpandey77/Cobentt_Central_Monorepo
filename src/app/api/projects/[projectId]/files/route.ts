@@ -36,7 +36,7 @@ export async function GET(
       console.log('No sandbox ID found, creating new sandbox to read files...');
       try {
         sandbox = await Sandbox.create("solidity-foundry-template");
-        sandboxId = (sandbox as any).id;
+        sandboxId = sandbox.sandboxId;
         
         // Update build job with sandbox ID
         await prisma.buildJob.update({

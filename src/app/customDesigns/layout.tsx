@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/sections/landing-sections";
+import { Footer } from "@/components/layout/footer";
 
 interface CustomDesignsLayoutProps {
   children: React.ReactNode;

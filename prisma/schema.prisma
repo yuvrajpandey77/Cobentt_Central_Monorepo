@@ -42,6 +42,9 @@ model Project {
   aiConfiguration Json? // Store full EnhancedContractConfig
   gasOptimizations String[] // AI-suggested optimizations
   securityNotes String[] // AI security recommendations
+  
+  // Token usage tracking
+  tokenUsage TokenUsage[]
 }
 
 enum MessageRole {
@@ -65,6 +68,7 @@ model Message {
   fragments Fragment?
   projectId String 
   project Project @relation(fields: [projectId] , references: [id], onDelete: Cascade)
+  tokenUsage TokenUsage[]
 }
 
 model Fragment {
@@ -136,6 +140,201 @@ model BuildJob {
   transactionHash String?
   progress Int @default(0) // 0-100
   currentStep String? // Current step description
+  sandboxId String? // E2B sandbox ID for the build environment
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// TOKEN USAGE & QUOTA SYSTEM
+// ============================================================
+
+enum AllowedUserStatus {
+  PENDING
+  APPROVED
+  REVOKED
+}
+
+enum UserPlan {
+  FREE
+  PRO
+  ENTERPRISE
+  CUSTOM
+}
+
+enum AIProvider {
+  OPENAI
+  ANTHROPIC
+}
+
+enum WebhookEventType {
+  QUOTA_WARNING_90
+  QUOTA_WARNING_100
+  QUOTA_EXCEEDED
+  LIMIT_CHANGED
+  PLAN_UPGRADED
+  PLAN_DOWNGRADED
+}
+
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  role         String    @default("SUPER_ADMIN")
+  clerkUserId  String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("admin_users")
+}
+
+model AllowedUser {
+  id                   String              @id @default(uuid())
+  email                String              @unique
+  userId               String?
+  clerkUserId          String?             @unique
+  status               AllowedUserStatus   @default(PENDING)
+  plan                 UserPlan            @default(FREE)
+  invitedBy            String?
+  invitedAt            DateTime            @default(now())
+  approvedAt           DateTime?
+  
+  // Quota limits (per day)
+  maxDailyRequests     Int                 @default(6)
+  maxDailyTokens       Int                 @default(200000)
+  
+  // Grace period settings
+  graceTokens          Int                 @default(20000) // 10% grace
+  graceUsed            Boolean             @default(false)
+  graceResetAt         DateTime?
+  
+  // Lifetime limits
+  totalRequestsAllowed Int?                // null = unlimited
+  
+  // Webhook configuration
+  webhookUrl           String?
+  webhookSecret        String?
+  webhookEvents        String[]            @default([])
+  
+  // Billing
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  billingEmail         String?
+  
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([clerkUserId])
+  @@map("allowed_users")
+}
+
+model UserUsage {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  
+  // Daily counters
+  dailyRequests Int      @default(0)
+  dailyTokens   Int      @default(0)
+  
+  // Lifetime counters
+  totalRequests Int      @default(0)
+  totalTokens   Int      @default(0)
+  
+  // Cost tracking
+  totalCostUsd  Decimal  @default(0) @db.Decimal(10, 2)
+  
+  // Reset tracking
+  lastResetAt   DateTime @default(now())
+  
+  // Alert tracking
+  alert90Sent   Boolean  @default(false)
+  alert100Sent  Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tokenUsage    TokenUsage[]
+
+  @@map("user_usage")
+}
+
+model TokenUsage {
+  id               String     @id @default(uuid())
+  userId           String
+  projectId        String?
+  messageId        String?
+  
+  // Provider details
+  provider         AIProvider
+  model            String
+  
+  // Token counts
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  
+  // Cost
+  costUsd          Decimal    @db.Decimal(10, 6)
+  
+  // Metadata
+  endpoint         String?    // e.g., "/api/dapp-studio/analyze"
+  durationMs       Int?       // response time
+  
+  createdAt        DateTime   @default(now())
+
+  project          Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  message          Message?   @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  userUsage        UserUsage  @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
+  @@map("token_usage")
+}
+
+model AdminActionLog {
+  id          String   @id @default(uuid())
+  adminEmail  String
+  clerkUserId String?
+  action      String
+  targetEmail String?
+  changes     Json?
+  timestamp   DateTime @default(now())
+  ipAddress   String?
+
+  @@index([adminEmail, timestamp])
+  @@index([targetEmail, timestamp])
+  @@map("admin_action_logs")
+}
+
+model WebhookLog {
+  id            String   @id @default(uuid())
+  userId        String
+  eventType     WebhookEventType
+  webhookUrl    String
+  payload       Json
+  responseCode  Int?
+  responseBody  String?
+  success       Boolean  @default(false)
+  attempts      Int      @default(1)
+  nextRetryAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([success, nextRetryAt])
+  @@map("webhook_logs")
+}
+
+model UsageAlert {
+  id          String   @id @default(uuid())
+  userId      String
+  alertType   String   // "90_percent", "100_percent", "grace_period"
+  message     String
+  percentUsed Int
+  tokensUsed  Int
+  tokenLimit  Int
+  sentAt      DateTime @default(now())
+  acknowledged Boolean @default(false)
+
+  @@index([userId, sentAt])
+  @@map("usage_alerts")
 }

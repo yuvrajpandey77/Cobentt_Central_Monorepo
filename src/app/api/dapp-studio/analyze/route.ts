@@ -2,12 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { openai } from '@inngest/agent-kit';
 import { buildPrompt } from '@/lib/prompts';
 import { EnhancedContractConfig } from '@/types/contract-config';
+import { auth } from '@clerk/nextjs/server';
+import { enforceQuota } from '@/lib/quota-enforcement';
+import { recordTokenUsage } from '@/lib/token-usage';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check auth and enforce quota
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Enforce quota before processing (estimate 2000 tokens for analysis)
+    await enforceQuota(userId, 2000);
+
     const { prompt: userPrompt } = await request.json();
 
     if (!userPrompt || typeof userPrompt !== 'string') {
@@ -21,7 +36,7 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildPrompt(userPrompt, 'analysis');
 
     // Call OpenAI with the context
-    const model = openai({ model: 'gpt-4o' });
+    const model = openai({ model: 'gpt-4o-mini' });
     
     // Enhanced system prompt for detailed analysis
     const enhancedSystemPrompt = `You are a blockchain expert. Analyze user requirements and provide detailed configuration including:
@@ -107,7 +122,7 @@ Analysis Guidelines:
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -118,8 +133,8 @@ Analysis Guidelines:
             content: analysisPrompt,
           },
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
+        
+        max_completion_tokens: 1000,
       }),
     });
 
@@ -134,6 +149,19 @@ Analysis Guidelines:
 
     const data = await response.json();
     const aiResponse = data.choices[0]?.message?.content;
+    const usage = data.usage; // { prompt_tokens, completion_tokens, total_tokens }
+
+    // Record token usage
+    if (userId && usage) {
+      await recordTokenUsage({
+        userId,
+        provider: 'OPENAI',
+        model: 'gpt-4o-mini',
+        promptTokens: usage.prompt_tokens ?? 0,
+        completionTokens: usage.completion_tokens ?? 0,
+        endpoint: '/api/dapp-studio/analyze',
+      });
+    }
 
     if (!aiResponse) {
       return NextResponse.json(
