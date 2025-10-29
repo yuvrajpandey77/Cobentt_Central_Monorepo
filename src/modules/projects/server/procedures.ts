@@ -106,6 +106,13 @@ export const projectsRouter = createTRPCRouter({
                         },
                     }
                 },
+                include: {
+                    messages: {
+                        orderBy: { createdAt: "desc" },
+                        take: 1,
+                        select: { id: true },
+                    },
+                },
             });
                                 
             await inngest.send({
@@ -113,6 +120,8 @@ export const projectsRouter = createTRPCRouter({
                 data: {
                     value: input.value,
                     projectId: createdProject.id,
+                    userId: ctx.auth.userId,
+                    messageId: createdProject.messages[0]?.id,
                 },
             });
             return createdProject;
@@ -191,6 +200,7 @@ export const projectsRouter = createTRPCRouter({
                 data: {
                     buildJobId: buildJob.id,
                     projectId: createdProject.id,
+                    userId: ctx.auth.userId, // Add userId for token tracking
                     contractType: input.contractType,
                     tokenName: input.tokenName,
                     tokenSymbol: input.tokenSymbol,

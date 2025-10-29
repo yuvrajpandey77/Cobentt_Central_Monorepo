@@ -7,7 +7,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2, Sparkles } from "lucide-react";
+import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2, Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -283,6 +283,19 @@ export const Sidebar = ({ className }: SidebarProps) => {
               <Plus className="w-3.5 h-3.5" />
               New Project
             </button>
+
+            {/* Settings link */}
+            <Link href="/settings/user">
+              <Button
+                variant="ghost"
+                className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
+              >
+                <div className="flex items-center">
+                  <SettingsIcon className="w-4 h-4 !mr-2 !shrink-0" />
+                  <span>Settings</span>
+                </div>
+              </Button>
+            </Link>
           </div>
         )}
       </div>

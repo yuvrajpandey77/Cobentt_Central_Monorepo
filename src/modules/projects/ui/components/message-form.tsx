@@ -11,6 +11,7 @@ import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
 import { toast } from "sonner";
+import { UsageDisplay } from "@/components/usage-display";
 
 
 
@@ -44,11 +45,20 @@ export const MessageForm = ({ projectId }: Props) => {
             queryClient.invalidateQueries(trpc.messages.getMany.queryOptions({
                 projectId: projectId,
             }));
-           //invalidate project usage status
+            // Invalidate usage queries to refresh quota display
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId }) as any });
         },
         onError: (error) => {
-            // redirec to pricing page if specific error
-            toast.error(error.message);
+            // Show error toast for quota exceeded or other errors
+            if (error.message.includes("quota") || error.message.includes("limit")) {
+                toast.error(error.message, {
+                    description: "Consider upgrading your plan for higher limits",
+                    duration: 5000,
+                });
+            } else {
+                toast.error(error.message);
+            }
         },
     }))
 
@@ -61,19 +71,23 @@ export const MessageForm = ({ projectId }: Props) => {
     }
 
     const [isFocused, setIsFocused] = useState(false);
-    const showUsage = false;
+    const showUsage = true; // Always show usage
     const isPending = createMessage.isPending;
     const isButtonDisabled = isPending || !form.formState.isValid;
     
     return (
         <Form {...form}>
+            <div className="space-y-2">
+                {/* Usage Display */}
+                {showUsage && (
+                    <UsageDisplay projectId={projectId} variant="compact" />
+                )}
 
-            <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
-                "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all ",
-                isFocused && "shadow-xs",
-                showUsage && "rounded-t-none"
-            )}>
-                <FormField
+                <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
+                    "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
+                    isFocused && "shadow-xs"
+                )}>
+                    <FormField
                     control={form.control}
                     name="value"
                     render={({ field }) => (
@@ -118,6 +132,7 @@ export const MessageForm = ({ projectId }: Props) => {
                     </Button>
                 </div>
             </form>
+            </div>
         </Form>
     )
 }

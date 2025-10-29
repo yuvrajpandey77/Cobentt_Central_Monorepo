@@ -14,6 +14,7 @@ import {
   parseForgeOutput,
   ForgeErrorInfo
 } from './ai-contract-generator';
+import { recordTokenUsage } from "@/lib/token-usage";
 // Screenshot capture deps loaded dynamically to avoid type and runtime issues when unavailable
 
 
@@ -72,7 +73,7 @@ export const CogerphereAgent = inngest.createFunction(
       description: "An expert coding agent",
       system: PROMPT,
       model: openai({
-        model: "gpt-5-mini",
+        model: "gpt-4o-mini",
       }),
       tools: [
         createTool({
@@ -190,12 +191,46 @@ export const CogerphereAgent = inngest.createFunction(
 
     const result = await network.run(event.data.value, {state: state});
 
+    // Track token usage from main agent
+    await step.run("record-main-agent-tokens", async () => {
+      try {
+        // Agent-kit stores usage in result.usage (type assertion needed)
+        const resultWithUsage = result as any;
+        if (resultWithUsage.usage) {
+          const usage = resultWithUsage.usage;
+          const promptTokens = usage.input_tokens || usage.prompt_tokens || 0;
+          const completionTokens = usage.output_tokens || usage.completion_tokens || 0;
+          
+          if (!event.data.userId) {
+            console.warn("[usage] Missing userId in event; cannot record token usage");
+            return;
+          }
+
+          if (promptTokens > 0 || completionTokens > 0) {
+            await recordTokenUsage({
+              userId: event.data.userId,
+              projectId: event.data.projectId,
+              messageId: event.data.messageId,
+              provider: 'OPENAI',
+              model: 'gpt-4o-mini',
+              promptTokens,
+              completionTokens,
+              endpoint: '/inngest/main-agent',
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to record token usage for main agent:', error);
+        // Don't fail the function if token tracking fails
+      }
+    });
+
     const fragmentTitleGenerator = createAgent({
       name:"fragment-title-generator",
       description:"A agent that generates a title for a code fragment",
       system:FRAGMENT_TITLE_PROMPT,
       model:openai({
-        model:"gpt-4o",
+        model:"gpt-4o-mini",
       }),
     });
     const responseGenerator = createAgent({
@@ -203,12 +238,79 @@ export const CogerphereAgent = inngest.createFunction(
       description:"A agent that generates a response for a code fragment",
       system:RESPONSE_PROMPT,
       model:openai({
-        model:"gpt-4o",
+        model:"gpt-4o-mini",
       }),
     });
 
-    const {output: fragmentTitleOutput} = await fragmentTitleGenerator.run(result.state.data.summary);
-    const {output: responseOutput} = await responseGenerator.run(result.state.data.summary);
+    const fragmentTitleResult = await fragmentTitleGenerator.run(result.state.data.summary);
+    const responseGeneratorResult = await responseGenerator.run(result.state.data.summary);
+    
+    const {output: fragmentTitleOutput} = fragmentTitleResult;
+    const {output: responseOutput} = responseGeneratorResult;
+
+    // Track token usage from fragment title generator
+    await step.run("record-title-generator-tokens", async () => {
+      try {
+        const titleResultWithUsage = fragmentTitleResult as any;
+        if (titleResultWithUsage.usage) {
+          const usage = titleResultWithUsage.usage;
+          const promptTokens = usage.input_tokens || usage.prompt_tokens || 0;
+          const completionTokens = usage.output_tokens || usage.completion_tokens || 0;
+          
+          if (!event.data.userId) {
+            console.warn("[usage] Missing userId in event; cannot record token usage");
+            return;
+          }
+
+          if (promptTokens > 0 || completionTokens > 0) {
+            await recordTokenUsage({
+              userId: event.data.userId,
+              projectId: event.data.projectId,
+              messageId: event.data.messageId,
+              provider: 'OPENAI',
+              model: 'gpt-4o-mini',
+              promptTokens,
+              completionTokens,
+              endpoint: '/inngest/title-generator',
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to record token usage for title generator:', error);
+      }
+    });
+
+    // Track token usage from response generator
+    await step.run("record-response-generator-tokens", async () => {
+      try {
+        const responseResultWithUsage = responseGeneratorResult as any;
+        if (responseResultWithUsage.usage) {
+          const usage = responseResultWithUsage.usage;
+          const promptTokens = usage.input_tokens || usage.prompt_tokens || 0;
+          const completionTokens = usage.output_tokens || usage.completion_tokens || 0;
+          
+          if (!event.data.userId) {
+            console.warn("[usage] Missing userId in event; cannot record token usage");
+            return;
+          }
+
+          if (promptTokens > 0 || completionTokens > 0) {
+            await recordTokenUsage({
+              userId: event.data.userId,
+              projectId: event.data.projectId,
+              messageId: event.data.messageId,
+              provider: 'OPENAI',
+              model: 'gpt-4o-mini',
+              promptTokens,
+              completionTokens,
+              endpoint: '/inngest/response-generator',
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to record token usage for response generator:', error);
+      }
+    });
 
     const generateFragmentTitle = () => {
       if(fragmentTitleOutput[0].type !== "text") {
@@ -307,9 +409,27 @@ export const CogerphereAgent = inngest.createFunction(
 // Helper function to update build progress
 async function updateBuildProgress(buildJobId: string, progress: number, currentStep: string, log?: string) {
   const existingJob = await prisma.buildJob.findUnique({ where: { id: buildJobId } });
+  
+  // Safety check: Don't update if already completed/failed or if this progress is lower than current
+  if (!existingJob) {
+    console.warn('Build job not found:', buildJobId);
+    return;
+  }
+  
+  if (existingJob.status === 'COMPLETED' || existingJob.status === 'FAILED') {
+    console.warn(`Skipping progress update for ${existingJob.status} job: ${progress}%`);
+    return;
+  }
+  
+  // Don't update with a lower progress value
+  if (existingJob.progress > progress) {
+    console.warn(`Skipping progress update - current ${existingJob.progress}% > new ${progress}%`);
+    return;
+  }
+  
   let logs: string[] = [];
   
-  if (existingJob?.logs) {
+  if (existingJob.logs) {
     try {
       logs = JSON.parse(existingJob.logs);
     } catch {
@@ -574,6 +694,32 @@ export const generateContract = inngest.createFunction(
       await step.run("update-progress-after-ai", async () => {
         await updateBuildProgress(buildJobId, 25, 'Contract generated successfully', `Generated using ${generationResult.generationMethod} (${generationResult.iteration} iterations, score: ${generationResult.validationScore}/100)`);
       });
+
+      // Track token usage for contract generation
+      // Estimate based on contract code length and iterations
+      await step.run("record-contract-generation-tokens", async () => {
+        try {
+          const contractLength = generationResult.contractCode.length;
+          // Rough estimate: ~4 chars per token for code
+          const estimatedOutputTokens = Math.ceil(contractLength / 4);
+          // Estimate input tokens based on prompt size and iterations
+          const estimatedInputTokens = Math.ceil(estimatedOutputTokens * 1.5 * generationResult.iteration);
+          
+          if (event.data.userId) {
+            await recordTokenUsage({
+              userId: event.data.userId,
+              projectId: event.data.projectId,
+              provider: 'OPENAI',
+              model: 'gpt-4o-mini',
+              promptTokens: estimatedInputTokens,
+              completionTokens: estimatedOutputTokens,
+              endpoint: '/inngest/contract-generation',
+            });
+          }
+        } catch (error) {
+          console.error('Failed to record contract generation token usage:', error);
+        }
+      });
       
     } catch (error) {
       console.error('❌ AI contract generation failed:', error);
@@ -747,6 +893,14 @@ export const generateContract = inngest.createFunction(
       compilationAttempts++;
       console.log(`\n🔄 Compilation Attempt ${compilationAttempts}/${maxCompilationAttempts}`);
       
+      // Update progress at start of each attempt
+      await updateBuildProgress(
+        buildJobId, 
+        66 + (compilationAttempts * 2), 
+        `Compilation attempt ${compilationAttempts}/${maxCompilationAttempts}`, 
+        'Starting compilation cycle'
+      );
+      
       try {
         // Write the current contract code to the sandbox
         await step.run(`write-contract-${compilationAttempts}`, async () => {
@@ -759,6 +913,15 @@ export const generateContract = inngest.createFunction(
         const stepResult = await step.run(`compile-attempt-${compilationAttempts}`, async () => {
           const sandbox = await Sandbox.connect(sandboxId);
           console.log('⚙️ Compiling with forge...');
+          
+          // Update progress before starting compilation
+          await updateBuildProgress(
+            buildJobId, 
+            68 + (compilationAttempts * 2), 
+            `Compiling with Forge (attempt ${compilationAttempts})...`, 
+            'Running forge build command'
+          );
+          
           let forgeBuild: ForgeBuildResult | null = null;
           
           try {
@@ -785,7 +948,7 @@ export const generateContract = inngest.createFunction(
             throw new Error('Failed to get Forge build result');
           }
           
-        console.log('Forge build result:', { 
+          console.log('Forge build result:', { 
           exitCode: forgeBuild.exitCode, 
             stdout: forgeBuild.stdout.substring(0, 500), 
             stderr: forgeBuild.stderr.substring(0, 500) 
@@ -795,6 +958,14 @@ export const generateContract = inngest.createFunction(
             // ✅ SUCCESS!
             console.log('✅ Forge compilation successful!');
             await updateBuildProgress(buildJobId, 80, 'Compilation successful', `Forge build completed on attempt ${compilationAttempts}`);
+          } else {
+            // Update progress if compilation failed but will retry
+            await updateBuildProgress(
+              buildJobId, 
+              70, 
+              `Compilation failed (attempt ${compilationAttempts})`, 
+              'Parsing errors for AI refinement'
+            );
           }
           
           return forgeBuild;
@@ -1039,6 +1210,22 @@ export const generateContract = inngest.createFunction(
         contractType: artifactsToSave.contractType
       });
       
+      // Get existing logs before final update
+      const existingJob = await prisma.buildJob.findUnique({ where: { id: buildJobId } });
+      let finalLogs: string[] = [];
+      
+      if (existingJob?.logs) {
+        try {
+          finalLogs = JSON.parse(existingJob.logs);
+        } catch {
+          finalLogs = [];
+        }
+      }
+      
+      // Add final log entry
+      const timestamp = new Date().toLocaleTimeString();
+      finalLogs.push(`[${timestamp}] ✅ Contract compiled successfully with ABI and bytecode extracted`);
+      
       await prisma.buildJob.update({
         where: { id: buildJobId },
         data: {
@@ -1046,11 +1233,11 @@ export const generateContract = inngest.createFunction(
           progress: 100,
           currentStep: 'Build complete! Ready to deploy.',
           artifacts: artifactsToSave,
+          logs: JSON.stringify(finalLogs),
         },
       });
       
-      console.log('✅ Successfully saved artifacts to database');
-      await updateBuildProgress(buildJobId, 100, 'Build complete! Ready to deploy.', '✅ Contract compiled successfully with ABI and bytecode extracted');
+      console.log('✅ Successfully saved artifacts to database with 100% progress');
     });
 
     return {

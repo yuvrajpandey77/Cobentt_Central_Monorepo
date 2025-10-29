@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
+import { auth } from '@clerk/nextjs/server';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -21,6 +22,15 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { projectId } = await params;
     const body = await request.json();
     const validatedData = generateContractSchema.parse({ ...body, projectId });
@@ -39,6 +49,7 @@ export async function POST(
       name: 'contract/generate',
       data: {
         buildJobId: buildJob.id,
+        userId, // Add userId for token tracking
         ...validatedData,
       },
     });

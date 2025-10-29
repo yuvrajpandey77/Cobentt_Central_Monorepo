@@ -46,7 +46,7 @@ export async function POST(
     if (!sandboxId || sandboxId === 'undefined') {
       console.log('Creating new sandbox for saving files...');
       sandbox = await Sandbox.create("solidity-foundry-template");
-      sandboxId = sandbox.id;
+      sandboxId = sandbox.sandboxId;
       
       // Update build job with sandbox ID
       await prisma.buildJob.update({
@@ -59,7 +59,7 @@ export async function POST(
       } catch (error) {
         console.log('Failed to connect to existing sandbox, creating new one...');
         sandbox = await Sandbox.create("solidity-foundry-template");
-        sandboxId = sandbox.id;
+        sandboxId = sandbox.sandboxId;
         
         await prisma.buildJob.update({
           where: { id: buildJob.id },
@@ -93,8 +93,12 @@ export async function POST(
     }
 
     // Update build job artifacts with the complete codebase
+    const existingArtifacts = buildJob.artifacts && typeof buildJob.artifacts === 'object' 
+      ? buildJob.artifacts as Record<string, any>
+      : {};
+      
     const updatedArtifacts = {
-      ...buildJob.artifacts,
+      ...existingArtifacts,
       codebase: files, // Store the complete file structure
       savedFiles: savedFiles,
       failedFiles: failedFiles,
