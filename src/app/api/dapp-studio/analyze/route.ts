@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildPrompt(userPrompt, 'analysis');
 
     // Call OpenAI with the context
-    const model = openai({ model: 'gpt-4o-mini' });
+    const model = openai({ model: 'gpt-5' });
     
     // Enhanced system prompt for detailed analysis
     const enhancedSystemPrompt = `You are a blockchain expert. Analyze user requirements and provide detailed configuration including:
@@ -122,7 +122,7 @@ Analysis Guidelines:
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5',
         messages: [
           {
             role: 'system',
@@ -156,7 +156,7 @@ Analysis Guidelines:
       await recordTokenUsage({
         userId,
         provider: 'OPENAI',
-        model: 'gpt-4o-mini',
+        model: 'gpt-5',
         promptTokens: usage.prompt_tokens ?? 0,
         completionTokens: usage.completion_tokens ?? 0,
         endpoint: '/api/dapp-studio/analyze',

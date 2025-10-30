@@ -32,14 +32,14 @@ export interface ForgeErrorInfo {
 }
 
 /**
- * Generates a complete smart contract using GPT-5
+ * Generates a complete smart contract using GPT-4.1
  */
 export async function generateCompleteContract(
   userPrompt: string,
   config: EnhancedContractConfig,
   examples?: string[]
 ): Promise<string> {
-  console.log('🤖 Generating complete contract with GPT-5 (Latest & Best)...');
+  console.log('🤖 Generating complete contract with GPT-4.1...');
   
   const prompt = buildContractGenerationPrompt(userPrompt, config, examples);
   
@@ -49,7 +49,7 @@ export async function generateCompleteContract(
       description: "An expert Solidity developer that generates complete smart contracts",
       system: "You are an expert Solidity developer. Generate complete, production-ready smart contracts.",
       model: openai({
-        model: "gpt-5",
+        model: "gpt-4.1",
       }),
     });
 
@@ -105,7 +105,7 @@ export async function validateContractWithAI(
       description: "An expert Solidity auditor that validates smart contracts",
       system: "You are an expert Solidity auditor. Analyze contracts and provide detailed validation feedback.",
       model: openai({
-        model: "gpt-5",
+        model: "gpt-4.1",
       }),
     });
 
@@ -174,7 +174,7 @@ export async function refineContract(
       description: "An expert Solidity developer that fixes contract issues",
       system: "You are an expert Solidity developer. Fix contract issues and regenerate complete, corrected code.",
       model: openai({
-        model: "gpt-5",
+        model: "gpt-4.1",
       }),
     });
 
@@ -431,7 +431,7 @@ contract MyNFT is ERC721, ERC721URIStorage, Ownable {
 
 Generate COMPLETE, CORRECTED contract code that will compile successfully with Forge.`,
       model: openai({
-        model: "gpt-5",
+        model: "gpt-4.1",
       }),
     });
 
