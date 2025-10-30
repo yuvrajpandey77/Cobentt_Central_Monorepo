@@ -664,7 +664,7 @@ export const generateContract = inngest.createFunction(
 
     // Update progress before AI generation
     await step.run("update-progress-before-ai", async () => {
-      await updateBuildProgress(buildJobId, 15, 'Generating contract with GPT-5...', 'Using AI-only generation approach');
+      await updateBuildProgress(buildJobId, 15, 'Generating contract with GPT-4.1...', 'Using AI-only generation approach');
     });
 
     // Generate contract with AI using iterative refinement (outside step to avoid nesting)
@@ -710,7 +710,7 @@ export const generateContract = inngest.createFunction(
               userId: event.data.userId,
               projectId: event.data.projectId,
               provider: 'OPENAI',
-              model: 'gpt-5',
+              model: 'gpt-4.1',
               promptTokens: estimatedInputTokens,
               completionTokens: estimatedOutputTokens,
               endpoint: '/inngest/contract-generation',
@@ -1002,10 +1002,10 @@ export const generateContract = inngest.createFunction(
               buildJobId, 
               67 + (compilationAttempts * 3), 
               'AI analyzing errors...', 
-              `Attempt ${compilationAttempts}: Sending errors to GPT-5 for analysis`
+              `Attempt ${compilationAttempts}: Sending errors to GPT-4.1 for analysis`
             );
             
-            console.log('🤖 Calling GPT-5 to refine contract...');
+            console.log('🤖 Calling GPT-4.1 to refine contract...');
             const refined = await refineContractWithForgeErrors(
               refinedContractCode,
               forgeErrors,
