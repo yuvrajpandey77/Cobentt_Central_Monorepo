@@ -131,7 +131,7 @@ const PageContent = () => {
                         ))}
                     </div>
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-                        <div className="text-center max-w-2xl mx-auto">
+                        <div className="text-center max-w-3xl mx-auto">
         
                             {/* Main Heading */}
                             <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
