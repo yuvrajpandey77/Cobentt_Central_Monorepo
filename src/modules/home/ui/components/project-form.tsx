@@ -21,7 +21,10 @@ import { useClerk } from "@clerk/nextjs";
 
 
 interface Props {
-    projectId: string;
+    projectId?: string;
+    mode?: "app" | "contract";
+    contractPreview?: any;
+    onContractPrompt?: (prompt: string) => void;
 }
 
 const formSchema = z.object({
@@ -31,7 +34,7 @@ const formSchema = z.object({
 
 
 
-export const ProjectForm = () => {
+export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -39,6 +42,7 @@ export const ProjectForm = () => {
     const [showLoading, setShowLoading] = useState(false);
     const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
     const [showIdeas, setShowIdeas] = useState(false);
+    const [isAnalyzingContract, setIsAnalyzingContract] = useState(false);
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -50,7 +54,11 @@ export const ProjectForm = () => {
     const createProject = useMutation(trpc.projects.create.mutationOptions({
         onSuccess: (data) => {
             console.log("Project created successfully:", data);
+            // Invalidate project list
             queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            // Invalidate usage so token bar refreshes
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as any });
             setCreatedProjectId(data.id);
             setShowLoading(true);
             console.log("Loading screen should now be visible");
@@ -63,14 +71,52 @@ export const ProjectForm = () => {
         },
     }));
 
+    const createDappProject = useMutation(trpc.projects.createDapp.mutationOptions({
+        onSuccess: (data) => {
+            console.log("Dapp project created successfully:", data);
+            // Invalidate project list
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            // Invalidate usage so token bar refreshes
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as any });
+            // Redirect to build page to show real-time progress
+            router.push(`/projects/${data.id}/build`);
+        },
+        onError: (error) => {
+            toast.error(error.message);
+            if(error.data?.code === "UNAUTHORIZED") {
+                router.push("/sign-in");
+            }
+        },
+    }));
+
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         console.log("Form submitted with values:", values);
+        
+        // If in contract mode without preview, trigger contract prompt analysis (redirect to dapp-studio)
+        if (mode === "contract" && onContractPrompt) {
+            setIsAnalyzingContract(true);
+            try {
+                // Add a small delay to show the loading state before navigation
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await onContractPrompt(values.value);
+            } catch (error) {
+                console.error("Error analyzing contract:", error);
+                toast.error("Failed to analyze contract. Please try again.");
+                setIsAnalyzingContract(false);
+            }
+            // Note: Don't reset isAnalyzingContract here as we're navigating away
+            return;
+        }
+        
         // If user is not authenticated, redirect to sign-in before attempting mutation
         if (!clerk.user) {
             router.push("/sign-in");
             return;
         }
+        
         try {
+            // Create regular website project (app mode)
             await createProject.mutateAsync({
                 value: values.value,
             });
@@ -101,10 +147,10 @@ export const ProjectForm = () => {
 
     const [isFocused, setIsFocused] = useState(false);
     const isPending = createProject.isPending;
-    const isButtonDisabled = isPending || !form.formState.isValid;
+    const isButtonDisabled = isPending || isAnalyzingContract || !form.formState.isValid;
 
     // Typing animation texts
-    const typingTexts = [
+    const appTexts = [
         "Ask Cogerphere to create a dashboard to track your team's productivity",
         "Build a modern e-commerce website with React and Stripe integration",
         "Create a social media app with real-time chat and notifications",
@@ -114,6 +160,17 @@ export const ProjectForm = () => {
         "Develop a learning management system with video streaming",
         "Build a real estate platform with property listings and virtual tours"
     ];
+
+    const contractTexts = [
+        "NFT collection for digital artwork with royalties",
+        "Loyalty token for my coffee shop rewards program",
+        "Gaming token with staking and rewards mechanism",
+        "Governance token for my DAO with voting capabilities",
+        "Multi-token standard for in-game items (ERC-1155)",
+        "Payment splitter contract for revenue sharing"
+    ];
+
+    const typingTexts = mode === "contract" ? contractTexts : appTexts;
 
     return (
         <>
@@ -125,10 +182,14 @@ export const ProjectForm = () => {
             )}
             <Form {...form}>
                 <section className="space-y-6">
-                <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
-                    "relative border border-white/40 rounded-xl bg-white/20 backdrop-blur-lg transition-all duration-200 cursor-text shadow-xl",
-                    isFocused && "border-white/60 shadow-2xl ring-2 ring-white/30",
-                )}>
+                <form 
+                    id="main-project-form"
+                    onSubmit={form.handleSubmit(onSubmit)} 
+                    className={cn(
+                        "relative border border-white/20 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                        isFocused && "border-white/40 shadow-2xl ring-1 ring-white/20",
+                    )}
+                >
                     <FormField
                         control={form.control}
                         name="value"
@@ -167,20 +228,25 @@ export const ProjectForm = () => {
                     {/* Ideas Section */}
                     {showIdeas && (
                         <div className="px-5 pb-3">
-                            <div className="p-4 bg-white/15 backdrop-blur-sm rounded-lg border border-white/30 shadow-lg">
-                                <div className="flex flex-wrap gap-2">
+                            <div className="p-6 bg-gradient-to-br from-white/20 via-white/15 to-white/10 backdrop-blur-md rounded-xl border border-white/40 shadow-2xl">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse"></div>
+                                    <h3 className="text-sm font-semibold text-white/90">Quick Ideas</h3>
+                                    <div className="flex-1 h-px bg-gradient-to-r from-white/30 to-transparent"></div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
                                         <Button
                                             key={template.title}
                                             variant="outline"
                                             size="sm"
-                                            className="h-8 px-3 text-xs bg-white/30 hover:bg-white/50 border-white/50 hover:border-white/70 transition-all duration-200 hover:scale-105 backdrop-blur-sm text-gray-800 font-medium shadow-sm"
+                                            className="h-10 px-4 text-sm bg-gradient-to-r from-white/25 to-white/15 hover:from-white/40 hover:to-white/25 border border-white/40 hover:border-white/60 transition-all duration-300 ease-out hover:scale-[1.02] backdrop-blur-sm text-white font-medium shadow-lg hover:shadow-xl focus:ring-2 focus:ring-white/30 focus:outline-none group"
                                             onClick={() => {
                                                 onSelect(template.prompt);
                                             }}
                                         >
-                                            <span className="mr-1 text-sm">{template.emoji}</span>
-                                            {template.title}
+                                            <span className="mr-2 text-base group-hover:scale-110 transition-transform duration-200">{template.emoji}</span>
+                                            <span className="truncate">{template.title}</span>
                                         </Button>
                                     ))}
                                 </div>
@@ -191,10 +257,8 @@ export const ProjectForm = () => {
                     {/* Build Button Section */}
                     <div className="px-5 py-3">
                         <div className="flex items-center justify-between">
-                            <div className="text-sm text-white/80 font-mono">
-                                <kbd className="pointer-events-none inline-flex h-6 select-none items-center gap-1 rounded border border-white/40 bg-white/20 px-2 text-sm font-mono font-medium text-white/90">
-                                    Ctrl + Enter
-                                </kbd>
+                            <div className="text-xs text-white/60">
+                                Press <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded border border-white/30">Ctrl + Enter</kbd> to build
                             </div>
                             <div className="flex items-center gap-3">
                                 <Button
@@ -202,10 +266,9 @@ export const ProjectForm = () => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowIdeas(!showIdeas)}
-                                    className="text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200"
+                                    className="text-white/80 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                                 >
-                                    <LightbulbIcon className="size-4 mr-1" />
-                                    Ideas
+                                    <LightbulbIcon className="size-4" />
                                     {showIdeas ? (
                                         <ChevronUpIcon className="size-4 ml-1" />
                                     ) : (
@@ -217,20 +280,14 @@ export const ProjectForm = () => {
                                     disabled={isButtonDisabled}
                                     size="default"
                                     className={cn(
-                                        "h-10 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200",
+                                        "h-10 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none",
                                         isButtonDisabled && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
-                                    {isPending ? (
-                                        <>
-                                            <Loader2Icon className="size-3 animate-spin mr-1" />
-                                            Building...
-                                        </>
+                                    {isPending || isAnalyzingContract ? (
+                                        <Loader2Icon className="size-4 animate-spin" />
                                     ) : (
-                                        <>
-                                            <ArrowUp className="size-3 mr-1" />
-                                            Build
-                                        </>
+                                        <ArrowUp className="size-4" />
                                     )}
                                 </Button>
                             </div>

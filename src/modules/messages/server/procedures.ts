@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { enforceQuota } from "@/lib/quota-enforcement";
 
 export const messagesRouter = createTRPCRouter({
     getMany: protectedProcedure
@@ -37,6 +38,8 @@ export const messagesRouter = createTRPCRouter({
             projectId: z.string().min(1, { message: "Project ID is required" }),
         }))
         .mutation(async ({ input, ctx }) => {
+            // Enforce quota before processing (estimate 5000 tokens per request)
+            const quotaCheck = await enforceQuota(ctx.auth.userId, 5000);
 
             const existingProject = await prisma.project.findUnique({
                 where: {
@@ -63,6 +66,9 @@ export const messagesRouter = createTRPCRouter({
                 data: {
                     value: input.value,
                     projectId: input.projectId,
+                    userId: ctx.auth.userId,
+                    messageId: createdMessage.id,
+                    quotaWarnings: quotaCheck.warnings,
                 },
             });
             return createdMessage;

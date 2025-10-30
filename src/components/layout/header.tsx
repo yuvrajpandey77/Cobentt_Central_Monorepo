@@ -36,7 +36,7 @@ export const Header = () => {
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/cogerpherelogoonly.jpg"
+                src="/cogerpherelogoonly.png"
                 alt="Cogerphere AI"
                 width={32}
                 height={32}
@@ -59,16 +59,17 @@ export const Header = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             <SignedOut>
-              <div className="flex items-center gap-2">
-                <Button asChild variant="secondary" size="sm" className="bg-white/10 text-white hover:bg-white/20">
-                  <Link href="/sign-in">Sign in</Link>
-                </Button>
-                <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                  <Link href="/sign-up">
-                    <Sparkles className="h-4 w-4 mr-2" />
+              <div className="flex items-center gap-3">
+                <Link href="/sign-in">
+                  <Button variant="ghost" size="default" className="text-white/80 hover:text-white hover:bg-white/10 border border-white/20 h-9 px-6">
+                    Sign in
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button className="bg-white text-black hover:bg-gray-100 font-semibold shadow-lg border-none h-9 px-6">
                     Sign up
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             </SignedOut>
             <SignedIn>
@@ -82,7 +83,7 @@ export const Header = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden text-white hover:bg-white/10"
+            className="md:hidden text-white hover:bg-white/20 hover:text-black"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -97,18 +98,19 @@ export const Header = () => {
               <InteractiveNavLink href="/customDesigns/pricing" className="text-sm" activeClassName="text-white" >Pricing</InteractiveNavLink>
               <InteractiveNavLink href="/docs" className="text-sm" activeClassName="text-white" >Docs</InteractiveNavLink>
               <InteractiveNavLink href="/customDesigns/support" className="text-sm" activeClassName="text-white" >Support</InteractiveNavLink>
-              <div className="flex items-center space-x-4 pt-4">
+              <div className="flex flex-col space-y-3 pt-4 w-full">
                 <SignedOut>
-                  <div className="flex items-center gap-2">
-                    <Button asChild variant="secondary" size="sm" className="bg-white/10 text-white hover:bg-white/20">
-                      <Link href="/sign-in">Sign in</Link>
-                    </Button>
-                    <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                      <Link href="/sign-up">
-                        <Sparkles className="h-4 w-4 mr-2" />
+                  <div className="flex flex-col gap-3 w-full">
+                    <Link href="/sign-in" className="w-full">
+                      <Button variant="ghost" size="default" className="text-white/80 hover:text-white hover:bg-white/10 w-full justify-start border border-white/20 h-9">
+                        Sign in
+                      </Button>
+                    </Link>
+                    <Link href="/sign-up" className="w-full">
+                      <Button className="bg-white text-black hover:bg-gray-100 font-semibold w-full border-none h-9">
                         Sign up
-                      </Link>
-                    </Button>
+                      </Button>
+                    </Link>
                   </div>
                 </SignedOut>
                 <SignedIn>

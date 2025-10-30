@@ -1,25 +1,58 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery, useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 import { ProjectForm } from "@/modules/home/ui/components/project-form";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
-import { Footer } from "@/components/sections/landing-sections";
+import { Footer } from "@/components/layout/footer";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
-import Image from "next/image";
 import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+
+const STORAGE_KEY = "cogy.home.mode";
+
+type BuilderMode = "app" | "contract";
 
 const PageContent = () => {
     const { isCollapsed } = useSidebar();
+    const router = useRouter();
     const trpc = useTRPC();
     const loadMoreRef = useRef<HTMLDivElement>(null);
-    
+    const [mode, setMode] = useState<BuilderMode>("app");
+    const [projectType, setProjectType] = useState<"webapp" | "contract">("webapp");
+
+    useEffect(() => {
+        const stored = window.localStorage.getItem(STORAGE_KEY) as BuilderMode | null;
+        if (stored === "app" || stored === "contract") {
+            setMode(stored);
+        }
+    }, []);
+
+    const handleModeChange = (value: string) => {
+        if (value === "app" || value === "contract") {
+            setMode(value);
+            window.localStorage.setItem(STORAGE_KEY, value);
+        }
+    };
+
+    const handleContractPromptAnalysis = async (userPrompt: string) => {
+        // Redirect to DApp Studio with the prompt
+        // The DApp Studio page will handle the analysis and show the form
+        return new Promise<void>((resolve) => {
+            const url = `/dapp-studio?prompt=${encodeURIComponent(userPrompt)}`;
+            router.push(url);
+            // Resolve after a short delay to allow the loading state to be visible
+            setTimeout(() => resolve(), 100);
+        });
+    };
+
     const {
         data,
         fetchNextPage,
@@ -27,7 +60,10 @@ const PageContent = () => {
         isFetchingNextPage,
         isLoading,
     } = useInfiniteQuery({
-        ...trpc.projects.getAll.infiniteQueryOptions({ limit: 20 }),
+        ...trpc.projects.getAll.infiniteQueryOptions({ 
+            limit: 20,
+            projectType: projectType
+        }),
         getNextPageParam: (lastPage: any) => lastPage.nextCursor,
     });
 
@@ -63,7 +99,7 @@ const PageContent = () => {
         return () => observer.disconnect();
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
     
-    return (
+  return (
         <div className="min-h-screen flex">
             {/* Sidebar - Fixed Full Height */}
             <Sidebar className="hidden lg:block fixed left-0 top-0 h-screen z-50" />
@@ -120,52 +156,121 @@ const PageContent = () => {
                                     <circle cx="12" cy="12" r="2.2" fill="white" opacity="0.85" />
                                 </svg>
                                 <span className="text-xs font-semibold tracking-wide text-white/90 leading-none align-middle">Beta 0.1</span>
-                            </div>
-
+        </div>
+        
                             {/* Main Heading */}
-                            <h1 className="text-4xl md:text-5xl font-semibold mb-5 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight pb-1">
-                                Build your app with Cogy
-                            </h1>
+                            <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
+                                Build your Dapp with Clox
+            </h1>
                             
                             {/* Subtitle */}
-                            <p className="text-lg text-white/90 mb-10 max-w-xl mx-auto drop-shadow-md">
-                                Describe your app idea and watch Cogerphere build it for you in minutes, not months.
+                            <p className="mt-2 text-lg text-white/20 mb-4 max-w-xl mx-auto ">
+                                {mode === "app" 
+                                    ? "Describe your app idea and watch Clox build it for you in minutes."
+                                    : "Describe your smart contract and let AI generate it."}
                             </p>
 
                             {/* Project Form */}
-                            <div className="max-w-2xl mx-auto">
-                                <ProjectForm />
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                            <div className="max-w-3xl mx-auto  space-y-8">
+                                <ProjectForm 
+                                    mode={mode}
+                                    onContractPrompt={handleContractPromptAnalysis}
+                                />
+
+                                <div className="flex flex-col items-center justify-center gap-4">
+                                    <div className="flex gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur">
+                                        <button
+                                            onClick={() => handleModeChange("app")}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
+                                                mode === "app"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Sparkles className="h-4 w-4" />
+                                            Build Dapp
+                                        </button>
+                                        <button
+                                            onClick={() => handleModeChange("contract")}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
+                                                mode === "contract"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Code2 className="h-4 w-4" />
+                                            Smart Contract
+                                        </button>
+                  </div>
+                                    <div className="flex flex-col items-center gap-2 text-center">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
 
                 {/* Projects Grid Section */}
                 <section className="py-16 bg-black/10 backdrop-blur-sm">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-12 rounded-2xl">
-                            <h2 className="text-3xl font-bold mb-4 text-white">
-                                Community Projects
-                            </h2>
-                            <p className="text-lg text-white/80 max-w-2xl mx-auto">
+                        <div className="mb-12 rounded-2xl">
+                            {/* Header with centered title and right-aligned toggle */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex-1"></div> {/* Spacer */}
+                                <h2 className="text-3xl font-bold text-white text-center flex-1">
+                                    Community Projects
+                </h2>
+                                <div className="flex-1 flex justify-end"> {/* Right-aligned toggle */}
+                                    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-1">
+                                        <button
+                                            onClick={() => setProjectType("webapp")}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
+                                                projectType === "webapp"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Code2 className="h-4 w-4" />
+                                            Web Apps
+                                        </button>
+                                        <button
+                                            onClick={() => setProjectType("contract")}
+                                            className={cn(
+                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
+                                                projectType === "contract"
+                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
+                                                    : "hover:bg-white/10",
+                                            )}
+                                        >
+                                            <Zap className="h-4 w-4" />
+                                            Smart Contracts
+                                        </button>
+                  </div>
+                </div>
+              </div>
+                            <p className="text-lg text-white/80 max-w-2xl mx-auto text-center">
                                 Explore amazing projects built by our community using Cogerphere
-                            </p>
-                        </div>
-                        
+            </p>
+          </div>
+
                         {isLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {Array.from({ length: 6 }).map((_, i) => (
                                     <ProjectCardSkeleton key={i} />
                                 ))}
-                            </div>
+              </div>
                         ) : projects && projects.length > 0 ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {projects.map((project: any) => (
                                         <ProjectCard key={project.id} project={project} />
                                     ))}
-                                </div>
-                                
+            </div>
+
                                 {/* Load more trigger */}
                                 <div ref={loadMoreRef} className="mt-8 text-center">
                                     {isFetchingNextPage ? (
@@ -173,24 +278,24 @@ const PageContent = () => {
                                             {Array.from({ length: 3 }).map((_, i) => (
                                                 <ProjectCardSkeleton key={i} />
                                             ))}
-                                        </div>
+              </div>
                                     ) : hasNextPage ? (
                                         <p className="text-white/40 text-sm">Scroll down to load more projects</p>
                                     ) : (
                                         <p className="text-white/40 text-sm">You've reached the end!</p>
                                     )}
-                                </div>
+            </div>
                             </>
                         ) : (
                             <div className="text-center py-12">
                                 <Code2 className="w-16 h-16 text-white/40 mx-auto mb-4" />
                                 <h3 className="text-xl font-semibold text-white/80 mb-2">
-                                    No projects yet
-                                </h3>
+                                    No {projectType === "webapp" ? "web apps" : "smart contracts"} yet
+              </h3>
                                 <p className="text-white/60">
-                                    Be the first to create a project and share it with the community!
+                                    Be the first to create a {projectType === "webapp" ? "web app" : "smart contract"} and share it with the community!
                                 </p>
-                            </div>
+            </div>
                         )}
                     </div>
                 </section>

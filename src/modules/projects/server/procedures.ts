@@ -50,13 +50,18 @@ export const projectsRouter = createTRPCRouter({
         .input(z.object({
             limit: z.number().min(1).max(20).default(20),
             cursor: z.string().nullish(),
+            projectType: z.enum(['webapp', 'contract']).optional(),
         }))
         .query(async ({ input }) => {
-            const { limit, cursor } = input;
+            const { limit, cursor, projectType } = input;
+            
+            // Map frontend values to database values
+            const dbProjectType = projectType === 'webapp' ? 'WEBSITE' : 'DAPP';
             
             const projects = await prisma.project.findMany({
                 take: limit + 1, // Take one extra to check if there are more
                 cursor: cursor ? { id: cursor } : undefined,
+                where: projectType ? { projectType: dbProjectType } : {},
                 orderBy: {
                     updatedAt: "desc",
                 },
@@ -101,6 +106,13 @@ export const projectsRouter = createTRPCRouter({
                         },
                     }
                 },
+                include: {
+                    messages: {
+                        orderBy: { createdAt: "desc" },
+                        take: 1,
+                        select: { id: true },
+                    },
+                },
             });
                                 
             await inngest.send({
@@ -108,9 +120,119 @@ export const projectsRouter = createTRPCRouter({
                 data: {
                     value: input.value,
                     projectId: createdProject.id,
+                    userId: ctx.auth.userId,
+                    messageId: createdProject.messages[0]?.id,
                 },
             });
             return createdProject;
+        }),
+
+    createDapp: protectedProcedure
+        .input(z.object({
+            value: z.string().min(1, { message: "Value is required" }).max(10000, { message: "Value must be less than 10000 characters" }),
+            blockchain: z.enum(['ETHEREUM', 'POLYGON', 'ARBITRUM', 'OPTIMISM', 'SOLANA']),
+            contractType: z.enum(['ERC20', 'ERC721', 'ERC1155', 'PAYMENT_SPLITTER', 'CUSTOM']),
+            tokenName: z.string().optional(),
+            tokenSymbol: z.string().optional(),
+            tokenSupply: z.string().optional(),
+            decimals: z.string().optional(),
+            network: z.enum(['MAINNET', 'TESTNET']),
+            features: z.array(z.string()).default([]),
+            // Enhanced configuration fields
+            aiConfiguration: z.any().optional(),
+            gasOptimizations: z.array(z.string()).default([]),
+            securityRecommendations: z.array(z.string()).default([]),
+            complexity: z.enum(['simple', 'moderate', 'complex']).optional(),
+            reasoning: z.string().optional(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+            console.log('🔥 createDapp mutation called with input:', input);
+            
+            const createdProject = await prisma.project.create({
+                data: {
+                    userId: ctx.auth.userId,
+                    name: generateSlug(2, {
+                        format: "title",
+                    }),
+                    projectType: 'DAPP',
+                    blockchain: input.blockchain,
+                    contractType: input.contractType,
+                    tokenName: input.tokenName,
+                    tokenSymbol: input.tokenSymbol,
+                    tokenSupply: input.tokenSupply,
+                    decimals: input.decimals,
+                    network: input.network,
+                    features: input.features,
+                    // Enhanced configuration fields
+                    aiConfiguration: input.aiConfiguration,
+                    gasOptimizations: input.gasOptimizations,
+                    securityNotes: input.securityRecommendations,
+                    messages: {
+                        create: {
+                            content: input.value,
+                            role: "USER",
+                            type: "RESULT",
+                        },
+                    }
+                },
+            });
+
+            // Create BuildJob for tracking progress
+            const buildJob = await prisma.buildJob.create({
+                data: {
+                    projectId: createdProject.id,
+                    type: 'GENERATE',
+                    status: 'PENDING',
+                    progress: 0,
+                    currentStep: 'Queued for generation...',
+                },
+            });
+
+            // Trigger contract generation with buildJobId
+            console.log('📤 Sending Inngest event for contract generation:', {
+                buildJobId: buildJob.id,
+                projectId: createdProject.id,
+                contractType: input.contractType,
+            });
+            
+            await inngest.send({
+                name: "contract/generate",
+                data: {
+                    buildJobId: buildJob.id,
+                    projectId: createdProject.id,
+                    userId: ctx.auth.userId, // Add userId for token tracking
+                    contractType: input.contractType,
+                    tokenName: input.tokenName,
+                    tokenSymbol: input.tokenSymbol,
+                    tokenSupply: input.tokenSupply,
+                    decimals: input.decimals,
+                    features: input.features,
+                    // Enhanced configuration fields
+                    aiConfiguration: input.aiConfiguration,
+                    gasOptimizations: input.gasOptimizations,
+                    securityRecommendations: input.securityRecommendations,
+                    complexity: input.complexity,
+                    reasoning: input.reasoning,
+                },
+            });
+
+            return createdProject;
+        }),
+
+    getBuildJobs: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+        }))
+        .query(async ({ input, ctx }) => {
+            const buildJobs = await prisma.buildJob.findMany({
+                where: {
+                    projectId: input.projectId,
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            });
+            return buildJobs;
         }),
 
     // Backfill/recapture screenshot for a single project

@@ -61,21 +61,22 @@ const AllProjectsContent = () => {
             {filteredProjects.map((project: any) => {
                 const latestMessage = project.messages[0];
                 const previewText = latestMessage?.content?.slice(0, 200) + "..." || "No description available";
+                const isSmartContract = project.projectType === 'SMART_CONTRACT' || project.contractType;
                 
                 return (
-                    <Card key={project.id} className="group hover:shadow-lg transition-all duration-300 bg-white/10 backdrop-blur-sm border-white/20 hover:border-white/40">
+                    <Card key={project.id} className="group hover:shadow-lg transition-all duration-200 ease-out bg-white/10 backdrop-blur-sm border-white/20 hover:border-white/40 focus-within:ring-2 focus-within:ring-white/20">
                         <CardContent className="p-6">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <Link href={`/projects/${project.id}`}>
-                                            <h3 className="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors cursor-pointer">
+                                        <Link href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}>
+                                            <h3 className="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors duration-200 ease-out cursor-pointer">
                                                 {project.name}
                                             </h3>
                                         </Link>
                                         <Badge variant="secondary" className="bg-white/20 text-white/90 border-white/30">
                                             <Code2 className="w-3 h-3 mr-1" />
-                                            Project
+                                            {isSmartContract ? 'Contract' : 'Project'}
                                         </Badge>
                                     </div>
                                     
@@ -100,13 +101,15 @@ const AllProjectsContent = () => {
                                 </div>
                                 
                                 <div className="flex items-center gap-2 ml-4">
-                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10">
-                                        <Eye className="w-4 h-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/10">
+                                    <Link href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}>
+                                        <Button variant="ghost" size="sm" className="text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
+                                            <Eye className="w-4 h-4" />
+                                        </Button>
+                                    </Link>
+                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
                                         <Edit className="w-4 h-4" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-red-400 hover:bg-red-400/10">
+                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 ease-out focus:ring-2 focus:ring-red-400/20 focus:outline-none">
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -166,7 +169,7 @@ const AllProjectsContent = () => {
                                         placeholder="Search projects..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ease-out hover:border-white/30"
                                     />
                                 </div>
                             </div>
@@ -180,7 +183,7 @@ const AllProjectsContent = () => {
                                     className={cn(
                                         viewMode === 'grid' 
                                             ? 'bg-blue-600 text-white' 
-                                            : 'text-white/60 hover:text-white hover:bg-white/10'
+                                            : 'text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
                                     )}
                                 >
                                     <Grid3X3 className="w-4 h-4" />
@@ -192,7 +195,7 @@ const AllProjectsContent = () => {
                                     className={cn(
                                         viewMode === 'list' 
                                             ? 'bg-blue-600 text-white' 
-                                            : 'text-white/60 hover:text-white hover:bg-white/10'
+                                            : 'text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
                                     )}
                                 >
                                     <List className="w-4 h-4" />
@@ -224,7 +227,7 @@ const AllProjectsContent = () => {
                             <Button 
                                 onClick={() => window.location.reload()} 
                                 variant="outline"
-                                className="border-white/20 text-white hover:bg-white/10"
+                                className="border-white/20 text-white hover:bg-white/20 hover:text-black"
                             >
                                 Retry
                             </Button>

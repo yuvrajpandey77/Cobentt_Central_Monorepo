@@ -17,7 +17,6 @@ import {
   Sparkles,
   Info,
 } from "lucide-react";
-import ThemeToggle from "@/components/theme-toggle";
 import FeedbackButtons from "@/app/docs/FeedbackButtons";
 import SearchBox from "./SearchBox";
 
@@ -190,7 +189,7 @@ export default async function DocsPage({ searchParams }: PageProps) {
         <div className="px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Image src="/cogerpherelogoonly.jpg" alt="Cogerphere" width={28} height={28} className="rounded" />
+            <Image src="/cogerpherelogoonly.png" alt="Cogerphere" width={28} height={28} className="rounded" />
             <span className="text-sm font-semibold tracking-wide">COGERPHERE Docs</span>
           </div>
           {/* Search */}
@@ -262,8 +261,8 @@ export default async function DocsPage({ searchParams }: PageProps) {
         </p>
 
         {/* Decorative illustration / gradient card */}
-        <div className="my-6 rounded-xl border border-white/10 overflow-hidden shadow-lg bg-gradient-to-br from-purple-500/20 via-blue-500/10 to-fuchsia-500/20">
-          <div className="h-56 sm:h-72 w-full bg-[radial-gradient(700px_200px_at_50%_-20%,rgba(124,58,237,0.35),transparent),radial-gradient(400px_200px_at_80%_20%,rgba(0,174,239,0.35),transparent)]" />
+        <div className="my-6 rounded-xl border border-white/10 overflow-hidden shadow-lg bg-gradient-to-br from-blue-500/20 via-slate-500/10 to-blue-600/20">
+          <div className="h-56 sm:h-72 w-full bg-[radial-gradient(700px_200px_at_50%_-20%,rgba(59,130,246,0.35),transparent),radial-gradient(400px_200px_at_80%_20%,rgba(0,174,239,0.35),transparent)]" />
         </div>
         {/* eslint-disable-next-line react/no-danger */}
         <div className="prose-headings:scroll-mt-24" dangerouslySetInnerHTML={{ __html: html }} />
@@ -302,9 +301,6 @@ export default async function DocsPage({ searchParams }: PageProps) {
         )}
       </aside>
       </div>
-
-      {/* Bottom-right theme toggle */}
-      <ThemeToggle />
     </div>
   );
 }
