@@ -132,31 +132,6 @@ const PageContent = () => {
                     </div>
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
                         <div className="text-center max-w-2xl mx-auto">
-                            {/* Beta Badge */}
-                            <div className="relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:bg-white/10 transition-colors mb-6">
-                                {/* subtle shine */}
-                                <span className="pointer-events-none absolute inset-0 rounded-full overflow-hidden">
-                                    <span className="absolute -inset-y-2 -left-8 w-2/3 bg-gradient-to-r from-white/0 via-white/25 to-white/0 blur-sm translate-x-0 will-change-transform animate-[shine_2.2s_linear_infinite]" />
-                                </span>
-                                {/* Custom unique glyph (spark-hex) */}
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-4 h-4 text-white/90"
-                                    aria-hidden
-                                >
-                                    <path
-                                        d="M12 2.8l2.35 3.9 4.45 1.23-2.9 3.2.42 4.64L12 14.7l-4.32 1.07.42-4.64-2.9-3.2 4.45-1.23L12 2.8z"
-                                        fill="currentColor"
-                                        opacity="0.9"
-                                    />
-                                    <circle cx="12" cy="12" r="2.2" fill="white" opacity="0.85" />
-                                </svg>
-                                <span className="text-xs font-semibold tracking-wide text-white/90 leading-none align-middle">Beta 0.1</span>
-        </div>
         
                             {/* Main Heading */}
                             <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">

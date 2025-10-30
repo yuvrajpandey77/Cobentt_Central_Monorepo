@@ -1,11 +1,11 @@
 "use client";
 import { z } from "zod";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Loader2Icon, LightbulbIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ArrowUp, Loader2Icon, LightbulbIcon, ChevronDown } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
@@ -43,6 +43,38 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
     const [showIdeas, setShowIdeas] = useState(false);
     const [isAnalyzingContract, setIsAnalyzingContract] = useState(false);
+    const [showModelMenu, setShowModelMenu] = useState(false);
+    const modelMenuRef = useRef<HTMLDivElement | null>(null);
+    const ideasMenuRef = useRef<HTMLDivElement | null>(null);
+    const ideasButtonRef = useRef<HTMLButtonElement | null>(null);
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            const target = e.target as Node | null;
+            // Close model menu when clicking outside
+            if (showModelMenu && modelMenuRef.current && target && !modelMenuRef.current.contains(target)) {
+                setShowModelMenu(false);
+            }
+            // Close ideas panel when clicking outside both its panel and button
+            const clickedInsideIdeasPanel = ideasMenuRef.current && target ? ideasMenuRef.current.contains(target) : false;
+            const clickedIdeasButton = ideasButtonRef.current && target ? ideasButtonRef.current.contains(target) : false;
+            if (showIdeas && !clickedInsideIdeasPanel && !clickedIdeasButton) {
+                setShowIdeas(false);
+            }
+        }
+        function handleEsc(e: KeyboardEvent) {
+            if (e.key === "Escape") {
+                setShowModelMenu(false);
+                setShowIdeas(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleEsc);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleEsc);
+        };
+    }, [showModelMenu, showIdeas]);
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -171,6 +203,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     ];
 
     const typingTexts = mode === "contract" ? contractTexts : appTexts;
+    const modelName = mode === "contract" ? "GPT-4.1" : "GPT-5";
 
     return (
         <>
@@ -186,15 +219,21 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                     id="main-project-form"
                     onSubmit={form.handleSubmit(onSubmit)} 
                     className={cn(
-                        "relative border border-white/20 rounded-xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                        "relative border border-white/20 rounded-2xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
                         isFocused && "border-white/40 shadow-2xl ring-1 ring-white/20",
                     )}
                 >
+                    {/* Bottom-center attached tag below the input */}
+                    <div className="absolute -bottom-4.5 left-1/2 -translate-x-1/2 pointer-events-none">
+                        <div className="inline-flex items-center px-2 py-0.5 rounded-md  border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 text-[10px] leading-none text-white/70 shadow-[0_2px_10px_rgba(0,0,0,0.25)]">
+                            Beta v0.1
+                        </div>
+                    </div>
                     <FormField
                         control={form.control}
                         name="value"
                         render={({ field }) => (
-                            <div className="relative">
+                            <div className="relative z-10">
                                 <TextareaAutosize
                                     {...field}
                                     disabled={isPending}
@@ -202,22 +241,23 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                     onBlur={() => setIsFocused(false)}
                                     minRows={1}
                                     maxRows={6}
-                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white placeholder:text-white/60 cursor-text"
+                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white/60 placeholder:text-white/30 cursor-text"
                                     placeholder=""
                                     onKeyDown={(e) => {
-                                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                        if (e.key === "Enter" && !e.shiftKey) {
                                             e.preventDefault();
                                             form.handleSubmit(onSubmit)(e);
                                         }
                                     }}
                                 />
+                                {/* Model toggle button moved to bottom-left */}
                                 {!field.value && !isFocused && (
                                     <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text flex items-center">
                                         <TypingAnimation 
                                             texts={typingTexts} 
                                             speed={15}
                                             pauseTime={1500}
-                                            className="text-base text-white/60 text-left w-full"
+                                            className="text-base text-white/40 text-left w-full"
                                         />
                                     </div>
                                 )}
@@ -227,53 +267,76 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                     
                     {/* Ideas Section */}
                     {showIdeas && (
-                        <div className="px-5 pb-3">
-                            <div className="p-6 bg-gradient-to-br from-white/20 via-white/15 to-white/10 backdrop-blur-md rounded-xl border border-white/40 shadow-2xl">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-pulse"></div>
-                                    <h3 className="text-sm font-semibold text-white/90">Quick Ideas</h3>
-                                    <div className="flex-1 h-px bg-gradient-to-r from-white/30 to-transparent"></div>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
-                                        <Button
-                                            key={template.title}
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-10 px-4 text-sm bg-gradient-to-r from-white/25 to-white/15 hover:from-white/40 hover:to-white/25 border border-white/40 hover:border-white/60 transition-all duration-300 ease-out hover:scale-[1.02] backdrop-blur-sm text-white font-medium shadow-lg hover:shadow-xl focus:ring-2 focus:ring-white/30 focus:outline-none group"
-                                            onClick={() => {
-                                                onSelect(template.prompt);
-                                            }}
-                                        >
-                                            <span className="mr-2 text-base group-hover:scale-110 transition-transform duration-200">{template.emoji}</span>
-                                            <span className="truncate">{template.title}</span>
-                                        </Button>
-                                    ))}
-                                </div>
+                    <div className="px-5 pb-3" ref={ideasMenuRef}>
+                        <div className="p-6 rounded-xl border border-white/15 bg-black/30 backdrop-blur-sm shadow-xl">
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                                <h3 className="text-sm font-semibold text-white">Quick Ideas</h3>
+                                <div className="flex-1 h-px bg-white/10"></div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
+                                    <Button
+                                        key={template.title}
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-10 px-4 text-sm border-white/20 hover:border-white/40 bg-transparent hover:bg-white/10 text-white transition-colors duration-200"
+                                        onClick={() => {
+                                            onSelect(template.prompt);
+                                        }}
+                                    >
+                                        <span className="truncate">{template.title}</span>
+                                    </Button>
+                                ))}
                             </div>
                         </div>
+                    </div>
                     )}
 
                     {/* Build Button Section */}
                     <div className="px-5 py-3">
                         <div className="flex items-center justify-between">
-                            <div className="text-xs text-white/60">
-                                Press <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded border border-white/30">Ctrl + Enter</kbd> to build
-                            </div>
-                            <div className="flex items-center gap-3">
+                            <div className="relative" ref={modelMenuRef}>
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
+                                    onClick={() => setShowModelMenu((v) => !v)}
+                                    className="h-10 px-4 rounded-full bg-transparent text-white/90 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none -ml-2"
+                                >
+                                    Auto
+                                    <ChevronDown className="ml-1 size-3 opacity-80" />
+                                </Button>
+                                {showModelMenu && (
+                                    <div className="absolute bottom-12 left-0 w-50 rounded-md border border-white/15 bg-black text-white shadow-2xl p-3 z-20">
+                                        <div className="text-[11px] text-white/80 mb-2 text-left">{modelName}</div>
+                                        <div className="flex items-center justify-start gap-1">
+                                            <div className="text-left">
+                                                <div className="text-sm font-medium leading-tight">Auto</div>
+                                                <div className="text-[11px] text-white/60 leading-snug">Balanced quality and speed, recommended for most tasks</div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                aria-disabled
+                                                title="Fixed option"
+                                                className="relative inline-flex h-5 w-14 items-center rounded-full bg-white/20 border border-white/40 cursor-not-allowed"
+                                            >
+                                                <div className="h-4 w-4 rounded-full bg-white translate-x-3 transition-transform" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    ref={ideasButtonRef}
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => setShowIdeas(!showIdeas)}
-                                    className="text-white/80 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
+                                    className="h-10 w-10 rounded-full bg-transparent text-white/90 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                                 >
                                     <LightbulbIcon className="size-4" />
-                                    {showIdeas ? (
-                                        <ChevronUpIcon className="size-4 ml-1" />
-                                    ) : (
-                                        <ChevronDownIcon className="size-4 ml-1" />
-                                    )}
                                 </Button>
                                 <Button
                                     type="submit"
