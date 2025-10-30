@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useTRPC } from "@/trpc/client";
@@ -20,8 +20,15 @@ export const Sidebar = ({ className }: SidebarProps) => {
   const { user } = useUser();
   const trpc = useTRPC();
   const { data: projects, isLoading } = useQuery(trpc.projects.getMany.queryOptions());
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed, toggleSidebar, setIsCollapsed } = useSidebar();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Open sidebar by default when signed in
+  useEffect(() => {
+    if (user && isCollapsed) {
+      setIsCollapsed(false);
+    }
+  }, [user]);
 
   const filteredProjects = useMemo(() => {
     if (!projects) return [] as any[];
@@ -95,10 +102,33 @@ export const Sidebar = ({ className }: SidebarProps) => {
               </div>
             )}
             {isCollapsed && (
-              <div className="text-center">
-                <div className="w-10 h-10 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto shadow-lg">
-                  <FolderOpen className="w-5 h-5 text-primary" />
-                </div>
+              <div className="mb-6 flex-shrink-0 flex flex-col items-center gap-3">
+                <Link href="/dapp-studio" className="group">
+                  <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                    <Code2 className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                  </div>
+                </Link>
+                <button className="group" aria-label="Templates">
+                  <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                    <Layout className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                  </div>
+                </button>
+                <Link href="/all-projects" className="group">
+                  <div className="relative h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                    <FolderOpen className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <span className="absolute -top-1.5 -right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/80 text-white border border-white/20">0</span>
+                  </div>
+                </Link>
+                <Link href="/sign-up" className="group" aria-label="Get Started">
+                  <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                    <Plus className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                  </div>
+                </Link>
+                <Link href="/settings/user" className="group" aria-label="Settings">
+                  <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                    <SettingsIcon className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                  </div>
+                </Link>
               </div>
             )}
           </div>
@@ -203,6 +233,28 @@ export const Sidebar = ({ className }: SidebarProps) => {
             </div>
           </div>
         )}
+        {isCollapsed && (
+          <div className="mb-6 flex-shrink-0 flex flex-col items-center gap-3">
+            <Link href="/dapp-studio" className="group">
+              <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                <Code2 className="w-4 h-4 text-white/80 group-hover:text-primary" />
+              </div>
+            </Link>
+            <button className="group">
+              <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                <Layout className="w-4 h-4 text-white/80 group-hover:text-primary" />
+              </div>
+            </button>
+            <Link href="/all-projects" className="group">
+              <div className="relative h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                <FolderOpen className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                <span className="absolute -top-1.5 -right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/80 text-white border border-white/20">
+                  {(projects?.length || 0) > 99 ? '99+' : (projects?.length || 0)}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* Projects List */}
         {!isCollapsed && (
@@ -295,6 +347,20 @@ export const Sidebar = ({ className }: SidebarProps) => {
                   <span>Settings</span>
                 </div>
               </Button>
+            </Link>
+          </div>
+        )}
+        {isCollapsed && (
+          <div className="mt-auto pb-2 flex-shrink-0 flex flex-col items-center gap-3">
+            <button 
+              className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur transition-all duration-200 ease-out hover:scale-[1.02] focus:ring-2 focus:ring-white/20 focus:outline-none flex items-center justify-center"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            <Link href="/settings/user" className="group">
+              <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                <SettingsIcon className="w-4 h-4 text-white/80 group-hover:text-primary" />
+              </div>
             </Link>
           </div>
         )}
