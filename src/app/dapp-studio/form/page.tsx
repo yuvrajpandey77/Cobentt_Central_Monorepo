@@ -13,6 +13,13 @@ import { toast } from "sonner";
 import {
   Loader2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const PageShell = () => {
   const { isCollapsed } = useSidebar();
@@ -21,6 +28,17 @@ const PageShell = () => {
   const [formData, setFormData] = useState<DappStudioFormValues | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [suggestedConfig, setSuggestedConfig] = useState<Partial<DappStudioFormValues> | null>(null);
+  const [aiDetailsDialog, setAiDetailsDialog] = useState<{ open: boolean; title: string; content: string }>({
+    open: false,
+    title: '',
+    content: '',
+  });
+
+  // Helper function to truncate text
+  const truncateText = (text: string, maxLength: number = 100): string => {
+    if (!text || text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
 
   // Get prompt from URL and analyze it
   useEffect(() => {
@@ -90,8 +108,23 @@ const PageShell = () => {
       };
 
       console.log('✅ AI Analysis Result:', config.reasoning);
+      const fullReasoning = config.reasoning || 'Configuration generated successfully';
+      const truncatedReasoning = truncateText(fullReasoning, 100);
+      
       toast.success('AI analyzed your prompt!', {
-        description: config.reasoning || 'Configuration generated successfully',
+        description: truncatedReasoning,
+        duration: 5000,
+        action: fullReasoning.length > 100 ? {
+          label: 'View Details',
+          onClick: () => {
+            setAiDetailsDialog({
+              open: true,
+              title: 'AI Analysis Details',
+              content: fullReasoning,
+            });
+          },
+        } : undefined,
+        className: 'max-w-sm',
       });
       
       setSuggestedConfig(finalConfig as DappStudioFormValues);
@@ -99,8 +132,11 @@ const PageShell = () => {
       return;
     } catch (error) {
       console.error('⚠️ AI analysis failed, falling back to pattern matching:', error);
+      const fallbackMessage = 'Your configuration will still be generated using our pattern matching system.';
       toast.warning('AI unavailable - Using smart pattern matching', {
-        description: 'Your configuration will still be generated using our pattern matching system.',
+        description: fallbackMessage,
+        duration: 5000,
+        className: 'max-w-sm',
       });
       
       // FALLBACK: Pattern matching if AI fails
@@ -288,6 +324,18 @@ const PageShell = () => {
           </section>
         </main>
       </div>
+
+      {/* AI Details Dialog */}
+      <Dialog open={aiDetailsDialog.open} onOpenChange={(open) => setAiDetailsDialog({ ...aiDetailsDialog, open })}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{aiDetailsDialog.title}</DialogTitle>
+            <DialogDescription className="pt-4 whitespace-pre-wrap text-sm leading-relaxed">
+              {aiDetailsDialog.content}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
