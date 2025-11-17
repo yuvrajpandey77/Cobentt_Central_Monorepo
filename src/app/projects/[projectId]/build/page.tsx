@@ -26,6 +26,8 @@ import {
   EyeIcon,
   CodeIcon,
   Zap,
+  RefreshCw,
+  XCircle,
 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { FileExplorer } from '@/components/file-explorer';
@@ -49,6 +51,7 @@ export default function BuildPage() {
   const [project, setProject] = useState<any>(null);
   const [buildStatus, setBuildStatus] = useState<BuildStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRestarting, setIsRestarting] = useState(false);
   const [activeTab, setActiveTab] = useState<'source' | 'abi' | 'bytecode'>('source');
   const [showArtifacts, setShowArtifacts] = useState(false);
   const [sourceCode, setSourceCode] = useState('');
@@ -353,9 +356,73 @@ forge test
     }
   };
 
+  const handleRestartBuild = async () => {
+    if (!project || isRestarting) return;
+
+    try {
+      setIsRestarting(true);
+      
+      // Call the generate API endpoint with project configuration
+      const response = await fetch(`/api/projects/${projectId}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contractType: project.contractType || 'ERC20',
+          tokenName: project.tokenName,
+          tokenSymbol: project.tokenSymbol,
+          tokenSupply: project.tokenSupply,
+          decimals: project.decimals,
+          features: project.features || [],
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Build restarted:', result);
+        
+        // Reset build status to show loading
+        setBuildStatus({
+          id: result.buildJobId,
+          status: 'PENDING',
+          progress: 0,
+          currentStep: 'Restarting build...',
+          logs: [],
+          artifacts: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        
+        // Reload the page after a short delay to show the new build starting
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        const error = await response.json();
+        alert(`Failed to restart build: ${error.error || 'Unknown error'}`);
+        setIsRestarting(false);
+      }
+    } catch (error) {
+      console.error('Error restarting build:', error);
+      alert('Failed to restart build. Please try again.');
+      setIsRestarting(false);
+    }
+  };
+
   const isCompleted = buildStatus?.status === 'COMPLETED';
   const isFailed = buildStatus?.status === 'FAILED';
   const isRunning = buildStatus?.status === 'RUNNING' || buildStatus?.status === 'PENDING';
+  
+  // Check for any error conditions (failed status, error in artifacts, error keywords in currentStep)
+  const hasError = isFailed || 
+    (buildStatus?.artifacts && typeof buildStatus.artifacts === 'object' && 'error' in buildStatus.artifacts) ||
+    (buildStatus?.currentStep && (
+      buildStatus.currentStep.toLowerCase().includes('failed') ||
+      buildStatus.currentStep.toLowerCase().includes('error') ||
+      buildStatus.currentStep.toLowerCase().includes('timeout') ||
+      buildStatus.currentStep.toLowerCase().includes('compilation failed')
+    ));
 
   if (!project) {
     return (
@@ -402,10 +469,10 @@ forge test
                     Ready
                   </Badge>
                 )}
-                {isFailed && (
+                {(isFailed || hasError) && (
                   <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
                     <AlertCircle className="h-3 w-3 mr-1" />
-                    Failed
+                    {isFailed ? 'Failed' : 'Error'}
                   </Badge>
                 )}
               </div>
@@ -467,6 +534,89 @@ forge test
                 )}
               </CardContent>
             </Card>
+
+            {/* Error Display */}
+            {hasError && (
+              <Card className="border-red-500/30 bg-red-500/10 backdrop-blur-md ring-1 ring-red-500/20 shadow-[0_4px_20px_rgba(239,68,68,0.25)]">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                        <XCircle className="h-5 w-5 text-red-400" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-red-300 mb-2">
+                        {isFailed ? 'Build Failed' : 'Build Error'}
+                      </h3>
+                      <div className="space-y-2">
+                        {buildStatus?.currentStep && (
+                          <p className="text-sm text-red-200 font-medium">
+                            {buildStatus.currentStep}
+                          </p>
+                        )}
+                        {buildStatus?.artifacts && typeof buildStatus.artifacts === 'object' && (
+                          <>
+                            {'error' in buildStatus.artifacts && (buildStatus.artifacts as any).error && (
+                              <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
+                                <p className="text-xs text-red-200 font-mono whitespace-pre-wrap break-words">
+                                  {String((buildStatus.artifacts as any).error)}
+                                </p>
+                              </div>
+                            )}
+                            {'compilationFailed' in buildStatus.artifacts && (buildStatus.artifacts as any).compilationFailed && (
+                              <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
+                                <p className="text-xs text-red-200 font-mono whitespace-pre-wrap break-words">
+                                  Compilation failed. Check logs below for details.
+                                </p>
+                              </div>
+                            )}
+                            {'generationFailed' in buildStatus.artifacts && (buildStatus.artifacts as any).generationFailed && (
+                              <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
+                                <p className="text-xs text-red-200 font-mono whitespace-pre-wrap break-words">
+                                  Contract generation failed. {String((buildStatus.artifacts as any).error || 'Unknown error')}
+                                </p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                        {buildStatus?.logs && buildStatus.logs.length > 0 && (
+                          <div className="bg-black/30 rounded-lg p-3 border border-red-500/20 max-h-32 overflow-y-auto thin-scrollbar">
+                            <p className="text-xs text-red-200/80 font-mono whitespace-pre-wrap">
+                              {buildStatus.logs.slice(-5).join('\n')}
+                            </p>
+                          </div>
+                        )}
+                        {!buildStatus?.artifacts && !buildStatus?.logs && buildStatus?.currentStep && (
+                          <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
+                            <p className="text-xs text-red-200 font-mono">
+                              {buildStatus.currentStep}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        onClick={handleRestartBuild}
+                        disabled={isRestarting}
+                        className="mt-4 w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 hover:border-red-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isRestarting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Restarting...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Restart Build
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Build Progress */}
             <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
@@ -600,21 +750,16 @@ forge test
               <div className="ml-auto flex items-center gap-x-2">
                 {/* Only show Deploy button if contract hasn't been deployed yet */}
                 {!project?.contractAddress && (
-                  <div className="flex flex-col items-end">
-                    <Button
-                      size="sm"
-                      onClick={() => router.push(`/projects/${projectId}/deploy`)}
-                      disabled={!buildStatus?.artifacts?.sourceCode}
-                      className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
-                      title={!buildStatus?.artifacts?.sourceCode ? "Build the contract first to enable deployment" : "Deploy your smart contract to the blockchain"}
-                    >
-                      <Rocket className="h-4 w-4 mr-2" />
-                      Deploy Contract
-                    </Button>
-                    {!buildStatus?.artifacts?.sourceCode && (
-                      <span className="text-xs text-white/50 mt-1">Build required first</span>
-                    )}
-                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => router.push(`/projects/${projectId}/deploy`)}
+                    disabled={!buildStatus?.artifacts?.sourceCode}
+                    className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    title={!buildStatus?.artifacts?.sourceCode ? "Build required first - Complete the build process to enable deployment" : "Deploy your smart contract to the blockchain"}
+                  >
+                    <Rocket className="h-4 w-4 mr-2" />
+                    Deploy Contract
+                  </Button>
                 )}
                 
                 {/* Show deployment status if contract is deployed */}
@@ -640,8 +785,8 @@ forge test
                     <Button
                       size="sm"
                       onClick={() => router.push(`/projects/${projectId}/contract`)}
-                      className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
-                      title="Interact with your deployed contract"
+                      className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      title="Interact with your deployed contract - Call functions and read state"
                     >
                       <Zap className="h-4 w-4 mr-2" />
                       Interact with Contract
@@ -653,7 +798,8 @@ forge test
                   size="sm"
                   onClick={handleDownloadArtifacts}
                   disabled={!buildStatus?.artifacts}
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  title={!buildStatus?.artifacts ? "Build artifacts not available yet" : "Download contract artifacts (ABI, bytecode, source)"}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Artifacts
@@ -663,7 +809,8 @@ forge test
                   size="sm"
                   onClick={handleRunTests}
                   disabled={!buildStatus?.artifacts?.sourceCode}
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  title={!buildStatus?.artifacts?.sourceCode ? "Build required first - Complete the build process to run tests" : "Run Foundry test suite for this contract"}
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Run Tests
@@ -697,7 +844,8 @@ forge test
                       alert('Error saving codebase');
                     }
                   }}
-                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm"
+                  className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none"
+                  title="Save the current codebase to E2B sandbox"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Save Codebase

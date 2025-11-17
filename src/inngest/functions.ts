@@ -603,7 +603,10 @@ function checkReentrancyGuards(contractCode: string): string[] {
 
 // AI-Only Contract Generation Function
 export const generateContract = inngest.createFunction(
-  { id: "generate-contract" },
+  { 
+    id: "generate-contract",
+    timeout: "15m", // 15-minute timeout for entire function
+  },
   { event: "contract/generate" },
   async ({ event, step }) => {
     console.log('🎯 AI Contract Generator called with event:', event);

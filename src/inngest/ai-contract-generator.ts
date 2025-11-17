@@ -53,9 +53,9 @@ export async function generateCompleteContract(
       }),
     });
 
-    // Create timeout promise (10 minutes)
+    // Create timeout promise (5 minutes per AI call)
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('AI contract generation timeout after 10 minutes')), 600000)
+      setTimeout(() => reject(new Error('AI contract generation timeout after 5 minutes')), 300000)
     );
 
     // Race between AI call and timeout
@@ -178,9 +178,9 @@ export async function refineContract(
       }),
     });
 
-    // Create timeout promise (10 minutes)
+    // Create timeout promise (5 minutes per AI call)
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('AI contract refinement timeout after 10 minutes')), 600000)
+      setTimeout(() => reject(new Error('AI contract refinement timeout after 5 minutes')), 300000)
     );
 
     // Race between AI call and timeout
@@ -435,9 +435,9 @@ Generate COMPLETE, CORRECTED contract code that will compile successfully with F
       }),
     });
 
-    // Create timeout promise (10 minutes)
+    // Create timeout promise (5 minutes per AI call)
     const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error('AI refinement timeout after 10 minutes')), 600000)
+      setTimeout(() => reject(new Error('AI refinement timeout after 5 minutes')), 300000)
     );
 
     // Race between AI call and timeout
