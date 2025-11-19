@@ -605,7 +605,9 @@ function checkReentrancyGuards(contractCode: string): string[] {
 export const generateContract = inngest.createFunction(
   { 
     id: "generate-contract",
-    timeout: "15m", // 15-minute timeout for entire function
+    timeouts: {
+      finish: "15m", // 15-minute timeout for entire function
+    },
   },
   { event: "contract/generate" },
   async ({ event, step }) => {
