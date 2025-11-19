@@ -203,7 +203,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     ];
 
     const typingTexts = mode === "contract" ? contractTexts : appTexts;
-    const modelName = mode === "contract" ? "GPT-4.1" : "GPT-5";
+    const modelName = mode === "contract" ? "GPT-5.1" : "GPT-5.1";
 
     return (
         <>

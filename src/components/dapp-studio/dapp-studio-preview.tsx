@@ -66,10 +66,12 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
       reasoning: data.reasoning
     });
     
+    const toBackendEnum = (value: string) => value?.replace(/-/g, '_').toUpperCase();
+
     await createDapp.mutateAsync({
       value: `Smart contract: ${data.tokenName}`, // Description
       blockchain: data.blockchain.toUpperCase() as any,
-      contractType: data.contractType.toUpperCase() as any,
+      contractType: toBackendEnum(data.contractType) as any,
       tokenName: data.tokenName,
       tokenSymbol: data.tokenSymbol,
       tokenSupply: data.tokenSupply,

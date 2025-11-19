@@ -45,6 +45,7 @@ export async function recordTokenUsage(input: RecordUsageInput) {
   });
 
   try {
+    // Increase transaction timeout to 30 seconds to handle longer operations
     await prisma.$transaction(async (tx) => {
       // Create per-call record
       await tx.tokenUsage.create({
@@ -107,6 +108,9 @@ export async function recordTokenUsage(input: RecordUsageInput) {
               totalCostUsd: { increment: new Decimal(costUsd) },
             },
       });
+    }, {
+      maxWait: 10000, // Maximum time to wait for a transaction slot
+      timeout: 30000, // Maximum time the transaction can run (30 seconds)
     });
   } catch (err) {
     console.error("[usage] recordTokenUsage failed; continuing without blocking", {

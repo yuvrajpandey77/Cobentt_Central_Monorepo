@@ -12,6 +12,7 @@ export const MODEL_PRICING = {
     "gpt-4": { input: 30.0, output: 60.0 },
     "gpt-3.5-turbo": { input: 0.5, output: 1.5 },
     "gpt-5": { input: 8.0, output: 24.0 }, // Estimated
+    "gpt-5.1": { input: 8.5, output: 25.5 }, // Estimated
   },
   ANTHROPIC: {
     "claude-3.5-sonnet": { input: 3.0, output: 15.0 },
