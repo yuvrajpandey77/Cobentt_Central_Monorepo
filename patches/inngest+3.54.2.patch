@@ -1,0 +1,19 @@
+--- a/node_modules/inngest/package.json
++++ b/node_modules/inngest/package.json
+@@ -97,6 +97,14 @@
+   "./internals": {
+     "types": "./internals.d.ts"
+   },
++  "./helpers/*": {
++    "types": "./helpers/*.d.ts",
++    "import": "./helpers/*.js",
++    "require": "./helpers/*.cjs"
++  },
++  "./components/*": {
++    "types": "./components/*.d.ts",
++    "import": "./components/*.js",
++    "require": "./components/*.cjs"
++  },
+   "./package.json": {
+     "import": "./package.json",
+     "require": "./package.json"
