@@ -1,5 +1,5 @@
 {
-  "name": "cogerphere_experimental_version0.1",
+  "name": "cobentt",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -55,6 +55,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^11.18.2",
+    "gpt-tokenizer": "^3.4.0",
     "inngest": "^3.40.2",
     "input-otp": "^1.4.2",
     "jszip": "^3.10.1",

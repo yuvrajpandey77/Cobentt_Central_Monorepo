@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Loader2Icon, LightbulbIcon, ChevronDown } from "lucide-react";
+import { ArrowUp, Loader2Icon, ChevronDown, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
@@ -14,7 +14,6 @@ import { Form, FormField } from "@/components/ui/form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "./constants";
-import { TypingAnimation } from "@/components/ui/typing-animation";
 import { ProjectLoading } from "@/components/ui/project-loading";
 import { useClerk } from "@clerk/nextjs";
 
@@ -25,6 +24,8 @@ interface Props {
     mode?: "app" | "contract";
     contractPreview?: any;
     onContractPrompt?: (prompt: string) => void;
+    projectCategory?: string | null;
+    onCategoryClear?: () => void;
 }
 
 const formSchema = z.object({
@@ -34,7 +35,7 @@ const formSchema = z.object({
 
 
 
-export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }: Props) => {
+export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, projectCategory, onCategoryClear }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -181,28 +182,6 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
     const isPending = createProject.isPending;
     const isButtonDisabled = isPending || isAnalyzingContract || !form.formState.isValid;
 
-    // Typing animation texts
-    const appTexts = [
-        "Ask Cogerphere to create a dashboard to track your team's productivity",
-        "Build a modern e-commerce website with React and Stripe integration",
-        "Create a social media app with real-time chat and notifications",
-        "Develop a project management tool with drag-and-drop functionality",
-        "Build a fitness tracking app with workout plans and progress charts",
-        "Create a restaurant ordering system with online payments",
-        "Develop a learning management system with video streaming",
-        "Build a real estate platform with property listings and virtual tours"
-    ];
-
-    const contractTexts = [
-        "NFT collection for digital artwork with royalties",
-        "Loyalty token for my coffee shop rewards program",
-        "Gaming token with staking and rewards mechanism",
-        "Governance token for my DAO with voting capabilities",
-        "Multi-token standard for in-game items (ERC-1155)",
-        "Payment splitter contract for revenue sharing"
-    ];
-
-    const typingTexts = mode === "contract" ? contractTexts : appTexts;
     const modelName = mode === "contract" ? "GPT-4.1" : "GPT-5";
 
     return (
@@ -219,16 +198,11 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                     id="main-project-form"
                     onSubmit={form.handleSubmit(onSubmit)} 
                     className={cn(
-                        "relative border border-white/20 rounded-2xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                        "relative border border-white/20 rounded-3xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
                         isFocused && "border-white/40 shadow-2xl ring-1 ring-white/20",
                     )}
                 >
-                    {/* Bottom-center attached tag below the input */}
-                    <div className="absolute -bottom-4.5 left-1/2 -translate-x-1/2 pointer-events-none">
-                        <div className="inline-flex items-center px-2 py-0.5 rounded-md  border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 text-[10px] leading-none text-white/70 shadow-[0_2px_10px_rgba(0,0,0,0.25)]">
-                            Beta v0.1
-                        </div>
-                    </div>
+
                     <FormField
                         control={form.control}
                         name="value"
@@ -242,7 +216,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                     minRows={1}
                                     maxRows={6}
                                     className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white/60 placeholder:text-white/30 cursor-text"
-                                    placeholder=""
+                                    placeholder="Hello there. Let's move forward. What's the vision?"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
                                             e.preventDefault();
@@ -250,17 +224,6 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                         }
                                     }}
                                 />
-                                {/* Model toggle button moved to bottom-left */}
-                                {!field.value && !isFocused && (
-                                    <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text flex items-center">
-                                        <TypingAnimation 
-                                            texts={typingTexts} 
-                                            speed={15}
-                                            pauseTime={1500}
-                                            className="text-base text-white/40 text-left w-full"
-                                        />
-                                    </div>
-                                )}
                             </div>
                         )}
                     />
@@ -328,16 +291,30 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt }:
                                 )}
                             </div>
                             <div className="flex items-center gap-3">
-                                <Button
-                                    ref={ideasButtonRef}
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setShowIdeas(!showIdeas)}
-                                    className="h-10 w-10 rounded-full bg-transparent text-white/90 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
-                                >
-                                    <LightbulbIcon className="size-4" />
-                                </Button>
+                                {projectCategory && onCategoryClear && (() => {
+                                    const iconMap: Record<string, any> = {
+                                        website: Globe,
+                                        "smart contract": ScrollText,
+                                        slides: Presentation,
+                                        docs: FileText,
+                                        "deep research": Search,
+                                        sheet: Table,
+                                    };
+                                    const TagIcon = iconMap[projectCategory];
+                                    return (
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/15 border border-green-500/25 group">
+                                            {TagIcon && <TagIcon className="h-3.5 w-3.5 text-green-400" />}
+                                            <span className="text-xs font-medium text-green-400 capitalize">{projectCategory}</span>
+                                            <button
+                                                type="button"
+                                                onClick={onCategoryClear}
+                                                className="h-4 w-4 rounded-full flex items-center justify-center text-green-400/60 hover:text-green-300 hover:bg-green-500/20 transition-colors"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
                                 <Button
                                     type="submit"
                                     disabled={isButtonDisabled}

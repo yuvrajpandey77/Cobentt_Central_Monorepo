@@ -34,7 +34,7 @@ async function sendWebhook(
   const payloadString = JSON.stringify(payload);
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "User-Agent": "Cogerphere-Webhooks/1.0",
+    "User-Agent": "Cobentt-Webhooks/1.0",
     "X-Webhook-Event": payload.event,
   };
 

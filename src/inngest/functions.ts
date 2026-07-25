@@ -18,15 +18,15 @@ import { recordTokenUsage } from "@/lib/token-usage";
 // Screenshot capture deps loaded dynamically to avoid type and runtime issues when unavailable
 
 
-interface CogerphereAgentResult {
+interface CobenttAgentResult {
   summary: string;
   files: { [path: string]: string };
 
 }
 
-export const CogerphereAgent = inngest.createFunction(
-  { id: "COGERPHERE" },
-  { event: "Cogerphereai/runAgent" },
+export const CobenttAgent = inngest.createFunction(
+  { id: "COBENTT" },
+  { event: "Cobentt/runAgent" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("cogerphereailabsbeta1");
@@ -59,7 +59,7 @@ export const CogerphereAgent = inngest.createFunction(
       return formattedMessages.reverse();
     });
 
-    const state = createState<CogerphereAgentResult>({
+    const state = createState<CobenttAgentResult>({
       summary: "",
       files: {},
     },
@@ -68,7 +68,7 @@ export const CogerphereAgent = inngest.createFunction(
       }
     );
 
-    const CogerphereCodeAgent = createAgent<CogerphereAgentResult>({
+    const CobenttCodeAgent = createAgent<CobenttAgentResult>({
       name: "Coding-Agent",
       description: "An expert coding agent",
       system: PROMPT,
@@ -115,7 +115,7 @@ export const CogerphereAgent = inngest.createFunction(
               content: z.string(),
             })),
           }) as unknown as AnyZodType,
-          handler: async ({ files }, { step, network }: Tool.Options<CogerphereAgentResult>) => {
+          handler: async ({ files }, { step, network }: Tool.Options<CobenttAgentResult>) => {
             const newFiles = await step?.run("createOrUpdateFiles", async () => {
               try {
                 const updatedFiles = network.state.data.files || {};
@@ -175,9 +175,9 @@ export const CogerphereAgent = inngest.createFunction(
 
 
 
-    const network = createNetwork<CogerphereAgentResult>({
+    const network = createNetwork<CobenttAgentResult>({
       name: "coding-agent-network",
-      agents: [CogerphereCodeAgent],
+      agents: [CobenttCodeAgent],
       maxIter: 30,
       defaultState: state,
       router: async ({ network }) => {
@@ -185,7 +185,7 @@ export const CogerphereAgent = inngest.createFunction(
         if (summary) {
           return;
         }
-        return CogerphereCodeAgent;
+        return CobenttCodeAgent;
       },
     });
 

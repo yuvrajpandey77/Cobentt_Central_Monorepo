@@ -1,7 +1,7 @@
 "use client";
 
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
@@ -29,6 +29,24 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const AllProjectsContent = () => {
     const { isCollapsed } = useSidebar();
@@ -39,6 +57,37 @@ const AllProjectsContent = () => {
     const { data: projects, isLoading, error } = useQuery(
         trpc.projects.getMany.queryOptions()
     );
+
+    const queryClient = useQueryClient();
+
+    const [renameTarget, setRenameTarget] = useState<any>(null);
+    const [renameValue, setRenameValue] = useState("");
+    const [deleteTarget, setDeleteTarget] = useState<any>(null);
+
+    const renameMutation = useMutation(trpc.projects.rename.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            toast.success("Project renamed");
+            setRenameTarget(null);
+        },
+        onError: (err) => toast.error(err.message || "Failed to rename"),
+    }));
+
+    const togglePinMutation = useMutation(trpc.projects.togglePin.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+        },
+        onError: (err) => toast.error(err.message || "Failed to update pin"),
+    }));
+
+    const deleteMutation = useMutation(trpc.projects.delete.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            toast.success("Project deleted");
+            setDeleteTarget(null);
+        },
+        onError: (err) => toast.error(err.message || "Failed to delete"),
+    }));
 
     // Filter projects based on search query
     const filteredProjects = projects?.filter((project: any) =>
@@ -51,7 +100,13 @@ const AllProjectsContent = () => {
     const ProjectGridView = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProjects.map((project: any) => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onRename={(id, name) => { setRenameTarget(project); setRenameValue(name); }}
+                    onTogglePin={(id) => togglePinMutation.mutate({ projectId: id })}
+                    onDelete={(id) => setDeleteTarget(project)}
+                />
             ))}
         </div>
     );
@@ -122,6 +177,7 @@ const AllProjectsContent = () => {
     );
 
     return (
+        <>
         <div className="min-h-screen flex">
             {/* Sidebar */}
             <Sidebar className="hidden lg:block fixed left-0 top-0 h-screen z-50" />
@@ -142,7 +198,7 @@ const AllProjectsContent = () => {
                                     My Projects
                                 </h1>
                                 <p className="text-white/80">
-                                    Manage and view all your Cogerphere projects
+                                    Manage and view all your Cobentt projects
                                 </p>
                             </div>
                             
@@ -243,7 +299,7 @@ const AllProjectsContent = () => {
                             <p className="text-white/60 mb-6">
                                 {searchQuery 
                                     ? `No projects match "${searchQuery}". Try a different search term.`
-                                    : 'Create your first project to get started with Cogerphere!'
+                                    : 'Create your first project to get started with Cobentt!'
                                 }
                             </p>
                             {!searchQuery && (
@@ -272,6 +328,56 @@ const AllProjectsContent = () => {
                 </div>
             </div>
         </div>
+
+        {/* Rename Dialog */}
+        <Dialog open={!!renameTarget} onOpenChange={(open) => { if (!open) setRenameTarget(null); }}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Rename Project</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={(e) => { e.preventDefault(); if (renameValue.trim()) renameMutation.mutate({ projectId: renameTarget?.id, name: renameValue.trim() }); }}>
+                    <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="w-full px-3 py-2 text-sm bg-black/40 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 text-white"
+                        placeholder="Project name"
+                        maxLength={255}
+                    />
+                    <DialogFooter className="mt-4">
+                        <Button type="button" variant="ghost" onClick={() => setRenameTarget(null)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={!renameValue.trim() || renameMutation.isPending}>
+                            {renameMutation.isPending ? "Saving..." : "Save"}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to delete <span className="font-semibold text-white">{deleteTarget?.name}</span>? This action cannot be undone. All messages, files, and data will be permanently removed.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => deleteMutation.mutate({ projectId: deleteTarget?.id })}
+                        disabled={deleteMutation.isPending}
+                    >
+                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </>
     );
 };
 

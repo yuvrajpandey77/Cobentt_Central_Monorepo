@@ -95,7 +95,7 @@ export default function FeaturesPage() {
             Everything you need to build amazing apps
           </h1>
           <p className="text-2xl text-white/70 max-w-4xl mx-auto leading-relaxed">
-            Cogerphere provides all the tools and features you need to create, deploy, and scale your applications with AI-powered development.
+            Cobentt provides all the tools and features you need to create, deploy, and scale your applications with AI-powered development.
           </p>
         </div>
 
@@ -122,7 +122,7 @@ export default function FeaturesPage() {
             Ready to experience these features?
           </h2>
           <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto">
-            Start building with Cogerphere today and see the difference AI can make.
+            Start building with Cobentt today and see the difference AI can make.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Button asChild variant="outline" className="px-8 py-3 text-base font-semibold bg-white text-white hover:bg-white/90 border-white/15 backdrop-blur-sm shadow-lg">

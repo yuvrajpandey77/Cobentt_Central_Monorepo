@@ -44,7 +44,7 @@ export async function checkQuota(
     allowedUser = await prisma.allowedUser.create({
       data: {
         clerkUserId: userId,
-        email: `${userId}@cogerphere.local`, // Placeholder, can be updated via profile
+        email: `${userId}@cobentt.local`, // Placeholder, can be updated via profile
         status: "APPROVED",
         approvedAt: new Date(),
         plan: "FREE",

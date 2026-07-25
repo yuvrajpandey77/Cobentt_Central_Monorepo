@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 
 import { ProjectForm } from "@/modules/home/ui/components/project-form";
 import { Header } from "@/components/layout/header";
@@ -12,9 +13,10 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
-import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { getDailyGreeting } from "@/lib/greetings";
 
 const STORAGE_KEY = "cogy.home.mode";
 
@@ -27,6 +29,8 @@ const PageContent = () => {
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const [mode, setMode] = useState<BuilderMode>("app");
     const [projectType, setProjectType] = useState<"webapp" | "contract">("webapp");
+    const [greeting] = useState(getDailyGreeting);
+    const [projectCategory, setProjectCategory] = useState<string | null>(null);
 
     useEffect(() => {
         const stored = window.localStorage.getItem(STORAGE_KEY) as BuilderMode | null;
@@ -67,17 +71,30 @@ const PageContent = () => {
         getNextPageParam: (lastPage: any) => lastPage.nextCursor,
     });
 
+    const { userId } = useAuth();
+    const queryClient = useQueryClient();
+    const copyProject = useMutation(trpc.projects.copyProject.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+        },
+    }));
+
     const projects = data?.pages.flatMap((page: any) => page.projects) ?? [];
 
     const starLines = useMemo(() => {
+        let seed = 42;
+        const next = () => {
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+            return seed / 0x7fffffff;
+        };
         const count = 56;
         return Array.from({ length: count }, (_, i) => {
-            const left = Math.random() * 100; // vw
-            const width = 1.2 + Math.random() * 2.8; // px thickness
-            const length = 28 + Math.random() * 72; // px length
-            const duration = 8 + Math.random() * 16; // seconds
-            const delay = -Math.random() * duration; // negative to desync starts
-            const opacity = 0.10 + Math.random() * 0.20; // still subtle but more visible
+            const left = next() * 100;
+            const width = 1.2 + next() * 2.8;
+            const length = 28 + next() * 72;
+            const duration = 8 + next() * 16;
+            const delay = -next() * duration;
+            const opacity = 0.10 + next() * 0.20;
             return { id: i, left, width, length, duration, delay, opacity };
         });
     }, []);
@@ -112,7 +129,7 @@ const PageContent = () => {
                 <Header />
                 
                 {/* Hero Section */}
-                <section className="relative overflow-hidden h-screen flex items-start justify-center pt-40">
+                <section className="relative overflow-hidden h-screen flex items-start justify-center pt-[12.65rem]">
                     {/* Falling diagonal star-lines behind content */}
                     <div className="hero-star-field z-0">
                         {starLines.map((s) => (
@@ -131,57 +148,52 @@ const PageContent = () => {
                         ))}
                     </div>
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-                        <div className="text-center max-w-3xl mx-auto">
+                        <div className="text-center max-w-[47.52rem] mx-auto">
         
                             {/* Main Heading */}
-                            <h1 className="text-4xl md:text-5xl font-semibold mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
-                                Build your Dapp with Clox
-            </h1>
-                            
-                            {/* Subtitle */}
-                            <p className="mt-2 text-lg text-white/20 mb-4 max-w-xl mx-auto ">
-                                {mode === "app" 
-                                    ? "Describe your app idea and watch Clox build it for you in minutes."
-                                    : "Describe your smart contract and let AI generate it."}
-                            </p>
+                            <h1 className="text-3xl md:text-4xl font-semibold opacity-90 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
+                                {greeting.heading}
+                            </h1>
 
                             {/* Project Form */}
-                            <div className="max-w-3xl mx-auto  space-y-8">
+                            <div className="max-w-3xl mx-auto space-y-8 mt-8">
                                 <ProjectForm 
                                     mode={mode}
                                     onContractPrompt={handleContractPromptAnalysis}
+                                    projectCategory={projectCategory}
+                                    onCategoryClear={() => setProjectCategory(null)}
                                 />
 
-                                <div className="flex flex-col items-center justify-center gap-4">
-                                    <div className="flex gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur">
-                                        <button
-                                            onClick={() => handleModeChange("app")}
-                                            className={cn(
-                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
-                                                mode === "app"
-                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
-                                                    : "hover:bg-white/10",
-                                            )}
-                                        >
-                                            <Sparkles className="h-4 w-4" />
-                                            Build Dapp
-                                        </button>
-                                        <button
-                                            onClick={() => handleModeChange("contract")}
-                                            className={cn(
-                                                "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-white transition-all duration-200",
-                                                mode === "contract"
-                                                    ? "bg-primary/90 text-primary-foreground shadow-lg"
-                                                    : "hover:bg-white/10",
-                                            )}
-                                        >
-                                            <Code2 className="h-4 w-4" />
-                                            Smart Contract
-                                        </button>
-                  </div>
-                                    <div className="flex flex-col items-center gap-2 text-center">
-                </div>
-              </div>
+                                <div className="flex items-center justify-center">
+                                    <div className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/5 p-1 backdrop-blur">
+                                        {([
+                                            ["website", Globe],
+                                            ["smart contract", ScrollText],
+                                            ["slides", Presentation],
+                                            ["docs", FileText],
+                                            ["deep research", Search],
+                                            ["sheet", Table],
+                                        ] as const).map(([cat, Icon]) => (
+                                            <button
+                                                key={cat}
+                                                onClick={() => {
+                                                    setProjectCategory(projectCategory === cat ? null : cat);
+                                                    if (cat === "website") handleModeChange("app");
+                                                    else if (cat === "smart contract") handleModeChange("contract");
+                                                }}
+                                                className={cn(
+                                                    "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 inline-flex items-center gap-1.5",
+                                                    projectCategory === cat
+                                                        ? "bg-white/80 text-black shadow-lg"
+                                                        : "text-white/40 hover:text-white/70 hover:bg-white/10",
+                                                )}
+                                            >
+                                                <Icon className="h-4 w-4" />
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
             </div>
           </div>
         </div>
@@ -228,7 +240,7 @@ const PageContent = () => {
                 </div>
               </div>
                             <p className="text-lg text-white/80 max-w-2xl mx-auto text-center">
-                                Explore amazing projects built by our community using Cogerphere
+                                Explore amazing projects built by our community using Cobentt
             </p>
           </div>
 
@@ -242,7 +254,13 @@ const PageContent = () => {
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {projects.map((project: any) => (
-                                        <ProjectCard key={project.id} project={project} />
+                                        <ProjectCard
+                                            key={project.id}
+                                            project={project}
+                                            showCopyButton={!!userId}
+                                            onCopy={(id) => copyProject.mutate({ projectId: id })}
+                                            isCopying={copyProject.isPending}
+                                        />
                                     ))}
             </div>
 

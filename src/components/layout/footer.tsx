@@ -13,20 +13,20 @@ export const Footer = () => {
           <div className="col-span-2">
             <Link href="/" className="flex items-center space-x-2 mb-4 group">
               <Image
-                src="/cogerpherelogoonly.png"
-                alt="Cogerphere AI Labs"
+                src="/cobentttransparent.webp"
+                alt="Cobentt Labs"
                 width={40}
                 height={40}
                 className="rounded-full group-hover:opacity-80 transition-opacity"
               />
-              <span className="text-2xl font-bold">COGERPHERE</span>
+              <span className="text-2xl font-bold">COBENTT</span>
             </Link>
             <p className="text-gray-400 text-sm max-w-xs mb-4">
               Building intelligent systems where AI and Web3 evolve together.
             </p>
             <div className="flex items-center space-x-4">
               <a 
-                href="https://github.com/COGERPHEREAILABS" 
+                href="https://github.com/COBENTT" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -34,7 +34,7 @@ export const Footer = () => {
                 <Github className="w-5 h-5" />
               </a>
               <a 
-                href="https://x.com/cogerphere" 
+                href="https://x.com/cobentt" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -42,7 +42,7 @@ export const Footer = () => {
                 <Twitter className="w-5 h-5" />
               </a>
               <a 
-                href="https://www.linkedin.com/company/cogerphere" 
+                href="https://www.linkedin.com/company/cobentt" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white transition-colors duration-200"
@@ -50,6 +50,9 @@ export const Footer = () => {
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>
+            <p className="text-gray-500 text-xs max-w-xs mt-5">
+              by{' '}<a href="https://cogerphere.vercel.app" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Cogerphere</a>{' '}AI Labs
+            </p>
           </div>
 
           {/* Products */}
@@ -58,7 +61,7 @@ export const Footer = () => {
             <ul className="space-y-3 text-gray-400">
               <li>
                 <Link href="/" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Clox</span>
+                  <span className="group-hover:translate-x-1 transition-transform duration-200">Cobentt</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>

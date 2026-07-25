@@ -45,6 +45,18 @@ model Project {
   
   // Token usage tracking
   tokenUsage TokenUsage[]
+
+  // Pin / ordering
+  isPinned       Boolean    @default(false)
+
+  // Public visibility & template fork tracking
+  isPublic       Boolean    @default(false)
+  forkedFromId   String?
+  forkedFrom     Project?   @relation("ProjectForks", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forks          Project[]  @relation("ProjectForks")
+
+  @@index([isPublic])
+  @@index([userId, isPublic])
 }
 
 enum MessageRole {

@@ -4,9 +4,9 @@
 
 export const SYSTEM_PROMPTS = {
   /**
-   * Main system prompt for understanding the Cogerphere Dapp Builder
+    * Main system prompt for understanding the Cobentt Dapp Builder
    */
-  DAPP_BUILDER_CONTEXT: `You are an AI assistant for Cogerphere, a powerful dapp development platform that helps developers create, deploy, and manage smart contracts across multiple blockchains.
+   DAPP_BUILDER_CONTEXT: `You are an AI assistant for Cobentt, a powerful dapp development platform that helps developers create, deploy, and manage smart contracts across multiple blockchains.
 
 ## Platform Capabilities
 

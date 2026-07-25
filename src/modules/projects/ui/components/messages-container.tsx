@@ -12,31 +12,31 @@ interface Props {
     projectId: string;
     activeFragment: Fragment | null;
     setActiveFragment: (fragments: Fragment | null) => void;
+    isReadOnly?: boolean;
 }
 
-export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment }: Props) => {
+export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment, isReadOnly }: Props) => {
     const trpc = useTRPC();
     const bottomRef = useRef<HTMLDivElement>(null);
-    const lastAssistantMessageIdRef = useRef<string | null>(null);
     const {data: messages} = useSuspenseQuery(trpc.messages.getMany.queryOptions({ projectId: projectId },
         // temporary refetch interval
         {  refetchInterval: 5000 }));
 
 
-       // automatic latest code gragment selector 
+       const initialSelectDone = useRef(false);
+
        useEffect(() => {
-        const lastAssistantMessage = messages.findLast(
-            (message) => message.role === "ASSISTANT"
+        if (initialSelectDone.current) return;
+
+        const assistantWithFragment = [...messages].reverse().find(
+            (m) => m.role === "ASSISTANT" && m.fragments
         );
 
-        if( 
-            lastAssistantMessage?.fragments && 
-            lastAssistantMessage.id !== lastAssistantMessageIdRef.current
-        ){
-            setActiveFragment(lastAssistantMessage.fragments);
-            lastAssistantMessageIdRef.current = lastAssistantMessage.id;
+        if (assistantWithFragment?.fragments) {
+            setActiveFragment(assistantWithFragment.fragments);
+            initialSelectDone.current = true;
         }
-       },[messages, setActiveFragment]);
+       }, [messages]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,11 +74,19 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
                 <div className="absolute -top-6 left-0 right-0 h-6 bg-gradient-to-b from-transparent to-background pointer-events-none">
 
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                    <div />
-                    {shouldShowTimer && <BuildTimer isBuilding={isCurrentlyBuilding} />}
-                </div>
-                <MessageForm projectId={projectId} />
+                {isReadOnly ? (
+                    <div className="text-center text-sm text-white/40 py-4">
+                        Sign in to use this project as a template
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex items-center justify-between mb-2">
+                            <div />
+                            {shouldShowTimer && <BuildTimer isBuilding={isCurrentlyBuilding} />}
+                        </div>
+                        <MessageForm projectId={projectId} />
+                    </>
+                )}
             </div>
            
         </div>

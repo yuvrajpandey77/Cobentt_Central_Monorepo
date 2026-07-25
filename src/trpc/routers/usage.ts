@@ -199,5 +199,50 @@ export const usageRouter = createTRPCRouter({
       return { usage: null, last3: [] };
     }
   }),
+
+  /**
+   * Token usage grouped by project
+   */
+  projectBreakdown: protectedProcedure
+    .input(z.object({
+      days: z.number().int().min(1).max(365).default(30),
+    }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const cutoff = new Date(Date.now() - input.days * 24 * 60 * 60 * 1000);
+        const records = await prisma.tokenUsage.groupBy({
+          by: ["projectId"],
+          where: {
+            userId: ctx.auth.userId,
+            createdAt: { gte: cutoff },
+            projectId: { not: null },
+          },
+          _sum: { totalTokens: true, promptTokens: true, completionTokens: true },
+          _count: { id: true },
+          orderBy: { _sum: { totalTokens: "desc" } },
+        });
+
+        const projectIds = records.map((r) => r.projectId).filter(Boolean) as string[];
+        const projects = projectIds.length > 0
+          ? await prisma.project.findMany({
+              where: { id: { in: projectIds } },
+              select: { id: true, name: true },
+            })
+          : [];
+        const projectMap = new Map(projects.map((p) => [p.id, p.name]));
+
+        return records.map((r) => ({
+          projectId: r.projectId,
+          projectName: projectMap.get(r.projectId!) || "Unknown",
+          totalTokens: r._sum.totalTokens ?? 0,
+          promptTokens: r._sum.promptTokens ?? 0,
+          completionTokens: r._sum.completionTokens ?? 0,
+          callCount: r._count.id,
+        }));
+      } catch (e) {
+        console.warn("[usage] projectBreakdown failed", e);
+        return [];
+      }
+    }),
 });
 

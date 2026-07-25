@@ -4,10 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Code2, ExternalLink, Zap, Play, Eye } from "lucide-react";
+import { Calendar, Code2, ExternalLink, Zap, Play, Eye, Copy, Loader2, MoreHorizontal, Pin, PinOff, Pencil, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ProjectCardProps {
   project: {
@@ -16,6 +23,7 @@ interface ProjectCardProps {
     userId: string;
     createdAt: Date;
     updatedAt: Date;
+    isPinned?: boolean;
     projectType?: string;
     contractType?: string;
     contractAddress?: string;
@@ -26,9 +34,15 @@ interface ProjectCardProps {
       type: string;
     }>;
   };
+  showCopyButton?: boolean;
+  onCopy?: (projectId: string) => void;
+  isCopying?: boolean;
+  onRename?: (projectId: string, currentName: string) => void;
+  onTogglePin?: (projectId: string) => void;
+  onDelete?: (projectId: string) => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({ project, showCopyButton, onCopy, isCopying, onRename, onTogglePin, onDelete }) => {
   const latestMessage = project.messages[0];
   const previewText = latestMessage?.content?.slice(0, 120) + "..." || "No description available";
   const isSmartContract = 
@@ -39,7 +53,46 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   if (isSmartContract) {
     // Smart Contract Card - Enhanced attractive design
     return (
-      <Card className="group hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 ease-out hover:scale-[1.02] bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm border border-slate-700/50 hover:border-blue-500/50 h-[16rem] w-full flex flex-col overflow-hidden p-0 rounded-2xl focus-within:ring-2 focus-within:ring-blue-500/30">
+      <Card className="group hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 ease-out hover:scale-[1.02] bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm border border-slate-700/50 hover:border-blue-500/50 h-[16rem] w-full flex flex-col overflow-hidden p-0 rounded-2xl focus-within:ring-2 focus-within:ring-blue-500/30 relative">
+        {/* Three-dot menu */}
+        {(onRename || onTogglePin || onDelete) && (
+          <div className="absolute top-2 right-2 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-7 w-7 rounded-lg border border-white/10 bg-black/40 hover:bg-white/10 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none backdrop-blur-sm">
+                  <MoreHorizontal className="h-3.5 w-3.5 text-white/70" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="bottom" className="w-40">
+                {onRename && (
+                  <DropdownMenuItem onClick={() => onRename(project.id, project.name)}>
+                    <Pencil className="h-3.5 w-3.5 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                )}
+                {onTogglePin && (
+                  <DropdownMenuItem onClick={() => onTogglePin(project.id)}>
+                    {project.isPinned ? (
+                      <><PinOff className="h-3.5 w-3.5 mr-2" /> Unpin</>
+                    ) : (
+                      <><Pin className="h-3.5 w-3.5 mr-2" /> Pin</>
+                    )}
+                  </DropdownMenuItem>
+                )}
+                {(onRename || onTogglePin) && onDelete && <DropdownMenuSeparator />}
+                {onDelete && (
+                  <DropdownMenuItem
+                    className="text-red-400 focus:text-red-400"
+                    onClick={() => onDelete(project.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         {/* Top Section - Enhanced Code Preview */}
         <div className="relative w-full h-28 bg-gradient-to-br from-blue-900/30 via-slate-800/40 to-purple-900/30 border-b border-slate-600/30">
           {/* Animated background pattern */}
@@ -106,6 +159,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
                 Interact with Contract
               </Button>
             </Link>
+
+            {showCopyButton && onCopy && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onCopy(project.id)}
+                disabled={isCopying}
+                className="w-full h-9 text-sm font-medium text-white/60 hover:text-blue-300 hover:bg-blue-500/10 border border-transparent hover:border-blue-400/30 transition-all duration-200 ease-out rounded-lg"
+              >
+                {isCopying ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Copy className="w-4 h-4 mr-2" />
+                )}
+                Use as Template
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -114,7 +184,46 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
 
   // Web App Card - Taller rectangle with screenshot background and overlay content
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 ease-out hover:scale-[1.02] bg-transparent backdrop-blur-sm border-white/10 hover:border-white/30 h-[15.4rem] w-full flex flex-col overflow-hidden p-0 rounded-xl focus-within:ring-2 focus-within:ring-white/20">
+    <Card className="group hover:shadow-lg transition-all duration-300 ease-out hover:scale-[1.02] bg-transparent backdrop-blur-sm border-white/10 hover:border-white/30 h-[15.4rem] w-full flex flex-col overflow-hidden p-0 rounded-xl focus-within:ring-2 focus-within:ring-white/20 relative">
+      {/* Three-dot menu */}
+      {(onRename || onTogglePin || onDelete) && (
+        <div className="absolute top-2 right-2 z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="h-7 w-7 rounded-lg border border-white/10 bg-black/40 hover:bg-white/10 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none backdrop-blur-sm">
+                <MoreHorizontal className="h-3.5 w-3.5 text-white/70" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="bottom" className="w-40">
+              {onRename && (
+                <DropdownMenuItem onClick={() => onRename(project.id, project.name)}>
+                  <Pencil className="h-3.5 w-3.5 mr-2" />
+                  Rename
+                </DropdownMenuItem>
+              )}
+              {onTogglePin && (
+                <DropdownMenuItem onClick={() => onTogglePin(project.id)}>
+                  {project.isPinned ? (
+                    <><PinOff className="h-3.5 w-3.5 mr-2" /> Unpin</>
+                  ) : (
+                    <><Pin className="h-3.5 w-3.5 mr-2" /> Pin</>
+                  )}
+                </DropdownMenuItem>
+              )}
+              {(onRename || onTogglePin) && onDelete && <DropdownMenuSeparator />}
+              {onDelete && (
+                <DropdownMenuItem
+                  className="text-red-400 focus:text-red-400"
+                  onClick={() => onDelete(project.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
       {/* Full Background Screenshot */}
       <div className="relative w-full h-full">
         <Image
@@ -136,13 +245,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         </div>
         
         {/* Hover Overlay with Actions */}
-        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out flex flex-col items-center justify-center gap-3">
           <Link href={`/projects/${project.id}`}>
             <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50 backdrop-blur-sm transition-all duration-200 ease-out">
               <Eye className="w-3 h-3 mr-1" />
               View Project
             </Button>
           </Link>
+          {showCopyButton && onCopy && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onCopy(project.id)}
+              disabled={isCopying}
+              className="bg-white/10 hover:bg-blue-500/20 text-white/80 hover:text-blue-300 border border-white/20 hover:border-blue-400/40 backdrop-blur-sm transition-all duration-200 ease-out"
+            >
+              {isCopying ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <Copy className="w-3 h-3 mr-1" />
+              )}
+              Use as Template
+            </Button>
+          )}
         </div>
       </div>
     </Card>

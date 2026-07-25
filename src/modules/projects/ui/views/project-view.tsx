@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Fragment } from "@/generated/prisma";
 import { ProjectHeader } from "../components/project-header";
 import { FragmentWeb } from "../components/fragment-web";
-import { CodeIcon, CrownIcon, EyeIcon, RotateCcwIcon, DownloadIcon } from "lucide-react";
+import { CodeIcon, CrownIcon, EyeIcon, RotateCcwIcon, DownloadIcon, Copy, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import AsyncButton from "@/components/async-button";
@@ -22,13 +22,116 @@ import { ErrorBoundary } from "react-error-boundary";
 import { toast } from "sonner";
 import { shouldAutoRestoreSandbox, getSandboxAge, isSandboxInWarningState } from "@/lib/sandbox-utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUser } from "@clerk/nextjs";
+import { useTRPC } from "@/trpc/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
     projectId: string;
 }
 
 export const ProjectView = ({ projectId }: Props) => {
+    const { user } = useUser();
+    const trpc = useTRPC();
+    const queryClient = useQueryClient();
+    const { data: project } = useQuery(trpc.projects.getOne.queryOptions({ id: projectId }));
+    const isOwner = !!project && !!user && project.userId === user.id;
+    const isReadOnly = !!project && !isOwner;
+
+    const copyProject = useMutation(trpc.projects.copyProject.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            toast.success("Project copied to your account!");
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to copy project");
+        },
+    }));
+
+    const setVisibility = useMutation(trpc.projects.setVisibility.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getOne.queryOptions({ id: projectId }));
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            queryClient.invalidateQueries(trpc.projects.getAll.infiniteQueryOptions({ limit: 20 }));
+            toast.success(project?.isPublic ? "Project made private" : "Project made public!");
+        },
+        onError: (err) => {
+            toast.error(err.message || "Failed to update visibility");
+        },
+    }));
+
+    const [renameOpen, setRenameOpen] = useState(false);
+    const [renameValue, setRenameValue] = useState("");
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    const renameMutation = useMutation(trpc.projects.rename.mutationOptions({
+        onSuccess: () => {
+            queryClient.invalidateQueries(trpc.projects.getOne.queryOptions({ id: projectId }));
+            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+            toast.success("Project renamed");
+            setRenameOpen(false);
+        },
+        onError: (err) => toast.error(err.message || "Failed to rename"),
+    }));
+
+    const deleteMutation = useMutation(trpc.projects.delete.mutationOptions({
+        onSuccess: () => {
+            toast.success("Project deleted");
+            window.location.href = "/";
+        },
+        onError: (err) => toast.error(err.message || "Failed to delete"),
+    }));
+
     const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
+    const [filesState, setFilesState] = useState<Record<string, string> | null>(null);
+
+    useEffect(() => {
+        setFilesState(null);
+    }, [activeFragment?.id]);
+
+    const handleFileChange = useCallback(async (filePath: string, content: string) => {
+        const baseFiles = activeFragment?.files as Record<string, string> | undefined;
+        if (!baseFiles) return;
+        const updatedFiles = { ...baseFiles, ...(filesState || {}), [filePath]: content };
+
+        setFilesState(updatedFiles);
+
+        try {
+            const res = await fetch(`/api/projects/${projectId}/save-codebase`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ files: updatedFiles }),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || "Failed to save");
+            toast.success("File saved");
+        } catch (e: any) {
+            toast.error(e.message || "Failed to save to sandbox");
+        }
+    }, [activeFragment, filesState, projectId]);
 
     const [tabsState, setTabsState] = useState<"preview" | "code">("preview");
     const [restoring, setRestoring] = useState(false);
@@ -162,13 +265,34 @@ export const ProjectView = ({ projectId }: Props) => {
                             <ProjectHeader projectId={projectId} />
                         </Suspense>
                     </ErrorBoundary>
+                    {isReadOnly && (
+                        <div className="flex items-center justify-between px-4 py-2 bg-blue-500/10 border-b border-blue-500/20">
+                            <p className="text-sm text-blue-300">
+                                Viewing in read-only mode
+                            </p>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => copyProject.mutate({ projectId })}
+                                disabled={copyProject.isPending}
+                                className="bg-blue-500/20 border-blue-400/30 text-blue-300 hover:bg-blue-500/30 hover:text-blue-200"
+                            >
+                                {copyProject.isPending ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Copy className="w-4 h-4 mr-2" />
+                                )}
+                                Use as Template
+                            </Button>
+                        </div>
+                    )}
                     <ErrorBoundary fallback={<div>Error loading messages...</div>}>
                         <Suspense fallback={<MessagesSkeleton />}>
                             <MessagesContainer
                             projectId={projectId}
                             activeFragment={activeFragment}
                             setActiveFragment={setActiveFragment}
-
+                            isReadOnly={isReadOnly}
                             />
                         </Suspense>
                     </ErrorBoundary>
@@ -197,17 +321,58 @@ export const ProjectView = ({ projectId }: Props) => {
                                     <span>Code</span>
                                 </TabsTrigger>
                             </TabsList>
+                            {isOwner && project && (
+                                <div className="flex items-center gap-2 ml-4">
+                                    <button
+                                        onClick={() => setVisibility.mutate({ projectId, isPublic: !project.isPublic })}
+                                        disabled={setVisibility.isPending}
+                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-green-500/30 ${
+                                            project.isPublic ? 'bg-green-500' : 'bg-white/20'
+                                        }`}
+                                    >
+                                        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-all duration-200 ease-out absolute ${
+                                            project.isPublic ? 'right-0.5' : 'left-0.5'
+                                        }`} />
+                                    </button>
+                                    <span className={`text-xs font-medium ${project.isPublic ? 'text-green-400' : 'text-white/50'}`}>
+                                        {project.isPublic ? 'Public' : 'Private'}
+                                    </span>
+                                </div>
+                            )}
                             <div className="ml-auto flex items-center gap-x-2">
+                                {isOwner && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button className="h-8 w-8 shrink-0 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center transition-all duration-200 focus:outline-none">
+                                                <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" side="bottom" className="w-40">
+                                            <DropdownMenuItem onClick={() => { setRenameValue(project?.name || ""); setRenameOpen(true); }}>
+                                                <Pencil className="h-3.5 w-3.5 mr-2" />
+                                                Rename
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                className="text-red-400 focus:text-red-400"
+                                                onClick={() => setDeleteOpen(true)}
+                                            >
+                                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
                                 <AsyncButton
                                     variant="outline"
                                     size="sm"
                                     onClick={handleDownload}
-                                    loadingText="Downloading..."
+                                    loadingText=""
                                     className=""
+                                    title="Download project code"
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <DownloadIcon className="h-4 w-4" />
-                                        <span>Download</span>
                                     </span>
                                 </AsyncButton>
                                 {activeFragment && (
@@ -261,7 +426,8 @@ export const ProjectView = ({ projectId }: Props) => {
                         <TabsContent value="code" className="min-h-0">
                             {!!activeFragment?.files && (
                                 <FileExplorer
-                                    files={activeFragment.files as { [path: string]: string }} />
+                                    files={filesState ?? activeFragment.files as Record<string, string>}
+                                    onFileChange={handleFileChange} />
                             )}
                         </TabsContent>
 
@@ -270,6 +436,55 @@ export const ProjectView = ({ projectId }: Props) => {
                 </ResizablePanel>
 
             </ResizablePanelGroup>
+
+            {/* Rename Dialog */}
+            <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Rename Project</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={(e) => { e.preventDefault(); if (renameValue.trim()) renameMutation.mutate({ projectId, name: renameValue.trim() }); }}>
+                        <input
+                            autoFocus
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            className="w-full px-3 py-2 text-sm bg-black/40 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 text-white"
+                            placeholder="Project name"
+                            maxLength={255}
+                        />
+                        <DialogFooter className="mt-4">
+                            <Button type="button" variant="ghost" onClick={() => setRenameOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={!renameValue.trim() || renameMutation.isPending}>
+                                {renameMutation.isPending ? "Saving..." : "Save"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation */}
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete <span className="font-semibold text-white">{project?.name}</span>? This action cannot be undone. All messages, files, and data will be permanently removed.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => deleteMutation.mutate({ projectId })}
+                            disabled={deleteMutation.isPending}
+                        >
+                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
         </div>
     )

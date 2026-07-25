@@ -1,23 +1,34 @@
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { createTRPCRouter, baseProcedure, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { enforceQuota } from "@/lib/quota-enforcement";
+import { estimateTokens } from "@/lib/token-estimator";
 
 export const messagesRouter = createTRPCRouter({
-    getMany: protectedProcedure
+    getMany: baseProcedure
         .input(z.object({
             projectId: z.string().min(1, { message: "Project ID is required" }),
         }))
 
         .query(async ({ input, ctx }) => {
+            const project = await prisma.project.findUnique({
+                where: { id: input.projectId },
+                select: { userId: true, isPublic: true },
+            });
+            if (!project) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
+
+            const isOwner = ctx.auth?.userId && project.userId === ctx.auth.userId;
+            if (!isOwner && !project.isPublic) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
+
             const messages = await prisma.message.findMany({
                 where: {
                     projectId: input.projectId,
-                    project: {
-                        userId: ctx.auth.userId,
-                    },
                 },
 
                 include: {
@@ -26,9 +37,6 @@ export const messagesRouter = createTRPCRouter({
                 orderBy: {
                     updatedAt: "asc",
                 },
-                // include: {
-                //     fragments: true,
-                // },
             });
             return messages;
         }),
@@ -38,8 +46,8 @@ export const messagesRouter = createTRPCRouter({
             projectId: z.string().min(1, { message: "Project ID is required" }),
         }))
         .mutation(async ({ input, ctx }) => {
-            // Enforce quota before processing (estimate 5000 tokens per request)
-            const quotaCheck = await enforceQuota(ctx.auth.userId, 5000);
+            const estimatedTokens = estimateTokens(input.value) + 2000;
+            const quotaCheck = await enforceQuota(ctx.auth.userId, estimatedTokens);
 
             const existingProject = await prisma.project.findUnique({
                 where: {
@@ -62,7 +70,7 @@ export const messagesRouter = createTRPCRouter({
                 },
             });
             await inngest.send({
-                name: "Cogerphereai/runAgent",
+                name: "Cobentt/runAgent",
                 data: {
                     value: input.value,
                     projectId: input.projectId,

@@ -189,8 +189,8 @@ export default async function DocsPage({ searchParams }: PageProps) {
         <div className="px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Image src="/cogerpherelogoonly.png" alt="Cogerphere" width={28} height={28} className="rounded" />
-            <span className="text-sm font-semibold tracking-wide">COGERPHERE Docs</span>
+            <Image src="/cobentttransparent.webp" alt="Cobentt" width={28} height={28} className="rounded" />
+            <span className="text-sm font-semibold tracking-wide">COBENTT Docs</span>
           </div>
           {/* Search */}
           <div className="flex-1 max-w-2xl mx-auto hidden md:block">

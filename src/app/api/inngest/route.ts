@@ -1,6 +1,6 @@
 import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
-import { CogerphereAgent, generateContract, verifyContract, testContract } from "@/inngest/functions";
+import { CobenttAgent, generateContract, verifyContract, testContract } from "@/inngest/functions";
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
-    CogerphereAgent,
+    CobenttAgent,
     generateContract,
     verifyContract,
     testContract,

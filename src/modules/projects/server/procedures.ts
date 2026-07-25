@@ -1,30 +1,37 @@
 import { inngest } from "@/inngest/client";
 import prisma from "@/lib/db";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { createTRPCRouter, baseProcedure, protectedProcedure } from "@/trpc/init";
 import { z } from "zod";
 import {generateSlug} from "random-word-slugs"
 import { TRPCError } from "@trpc/server";
 
 export const projectsRouter = createTRPCRouter({
-    getOne: protectedProcedure
+    getOne: baseProcedure
     .input(z.object({
         id: z.string().min(1, { message: "ID is required" }),
     }))
     .query(async ({ input, ctx }) => {
-        const existingProject = await prisma.project.findUnique({
-            where: {
-                id: input.id,
-                userId: ctx.auth.userId,
-            },
-            
+        const project = await prisma.project.findUnique({
+            where: { id: input.id },
         });
-        if (!existingProject) {
+        if (!project) {
             throw new TRPCError({
                 code: "NOT_FOUND",
                 message: "Project not found",
             });
         }
-        return existingProject;
+        // Owner always has access
+        if (ctx.auth?.userId && project.userId === ctx.auth.userId) {
+            return project;
+        }
+        // Non-owners can only view public projects
+        if (!project.isPublic) {
+            throw new TRPCError({
+                code: "NOT_FOUND",
+                message: "Project not found",
+            });
+        }
+        return project;
     }),
     getMany: protectedProcedure
         .query(async ({ ctx }) => {
@@ -32,9 +39,10 @@ export const projectsRouter = createTRPCRouter({
                 where: {
                     userId: ctx.auth.userId,
                 },
-                orderBy: {
-                    updatedAt: "desc",
-                },
+                orderBy: [
+                    { isPinned: "desc" },
+                    { updatedAt: "desc" },
+                ],
                 include: {
                     messages: {
                         take: 1,
@@ -46,7 +54,7 @@ export const projectsRouter = createTRPCRouter({
             });
             return projects;
         }),
-    getAll: protectedProcedure
+    getAll: baseProcedure
         .input(z.object({
             limit: z.number().min(1).max(20).default(20),
             cursor: z.string().nullish(),
@@ -61,7 +69,10 @@ export const projectsRouter = createTRPCRouter({
             const projects = await prisma.project.findMany({
                 take: limit + 1, // Take one extra to check if there are more
                 cursor: cursor ? { id: cursor } : undefined,
-                where: projectType ? { projectType: dbProjectType } : {},
+                where: {
+                    isPublic: true,
+                    ...(projectType ? { projectType: dbProjectType } : {}),
+                },
                 orderBy: {
                     updatedAt: "desc",
                 },
@@ -116,7 +127,7 @@ export const projectsRouter = createTRPCRouter({
             });
                                 
             await inngest.send({
-                name: "Cogerphereai/runAgent",
+                name: "Cobentt/runAgent",
                 data: {
                     value: input.value,
                     projectId: createdProject.id,
@@ -235,7 +246,126 @@ export const projectsRouter = createTRPCRouter({
             return buildJobs;
         }),
 
+    setVisibility: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+            isPublic: z.boolean(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const project = await prisma.project.findFirst({
+                where: { id: input.projectId, userId: ctx.auth.userId },
+                select: { id: true },
+            });
+            if (!project) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
+            await prisma.project.update({
+                where: { id: input.projectId },
+                data: { isPublic: input.isPublic },
+            });
+            return { ok: true };
+        }),
+
+    copyProject: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const userId = ctx.auth.userId;
+
+            const source = await prisma.project.findUnique({
+                where: { id: input.projectId },
+            });
+            if (!source || !source.isPublic) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Source project not found' });
+            }
+
+            const COPY_LIMIT = 2;
+            const existingCopies = await prisma.project.count({
+                where: { userId, forkedFromId: { not: null } },
+            });
+            if (existingCopies >= COPY_LIMIT) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: `Template copy limit reached (${COPY_LIMIT}). You can only copy up to ${COPY_LIMIT} projects.`,
+                });
+            }
+
+            const copy = await prisma.project.create({
+                data: {
+                    name: source.name,
+                    userId,
+                    projectType: source.projectType,
+                    blockchain: source.blockchain,
+                    contractType: source.contractType,
+                    network: source.network,
+                    features: source.features,
+                    isPublic: false,
+                    forkedFromId: source.id,
+                },
+            });
+
+            return copy;
+        }),
+
     // Backfill/recapture screenshot for a single project
+    rename: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+            name: z.string().min(1).max(255),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const project = await prisma.project.findFirst({
+                where: { id: input.projectId, userId: ctx.auth.userId },
+                select: { id: true },
+            });
+            if (!project) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
+            await prisma.project.update({
+                where: { id: input.projectId },
+                data: { name: input.name },
+            });
+            return { ok: true };
+        }),
+
+    togglePin: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const project = await prisma.project.findFirst({
+                where: { id: input.projectId, userId: ctx.auth.userId },
+                select: { id: true, isPinned: true },
+            });
+            if (!project) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
+            await prisma.project.update({
+                where: { id: input.projectId },
+                data: { isPinned: !project.isPinned },
+            });
+            return { ok: true };
+        }),
+
+    delete: protectedProcedure
+        .input(z.object({
+            projectId: z.string().min(1),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const project = await prisma.project.findFirst({
+                where: { id: input.projectId, userId: ctx.auth.userId },
+                select: { id: true },
+            });
+            if (!project) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
+            await prisma.project.delete({
+                where: { id: input.projectId },
+            });
+            return { ok: true };
+        }),
+
     captureScreenshot: protectedProcedure
         .input(z.object({
             projectId: z.string().min(1),

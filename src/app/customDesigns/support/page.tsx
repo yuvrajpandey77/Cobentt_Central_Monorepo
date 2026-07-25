@@ -60,12 +60,12 @@ export default function SupportPage() {
 
   const faqItems = [
     {
-      question: "How do I get started with Cogerphere?",
+      question: "How do I get started with Cobentt?",
       answer: "Simply describe your app idea in the input box on our homepage, and our AI will generate a complete application for you in minutes."
     },
     {
-      question: "What programming languages does Cogerphere support?",
-      answer: "Cogerphere primarily generates applications using React, TypeScript, Node.js, and modern web technologies."
+      question: "What programming languages does Cobentt support?",
+      answer: "Cobentt primarily generates applications using React, TypeScript, Node.js, and modern web technologies."
     },
     {
       question: "Can I customize the generated code?",
@@ -81,7 +81,7 @@ export default function SupportPage() {
     },
     {
       question: "Can I deploy my applications?",
-      answer: "Yes! Cogerphere includes instant hosting and deployment capabilities for all generated applications."
+      answer: "Yes! Cobentt includes instant hosting and deployment capabilities for all generated applications."
     }
   ];
 
@@ -97,7 +97,7 @@ export default function SupportPage() {
             We're here to help
           </h1>
           <p className="text-2xl text-white/70 max-w-4xl mx-auto leading-relaxed">
-            Get the support you need to build amazing applications with Cogerphere. Our team is ready to assist you every step of the way.
+             Get the support you need to build amazing applications with Cobentt. Our team is ready to assist you every step of the way.
           </p>
         </div>
 
@@ -144,7 +144,7 @@ export default function SupportPage() {
               <Mail className="h-12 w-12 mx-auto mb-6 text-white flex-shrink-0" />
               <h3 className="text-2xl font-bold mb-4 break-words text-white">Email Support</h3>
               <p className="text-white/70 mb-6 text-lg break-words">Send us detailed questions</p>
-              <p className="text-lg text-white font-semibold break-words">support@cogerphere.com</p>
+              <p className="text-lg text-white font-semibold break-words">support@cobentt.com</p>
               <p className="text-sm text-white/70 mt-2 break-words">24/7 Response</p>
             </CardContent>
           </Card>

@@ -22,7 +22,7 @@ export default function Page() {
                 className="hidden lg:flex relative z-10 items-center justify-center"
             >
                 <div className="relative z-10 max-w-lg px-10 text-white">
-                    <p className="text-sm uppercase tracking-widest text-white/80 mb-2">Cogerphere</p>
+                    <p className="text-sm uppercase tracking-widest text-white/80 mb-2">Cobentt</p>
                     <h2 className="text-3xl font-semibold mb-3">Crafting Intelligent Platforms</h2>
                     <p className="text-white/90">
                         We merge AI and modern development to turn ideas into production-ready products.

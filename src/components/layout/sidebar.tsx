@@ -1,16 +1,42 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2, Sparkles, Settings as SettingsIcon } from "lucide-react";
+import { Plus, FolderOpen, Search, Layout, Clock, PanelLeft, PanelLeftClose, Code2, Sparkles, Settings as SettingsIcon, MoreHorizontal, Pin, PinOff, Trash2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TokenCounter } from "@/components/token-counter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface SidebarProps {
   className?: string;
@@ -19,7 +45,10 @@ interface SidebarProps {
 export const Sidebar = ({ className }: SidebarProps) => {
   const { user } = useUser();
   const trpc = useTRPC();
-  const { data: projects, isLoading } = useQuery(trpc.projects.getMany.queryOptions());
+  const { data: projects, isLoading } = useQuery({
+    ...trpc.projects.getMany.queryOptions(),
+    enabled: !!user,
+  });
   const { isCollapsed, toggleSidebar, setIsCollapsed } = useSidebar();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -29,6 +58,37 @@ export const Sidebar = ({ className }: SidebarProps) => {
       setIsCollapsed(false);
     }
   }, [user]);
+
+  const queryClient = useQueryClient();
+
+  const [renameTarget, setRenameTarget] = useState<any>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+
+  const renameMutation = useMutation(trpc.projects.rename.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+      toast.success("Project renamed");
+      setRenameTarget(null);
+    },
+    onError: (err) => toast.error(err.message || "Failed to rename"),
+  }));
+
+  const togglePinMutation = useMutation(trpc.projects.togglePin.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+    },
+    onError: (err) => toast.error(err.message || "Failed to update pin"),
+  }));
+
+  const deleteMutation = useMutation(trpc.projects.delete.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+      toast.success("Project deleted");
+      setDeleteTarget(null);
+    },
+    onError: (err) => toast.error(err.message || "Failed to delete"),
+  }));
 
   const filteredProjects = useMemo(() => {
     if (!projects) return [] as any[];
@@ -138,233 +198,333 @@ export const Sidebar = ({ className }: SidebarProps) => {
   }
 
   return (
-    <div className={cn(
-      "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 shadow-2xl transition-all duration-500 ease-in-out relative overflow-hidden",
-      isCollapsed ? "w-16" : "w-64",
-      className
-    )}>
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/20 via-transparent to-secondary/20"></div>
-        <div className="absolute top-10 right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
-        <div className="absolute bottom-20 left-4 w-16 h-16 bg-secondary/10 rounded-full blur-xl"></div>
-      </div>
-
-      <div className="px-3 py-4 h-full flex flex-col relative z-10 overflow-x-hidden">
-        {/* Header */}
-        <div className={cn(
-          "flex items-center mb-6 flex-shrink-0",
-          isCollapsed ? "justify-center" : "justify-between"
-        )}>
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-                {user?.firstName || user?.emailAddresses[0]?.emailAddress || 'User'}'s Projects
-              </h2>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="h-8 w-8 p-0 hover:bg-primary/10 hover:scale-105 transition-all duration-200 ease-out rounded-lg flex-shrink-0 focus:ring-2 focus:ring-primary/20 focus:outline-none"
-          >
-            {isCollapsed ? (
-              <PanelLeft className="h-4 w-4 text-primary" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4 text-primary" />
-            )}
-          </Button>
+    <>
+      <div className={cn(
+        "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 shadow-2xl transition-all duration-500 ease-in-out relative overflow-hidden",
+        isCollapsed ? "w-16" : "w-64",
+        className
+      )}>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/20 via-transparent to-secondary/20"></div>
+          <div className="absolute top-10 right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
+          <div className="absolute bottom-20 left-4 w-16 h-16 bg-secondary/10 rounded-full blur-xl"></div>
         </div>
 
-        {/* Search and Navigation */}
-        {!isCollapsed && (
-          <div className="space-y-3 mb-6 flex-shrink-0">
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 text-sm bg-card/40 border border-border/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 ease-out backdrop-blur-sm hover:border-border/30"
-              />
-            </div>
+        <div className="px-3 py-4 h-full flex flex-col relative z-10 overflow-x-hidden">
+          {/* Header */}
+          <div className={cn(
+            "flex items-center mb-6 flex-shrink-0",
+            isCollapsed ? "justify-center" : "justify-between"
+          )}>
+            {!isCollapsed && (
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-foreground bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+                  {user?.firstName || user?.emailAddresses[0]?.emailAddress || 'User'}'s Projects
+                </h2>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="h-8 w-8 p-0 hover:bg-primary/10 hover:scale-105 transition-all duration-200 ease-out rounded-lg flex-shrink-0 focus:ring-2 focus:ring-primary/20 focus:outline-none"
+            >
+              {isCollapsed ? (
+                <PanelLeft className="h-4 w-4 text-primary" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4 text-primary" />
+              )}
+            </Button>
+          </div>
 
-            {/* Navigation Buttons */}
-            <div className="space-y-2">
-              <Link href="/dapp-studio">
+          {/* Search and Navigation */}
+          {!isCollapsed && (
+            <div className="space-y-3 mb-6 flex-shrink-0">
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 text-sm bg-card/40 border border-border/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all duration-200 ease-out backdrop-blur-sm hover:border-border/30"
+                />
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="space-y-2">
+                <Link href="/dapp-studio">
+                  <Button
+                    variant="ghost"
+                    className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
+                  >
+                    <div className="flex items-center">
+                      <Code2 className="w-4 h-4 !mr-2 !shrink-0" />
+                      <span>DApp Studio</span>
+                    </div>
+                  </Button>
+                </Link>
+                
                 <Button
                   variant="ghost"
                   className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
                 >
                   <div className="flex items-center">
-                    <Code2 className="w-4 h-4 !mr-2 !shrink-0" />
-                    <span>DApp Studio</span>
+                    <Layout className="w-4 h-4 !mr-2 !shrink-0" />
+                    <span>Templates</span>
                   </div>
                 </Button>
-              </Link>
-              
-              <Button
-                variant="ghost"
-                className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
-              >
-                <div className="flex items-center">
-                  <Layout className="w-4 h-4 !mr-2 !shrink-0" />
-                  <span>Templates</span>
+                
+                <Link href="/all-projects">
+                  <Button
+                    variant="ghost"
+                    className="w-full !justify-between h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
+                  >
+                    <div className="flex items-center">
+                      <FolderOpen className="w-4 h-4 !mr-2 !shrink-0" />
+                      <span>All Projects</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground bg-gradient-to-r from-primary/20 to-secondary/20 px-2 py-1 rounded-full border border-primary/20">
+                      {projects?.length || 0}
+                    </div>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+          {isCollapsed && (
+            <div className="mb-6 flex-shrink-0 flex flex-col items-center gap-3">
+              <Link href="/dapp-studio" className="group">
+                <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                  <Code2 className="w-4 h-4 text-white/80 group-hover:text-primary" />
                 </div>
-              </Button>
+              </Link>
+              <button className="group">
+                <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                  <Layout className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                </div>
+              </button>
+              <Link href="/all-projects" className="group">
+                <div className="relative h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                  <FolderOpen className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                  <span className="absolute -top-1.5 -right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/80 text-white border border-white/20">
+                    {(projects?.length || 0) > 99 ? '99+' : (projects?.length || 0)}
+                  </span>
+                </div>
+              </Link>
+            </div>
+          )}
+
+          {/* Projects List */}
+          {!isCollapsed && (
+            <div className="flex-1 flex flex-col min-h-0 min-w-0">
+              {/* Recently Made Header */}
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <Clock className="w-3.5 h-3.5 text-primary/50" />
+                <h3 className="text-xs font-medium text-foreground/70 uppercase tracking-wider">
+                  Recently Made
+                </h3>
+              </div>
+
+              <div 
+                className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden thin-scrollbar min-w-0"
+              >
+              {isLoading && (
+                <div className="space-y-3 px-1">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-card/40 border border-border/20 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-6" />
+                        <Skeleton className="h-4 w-40" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!isLoading && projects?.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="w-10 h-10 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                    <FolderOpen className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-medium mb-1 text-foreground">No projects yet</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Start building your first project
+                  </p>
+                </div>
+              )}
               
-              <Link href="/all-projects">
+              {!isLoading && projects && filteredProjects.length === 0 && searchQuery && (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  No results for "{searchQuery}"
+                </div>
+              )}
+
+              {!isLoading && filteredProjects?.map((project: any, index: number) => {
+                const isSmartContract = project.projectType === 'SMART_CONTRACT' || project.contractType;
+                return (
+                <div
+                  key={project.id}
+                  className="group p-1"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  {isCollapsed ? (
+                    <Link
+                      href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}
+                      className="block"
+                    >
+                      <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200 mx-auto">
+                        <FolderOpen className="w-4 h-4 text-white/80" />
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Link
+                        href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}
+                        className="flex-1 min-w-0"
+                      >
+                        <div className="bg-gradient-to-r from-card/40 via-card/30 to-card/40 hover:from-card/60 hover:via-card/50 hover:to-card/60 border border-border/20 hover:border-primary/40 rounded-lg transition-all duration-200 ease-out hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01] backdrop-blur-sm p-3 min-w-0 focus-within:ring-2 focus-within:ring-primary/20">
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors duration-200 ease-out min-w-0 flex items-center gap-1.5">
+                              {project.isPinned && <Pin className="h-3 w-3 shrink-0 text-primary/60" />}
+                              {project.name}
+                            </h3>
+                            <div className="text-xs text-muted-foreground truncate min-w-0">
+                              <span>{formatDistanceToNow(new Date(project.updatedAt), { addSuffix: false })}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="h-8 w-8 shrink-0 rounded-lg border border-transparent hover:border-white/10 hover:bg-white/5 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none">
+                            <MoreHorizontal className="h-4 w-4 text-white/60" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" side="bottom" className="w-40">
+                          <DropdownMenuItem onClick={() => { setRenameTarget(project); setRenameValue(project.name); }}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => togglePinMutation.mutate({ projectId: project.id })}>
+                            {project.isPinned ? (
+                              <><PinOff className="h-3.5 w-3.5 mr-2" /> Unpin</>
+                            ) : (
+                              <><Pin className="h-3.5 w-3.5 mr-2" /> Pin</>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-400 focus:text-red-400"
+                            onClick={() => setDeleteTarget(project)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </div>
+                );
+              })}
+              </div>
+            </div>
+          )}
+
+          {/* Token Counter */}
+          <TokenCounter variant="sidebar" collapsed={isCollapsed} />
+
+          {/* Action Buttons */}
+          {!isCollapsed && (
+            <div className="mt-auto pt-4 border-t border-border/20 flex-shrink-0 space-y-2">
+              <button 
+                className="w-full rounded-full border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none flex items-center justify-center gap-2 h-8 px-3 text-sm font-medium [color:white] hover:[color:white]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                New Project
+              </button>
+
+              {/* Settings link */}
+              <Link href="/settings/user">
                 <Button
                   variant="ghost"
-                  className="w-full !justify-between h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
+                  className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
                 >
                   <div className="flex items-center">
-                    <FolderOpen className="w-4 h-4 !mr-2 !shrink-0" />
-                    <span>All Projects</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground bg-gradient-to-r from-primary/20 to-secondary/20 px-2 py-1 rounded-full border border-primary/20">
-                    {projects?.length || 0}
+                    <SettingsIcon className="w-4 h-4 !mr-2 !shrink-0" />
+                    <span>Settings</span>
                   </div>
                 </Button>
               </Link>
             </div>
-          </div>
-        )}
-        {isCollapsed && (
-          <div className="mb-6 flex-shrink-0 flex flex-col items-center gap-3">
-            <Link href="/dapp-studio" className="group">
-              <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
-                <Code2 className="w-4 h-4 text-white/80 group-hover:text-primary" />
-              </div>
-            </Link>
-            <button className="group">
-              <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
-                <Layout className="w-4 h-4 text-white/80 group-hover:text-primary" />
-              </div>
-            </button>
-            <Link href="/all-projects" className="group">
-              <div className="relative h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
-                <FolderOpen className="w-4 h-4 text-white/80 group-hover:text-primary" />
-                <span className="absolute -top-1.5 -right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/80 text-white border border-white/20">
-                  {(projects?.length || 0) > 99 ? '99+' : (projects?.length || 0)}
-                </span>
-              </div>
-            </Link>
-          </div>
-        )}
-
-        {/* Projects List */}
-        {!isCollapsed && (
-          <div className="flex-1 flex flex-col min-h-0 min-w-0">
-            {/* Recently Made Header */}
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <Clock className="w-3.5 h-3.5 text-primary/50" />
-              <h3 className="text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                Recently Made
-              </h3>
-            </div>
-
-            <div 
-              className="space-y-3 flex-1 overflow-y-auto overflow-x-hidden thin-scrollbar min-w-0"
-            >
-            {isLoading && (
-              <div className="space-y-3 px-1">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-card/40 border border-border/20 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-4 w-6" />
-                      <Skeleton className="h-4 w-40" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!isLoading && projects?.length === 0 && (
-              <div className="text-center py-8">
-                <div className="w-10 h-10 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                  <FolderOpen className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="text-sm font-medium mb-1 text-foreground">No projects yet</h3>
-                <p className="text-xs text-muted-foreground">
-                  Start building your first project
-                </p>
-              </div>
-            )}
-            
-            {!isLoading && projects && filteredProjects.length === 0 && searchQuery && (
-              <div className="text-center py-6 text-muted-foreground text-sm">
-                No results for "{searchQuery}"
-              </div>
-            )}
-
-            {!isLoading && filteredProjects?.map((project: any, index: number) => {
-              const isSmartContract = project.projectType === 'SMART_CONTRACT' || project.contractType;
-              return (
-              <Link
-                key={project.id}
-                href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}
-                className="block group p-1"
-                style={{ animationDelay: `${index * 50}ms` }}
+          )}
+          {isCollapsed && (
+            <div className="mt-auto pb-2 flex-shrink-0 flex flex-col items-center gap-3">
+              <button 
+                className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur transition-all duration-200 ease-out hover:scale-[1.02] focus:ring-2 focus:ring-white/20 focus:outline-none flex items-center justify-center"
               >
-                <div className="bg-gradient-to-r from-card/40 via-card/30 to-card/40 hover:from-card/60 hover:via-card/50 hover:to-card/60 border border-border/20 hover:border-primary/40 rounded-lg transition-all duration-200 ease-out hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.01] backdrop-blur-sm p-3 min-w-0 focus-within:ring-2 focus-within:ring-primary/20">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors duration-200 ease-out min-w-0">
-                      {project.name}
-                    </h3>
-                    <div className="text-xs text-muted-foreground truncate min-w-0">
-                      <span>{formatDistanceToNow(new Date(project.updatedAt), { addSuffix: false })}</span>
-                    </div>
-                  </div>
+                <Plus className="w-4 h-4" />
+              </button>
+              <Link href="/settings/user" className="group">
+                <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
+                  <SettingsIcon className="w-4 h-4 text-white/80 group-hover:text-primary" />
                 </div>
               </Link>
-              );
-            })}
             </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        {!isCollapsed && (
-          <div className="mt-auto pt-4 border-t border-border/20 flex-shrink-0 space-y-2">
-            <button 
-              className="w-full rounded-full border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur transition-all duration-200 ease-out hover:scale-[1.01] focus:ring-2 focus:ring-white/20 focus:outline-none flex items-center justify-center gap-2 h-8 px-3 text-sm font-medium [color:white] hover:[color:white]"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              New Project
-            </button>
-
-            {/* Settings link */}
-            <Link href="/settings/user">
-              <Button
-                variant="ghost"
-                className="w-full !justify-start h-9 !px-3 !py-2 hover:bg-primary/10 hover:text-primary transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none !flex !items-center"
-              >
-                <div className="flex items-center">
-                  <SettingsIcon className="w-4 h-4 !mr-2 !shrink-0" />
-                  <span>Settings</span>
-                </div>
-              </Button>
-            </Link>
-          </div>
-        )}
-        {isCollapsed && (
-          <div className="mt-auto pb-2 flex-shrink-0 flex flex-col items-center gap-3">
-            <button 
-              className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur transition-all duration-200 ease-out hover:scale-[1.02] focus:ring-2 focus:ring-white/20 focus:outline-none flex items-center justify-center"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-            <Link href="/settings/user" className="group">
-              <div className="h-10 w-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200">
-                <SettingsIcon className="w-4 h-4 text-white/80 group-hover:text-primary" />
-              </div>
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Rename Dialog */}
+      <Dialog open={!!renameTarget} onOpenChange={(open) => { if (!open) setRenameTarget(null); }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Rename Project</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); if (renameValue.trim()) renameMutation.mutate({ projectId: renameTarget?.id, name: renameValue.trim() }); }}>
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-black/40 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 text-white"
+              placeholder="Project name"
+              maxLength={255}
+            />
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="ghost" onClick={() => setRenameTarget(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!renameValue.trim() || renameMutation.isPending}>
+                {renameMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold text-white">{deleteTarget?.name}</span>? This action cannot be undone. All messages, files, and data will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => deleteMutation.mutate({ projectId: deleteTarget?.id })}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };

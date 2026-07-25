@@ -19,7 +19,7 @@ export default function PricingPage() {
         "Public & private projects",
         "400K tokens daily",
         "2.5M tokens monthly",
-        "Cogerphere branding",
+        "Cobentt branding",
         "10MB file upload",
         "Website hosting",
         "333k web requests",

@@ -36,14 +36,14 @@ export const Header = () => {
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/cogerpherelogoonly.png"
-                alt="Cogerphere AI"
+                src="/cobentttransparent.webp"
+                alt="Cobentt AI"
                 width={32}
                 height={32}
                 className="rounded-full"
               />
               <span className="text-xl font-bold text-white drop-shadow-lg">
-                Cogerphere
+                Cobentt
               </span>
             </Link>
           </div>

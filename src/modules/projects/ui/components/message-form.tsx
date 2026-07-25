@@ -1,17 +1,18 @@
 import { z } from "zod";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
-import { SendIcon, Loader2Icon } from "lucide-react";
+import { SendIcon, Loader2Icon, Zap } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
 import { toast } from "sonner";
-import { UsageDisplay } from "@/components/usage-display";
+import { TokenCounter } from "@/components/token-counter";
+import { estimateTokens } from "@/lib/token-estimator";
 
 
 
@@ -71,17 +72,16 @@ export const MessageForm = ({ projectId }: Props) => {
     }
 
     const [isFocused, setIsFocused] = useState(false);
-    const showUsage = true; // Always show usage
+    const watchValue = form.watch("value");
+    const estimatedTokens = useMemo(() => estimateTokens(watchValue || ""), [watchValue]);
     const isPending = createMessage.isPending;
     const isButtonDisabled = isPending || !form.formState.isValid;
     
     return (
         <Form {...form}>
             <div className="space-y-2">
-                {/* Usage Display */}
-                {showUsage && (
-                    <UsageDisplay projectId={projectId} variant="compact" />
-                )}
+                {/* Token Counter Bar */}
+                <TokenCounter projectId={projectId} variant="bar" />
 
                 <form onSubmit={form.handleSubmit(onSubmit)} className={cn(
                     "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
@@ -110,11 +110,17 @@ export const MessageForm = ({ projectId }: Props) => {
                     )}
                 />
                 <div className="flex gap-x-2 items-end justify-between pt-2">
-                    <div className="text-[10px] text-muted-foreground font-mono">
-                       <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5  text-[10px] font-mono font-medium text-muted-foreground ">
-                        Ctrl + Enter
-                       </kbd>
-                       &nbsp; to submit
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-mono">
+                        {watchValue && (
+                            <span className="flex items-center gap-1">
+                                <Zap className="h-3 w-3" />
+                                ~{estimatedTokens} token{estimatedTokens !== 1 ? 's' : ''}
+                            </span>
+                        )}
+                        <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 text-[10px] font-mono font-medium text-muted-foreground ">
+                            Ctrl + Enter
+                        </kbd>
+                        &nbsp; to submit
                     </div>
                     <Button 
                     disabled={isButtonDisabled}

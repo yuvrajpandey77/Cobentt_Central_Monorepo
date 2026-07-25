@@ -28,14 +28,14 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Cogerphere",
-    template: "%s | Cogerphere",
+    default: "Cobentt",
+    template: "%s | Cobentt",
   },
-  description: "Cogerphere – Crafting intelligent platforms that merge AI and development.",
+  description: "Cobentt – Crafting intelligent platforms that merge AI and development.",
   icons: {
-      icon: "/cogerpherelogoonly.png",
-      apple: "/cogerpherelogoonly.png",
-      shortcut: "/cogerpherelogoonly.png",
+      icon: "/cobentttransparent.webp",
+      apple: "/cobentttransparent.webp",
+      shortcut: "/cobentttransparent.webp",
   },
 };
 

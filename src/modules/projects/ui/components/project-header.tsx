@@ -34,7 +34,7 @@ export const ProjectHeader = ({ projectId }: Props) => {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="focus-visible:ring-0 hover:bg-transparent hover:opacity-75 transition-all duration-200 ease-out pl-2 focus:ring-2 focus:ring-primary/20 focus:outline-none">
-                    <Image src="/cogerpherelogoonly.png" alt="Cogerphere AI" width={32} height={32} className="rounded-full" /> 
+                    <Image src="/cobentttransparent.webp" alt="Cobentt AI" width={32} height={32} className="rounded-full" /> 
                     <span className="text-sm font-medium">{project.name}</span>
                     <ChevronDownIcon className="size-4" />
                 </Button>
