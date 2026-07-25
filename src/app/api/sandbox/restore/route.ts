@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       where: { id: fragment?.messageId },
       select: { projectId: true },
     } as any);
-    const projectId: string | undefined = message?.projectId;
+    const projectId = message?.projectId ?? undefined;
     if (!projectId) {
       return NextResponse.json({ error: "Invalid fragment: missing project" }, { status: 400 });
     }

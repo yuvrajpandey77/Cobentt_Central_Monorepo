@@ -26,6 +26,7 @@ interface Props {
     onContractPrompt?: (prompt: string) => void;
     projectCategory?: string | null;
     onCategoryClear?: () => void;
+    onStartChat?: (prompt: string) => void;
 }
 
 const formSchema = z.object({
@@ -35,7 +36,7 @@ const formSchema = z.object({
 
 
 
-export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, projectCategory, onCategoryClear }: Props) => {
+export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, projectCategory, onCategoryClear, onStartChat }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -125,6 +126,13 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         console.log("Form submitted with values:", values);
+        
+        // If no category set and mode is default (app without category), start a chat
+        const isExplicitMode = mode === "app" && projectCategory === null;
+        if (onStartChat && !projectCategory && !(onContractPrompt && mode === "contract")) {
+            onStartChat(values.value);
+            return;
+        }
         
         // If in contract mode without preview, trigger contract prompt analysis (redirect to dapp-studio)
         if (mode === "contract" && onContractPrompt) {

@@ -59,6 +59,22 @@ model Project {
   @@index([userId, isPublic])
 }
 
+model Conversation {
+  id         String    @id @default(uuid())
+  title      String?
+  userId     String
+  mode       String    @default("chat")
+  model      String    @default("openai/gpt-4o-mini")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  isPinned   Boolean   @default(false)
+  isArchived Boolean   @default(false)
+  messages   Message[]
+
+  @@index([userId, updatedAt])
+  @@map("conversations")
+}
+
 enum MessageRole {
   USER
   ASSISTANT
@@ -69,17 +85,43 @@ enum MessageType {
   ERROR
 }
 
- 
+enum MessageStatus {
+  PENDING
+  STREAMING
+  COMPLETE
+  ERROR
+  CANCELLED
+}
+
 model Message {
   id String @id @default(uuid())
   content String
   role MessageRole
   type MessageType
+  status MessageStatus @default(COMPLETE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   fragments Fragment?
-  projectId String 
-  project Project @relation(fields: [projectId] , references: [id], onDelete: Cascade)
+  
+  // Project messages (existing)
+  projectId String?
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Chat messages (new)
+  conversationId String?
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Message tree for branching/regeneration
+  parentMessageId String?
+  parentMessage Message? @relation("MessageTree", fields: [parentMessageId], references: [id])
+  replies Message[] @relation("MessageTree")
+
+  // Metadata
+  modelUsed String?
+  tokenCount Int?
+  feedbackValue Int?
+
   tokenUsage TokenUsage[]
 }
 

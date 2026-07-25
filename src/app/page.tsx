@@ -162,6 +162,7 @@ const PageContent = () => {
                                     onContractPrompt={handleContractPromptAnalysis}
                                     projectCategory={projectCategory}
                                     onCategoryClear={() => setProjectCategory(null)}
+                                    onStartChat={(prompt) => router.push(`/chat?q=${encodeURIComponent(prompt)}`)}
                                 />
 
                                 <div className="flex items-center justify-center">
