@@ -1,19 +1,20 @@
+diff --git a/node_modules/inngest/package.json b/node_modules/inngest/package.json
 --- a/node_modules/inngest/package.json
 +++ b/node_modules/inngest/package.json
-@@ -97,6 +97,14 @@
-   "./internals": {
-     "types": "./internals.d.ts"
+@@ -224,6 +224,16 @@
+       },
+       "import": "./internals.js",
+       "require": "./internals.cjs"
++    },
++    "./helpers/*": {
++      "types": "./helpers/*.d.ts",
++      "import": "./helpers/*.js",
++      "require": "./helpers/*.cjs"
++    },
++    "./components/*": {
++      "types": "./components/*.d.ts",
++      "import": "./components/*.js",
++      "require": "./components/*.cjs"
+     }
    },
-+  "./helpers/*": {
-+    "types": "./helpers/*.d.ts",
-+    "import": "./helpers/*.js",
-+    "require": "./helpers/*.cjs"
-+  },
-+  "./components/*": {
-+    "types": "./components/*.d.ts",
-+    "import": "./components/*.js",
-+    "require": "./components/*.cjs"
-+  },
-   "./package.json": {
-     "import": "./package.json",
-     "require": "./package.json"
+   "homepage": "https://github.com/inngest/inngest-js#readme",
