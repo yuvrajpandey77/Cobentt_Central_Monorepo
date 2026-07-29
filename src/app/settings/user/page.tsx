@@ -174,7 +174,7 @@ export default function UserInfoPage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/customDesigns/pricing">
+                <Link href="/overview/pricing">
                   <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black font-medium">
                     Upgrade Plan
                     <ExternalLink className="h-3 w-3 ml-1" />

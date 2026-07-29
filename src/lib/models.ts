@@ -10,6 +10,14 @@ export interface ModelInfo {
 export const MODELS: ModelInfo[] = [
   // Fast / Cheap
   {
+    id: "openrouter/free",
+    label: "OpenRouter Free",
+    provider: "OpenRouter",
+    tier: "fast",
+    description: "Routes to the best available free model",
+    context: 131072,
+  },
+  {
     id: "openai/gpt-4o-mini",
     label: "GPT-4o Mini",
     provider: "OpenAI",
@@ -121,7 +129,7 @@ export const MODELS: ModelInfo[] = [
   },
 ];
 
-export const DEFAULT_MODEL = "openai/gpt-4o-mini";
+export const DEFAULT_MODEL = "openrouter/free";
 
 export const TIER_LABELS: Record<string, string> = {
   fast: "Fast & Cheap",

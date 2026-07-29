@@ -125,20 +125,16 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
     }));
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        console.log("Form submitted with values:", values);
-        
-        // If no category set and mode is default (app without category), start a chat
-        const isExplicitMode = mode === "app" && projectCategory === null;
-        if (onStartChat && !projectCategory && !(onContractPrompt && mode === "contract")) {
+        // Default: no category selected → start a chat
+        if (!projectCategory && onStartChat) {
             onStartChat(values.value);
             return;
         }
-        
-        // If in contract mode without preview, trigger contract prompt analysis (redirect to dapp-studio)
-        if (mode === "contract" && onContractPrompt) {
+
+        // Smart contract category → dapp-studio
+        if (projectCategory === "smart contract" && onContractPrompt) {
             setIsAnalyzingContract(true);
             try {
-                // Add a small delay to show the loading state before navigation
                 await new Promise(resolve => setTimeout(resolve, 500));
                 await onContractPrompt(values.value);
             } catch (error) {
@@ -146,21 +142,17 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
                 toast.error("Failed to analyze contract. Please try again.");
                 setIsAnalyzingContract(false);
             }
-            // Note: Don't reset isAnalyzingContract here as we're navigating away
             return;
         }
-        
-        // If user is not authenticated, redirect to sign-in before attempting mutation
+
+        // Any other category → create project
         if (!clerk.user) {
             router.push("/sign-in");
             return;
         }
-        
+
         try {
-            // Create regular website project (app mode)
-            await createProject.mutateAsync({
-                value: values.value,
-            });
+            await createProject.mutateAsync({ value: values.value });
         } catch (error) {
             console.error("Error creating project:", error);
             const code = (error as any)?.data?.code ?? (error as any)?.shape?.code;

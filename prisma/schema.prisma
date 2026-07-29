@@ -122,6 +122,10 @@ model Message {
   tokenCount Int?
   feedbackValue Int?
 
+  // Thinking traces & sources (from cobentt_landing chat)
+  thinking Json?   @default("[]")
+  sources  Json?   @default("[]")
+
   tokenUsage TokenUsage[]
 }
 

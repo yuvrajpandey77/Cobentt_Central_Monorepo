@@ -131,7 +131,7 @@ export default function FeaturesPage() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="px-8 py-3 text-base font-semibold border-white/15 bg-white/5 text-white hover:bg-white/20 backdrop-blur-sm">
-              <Link href="/customDesigns/pricing">
+              <Link href="/overview/pricing">
                 View Pricing
               </Link>
             </Button>

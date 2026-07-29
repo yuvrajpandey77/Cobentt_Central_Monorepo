@@ -198,7 +198,7 @@ export default async function DocsPage({ searchParams }: PageProps) {
           </div>
           {/* Actions */}
           <div className="ml-auto flex items-center gap-2">
-            <Link href="/customDesigns/support" className="hidden sm:inline-flex h-9 items-center px-3 rounded-md border border-white/15 hover:bg-white/5 text-sm">
+            <Link href="/overview/about" className="hidden sm:inline-flex h-9 items-center px-3 rounded-md border border-white/15 hover:bg-white/5 text-sm">
               Contact support
             </Link>
             <Link href="/" className="inline-flex h-9 items-center px-3 rounded-md bg-[#00AEEF] text-black font-medium hover:brightness-110">
@@ -281,7 +281,7 @@ export default async function DocsPage({ searchParams }: PageProps) {
       {/* Right rail: actions and ToC */}
       <aside className="hidden xl:block sticky top-20 self-start h-[calc(100vh-6rem)] pl-2">
         <div className="flex items-center justify-end mb-4">
-          <Link href="/customDesigns/support" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border hover:bg-accent/50 text-sm">Ask</Link>
+          <Link href="/overview/about" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border hover:bg-accent/50 text-sm">Ask</Link>
         </div>
         <div className="rounded-md border bg-card/50 p-3 text-sm">
           <div className="mb-2">Was this helpful?</div>

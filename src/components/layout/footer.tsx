@@ -78,7 +78,7 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/customDesigns/pricing" className="hover:text-white transition-colors duration-200 flex items-center group">
+                <Link href="/overview/pricing" className="hover:text-white transition-colors duration-200 flex items-center group">
                   <span className="group-hover:translate-x-1 transition-transform duration-200">Pricing</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -97,13 +97,13 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/customDesigns/features" className="hover:text-white transition-colors duration-200 flex items-center group">
+                <Link href="/overview/features" className="hover:text-white transition-colors duration-200 flex items-center group">
                   <span className="group-hover:translate-x-1 transition-transform duration-200">Features</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/customDesigns/support" className="hover:text-white transition-colors duration-200 flex items-center group">
+                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center group">
                   <span className="group-hover:translate-x-1 transition-transform duration-200">Support</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -122,13 +122,13 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4 text-gray-300">Company</h3>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <Link href="/about" className="hover:text-white transition-colors duration-200 flex items-center group">
+                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center group">
                   <span className="group-hover:translate-x-1 transition-transform duration-200">About</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/research" className="hover:text-white transition-colors duration-200 flex items-center group">
+                <Link href="/overview/research" className="hover:text-white transition-colors duration-200 flex items-center group">
                   <span className="group-hover:translate-x-1 transition-transform duration-200">Research</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -140,7 +140,7 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors duration-200 flex items-center group">
+                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center group">
                   <span className="group-hover:translate-x-1 transition-transform duration-200">Contact</span>
                   <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -154,14 +154,14 @@ export const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
             <p>&copy; {new Date().getFullYear()} Cogerphere AI Labs. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-white transition-colors duration-200">
+              <Link href="/overview/privacy" className="hover:text-white transition-colors duration-200">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-white transition-colors duration-200">
+              <Link href="/overview/terms" className="hover:text-white transition-colors duration-200">
                 Terms of Service
               </Link>
-              <Link href="/accessibility" className="hover:text-white transition-colors duration-200">
-                Accessibility
+              <Link href="/overview/ai-disclosure" className="hover:text-white transition-colors duration-200">
+                AI Disclosure
               </Link>
             </div>
           </div>

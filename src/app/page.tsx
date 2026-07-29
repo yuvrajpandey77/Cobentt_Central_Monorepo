@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,33 +18,14 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { getDailyGreeting } from "@/lib/greetings";
 
-const STORAGE_KEY = "cogy.home.mode";
-
-type BuilderMode = "app" | "contract";
-
 const PageContent = () => {
     const { isCollapsed } = useSidebar();
     const router = useRouter();
     const trpc = useTRPC();
     const loadMoreRef = useRef<HTMLDivElement>(null);
-    const [mode, setMode] = useState<BuilderMode>("app");
     const [projectType, setProjectType] = useState<"webapp" | "contract">("webapp");
     const [greeting] = useState(getDailyGreeting);
     const [projectCategory, setProjectCategory] = useState<string | null>(null);
-
-    useEffect(() => {
-        const stored = window.localStorage.getItem(STORAGE_KEY) as BuilderMode | null;
-        if (stored === "app" || stored === "contract") {
-            setMode(stored);
-        }
-    }, []);
-
-    const handleModeChange = (value: string) => {
-        if (value === "app" || value === "contract") {
-            setMode(value);
-            window.localStorage.setItem(STORAGE_KEY, value);
-        }
-    };
 
     const handleContractPromptAnalysis = async (userPrompt: string) => {
         // Redirect to DApp Studio with the prompt
@@ -81,24 +62,6 @@ const PageContent = () => {
 
     const projects = data?.pages.flatMap((page: any) => page.projects) ?? [];
 
-    const starLines = useMemo(() => {
-        let seed = 42;
-        const next = () => {
-            seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-            return seed / 0x7fffffff;
-        };
-        const count = 56;
-        return Array.from({ length: count }, (_, i) => {
-            const left = next() * 100;
-            const width = 1.2 + next() * 2.8;
-            const length = 28 + next() * 72;
-            const duration = 8 + next() * 16;
-            const delay = -next() * duration;
-            const opacity = 0.10 + next() * 0.20;
-            return { id: i, left, width, length, duration, delay, opacity };
-        });
-    }, []);
-
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -130,23 +93,6 @@ const PageContent = () => {
                 
                 {/* Hero Section */}
                 <section className="relative overflow-hidden h-screen flex items-start justify-center pt-[12.65rem]">
-                    {/* Falling diagonal star-lines behind content */}
-                    <div className="hero-star-field z-0">
-                        {starLines.map((s) => (
-                            <span
-                                key={s.id}
-                                className="hero-star-line"
-                                style={{
-                                    left: `${s.left}vw`,
-                                    width: `${s.length}px`,
-                                    height: `${s.width}px`,
-                                    opacity: s.opacity,
-                                    animationDuration: `${s.duration}s`,
-                                    animationDelay: `${s.delay}s`,
-                                }}
-                            />
-                        ))}
-                    </div>
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
                         <div className="text-center max-w-[47.52rem] mx-auto">
         
@@ -158,7 +104,6 @@ const PageContent = () => {
                             {/* Project Form */}
                             <div className="max-w-3xl mx-auto space-y-8 mt-8">
                                 <ProjectForm 
-                                    mode={mode}
                                     onContractPrompt={handleContractPromptAnalysis}
                                     projectCategory={projectCategory}
                                     onCategoryClear={() => setProjectCategory(null)}
@@ -177,11 +122,9 @@ const PageContent = () => {
                                         ] as const).map(([cat, Icon]) => (
                                             <button
                                                 key={cat}
-                                                onClick={() => {
-                                                    setProjectCategory(projectCategory === cat ? null : cat);
-                                                    if (cat === "website") handleModeChange("app");
-                                                    else if (cat === "smart contract") handleModeChange("contract");
-                                                }}
+                                                    onClick={() => {
+                                                        setProjectCategory(projectCategory === cat ? null : cat);
+                                                    }}
                                                 className={cn(
                                                     "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 inline-flex items-center gap-1.5",
                                                     projectCategory === cat

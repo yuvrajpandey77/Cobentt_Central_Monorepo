@@ -4,6 +4,39 @@
 :root {
   --background: oklch(0 0 0);
   --foreground: oklch(1 0 0);
+
+  /* Landing page palette (cobentt_landing compat) */
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #0D0D0D;
+  --color-bg-card: #141414;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+  --color-accent-secondary: #D4D4D8;
+  --color-accent-hover: #E4E4E7;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+
+  /* Chat palette (dark default) */
+  --color-cb-bg: #000000;
+  --color-cb-bg-elevated: #0a0a0a;
+  --color-cb-card: #111111;
+  --color-cb-border: #1a1a1a;
+  --color-cb-border-strong: #2a2a2a;
+  --color-cb-text: #e0e0e0;
+  --color-cb-text-bright: #f5f5f5;
+  --color-cb-text-muted: #737373;
+  --color-cb-text-dim: #545454;
+  --color-cb-accent: #ffffff;
+  --color-cb-accent-muted: rgba(255,255,255,0.1);
+  --color-cb-accent-glow: rgba(255,255,255,0.2);
+  --color-cb-user-bubble: #1a1a1a;
+  --color-cb-assistant-text: #c7c7c7;
+  --color-cb-input-bg: #222222;
+  --color-cb-input-focus: #121212;
+  --color-cb-tab-bar: #050505;
+  --color-cb-upgrade: #2563EB;
+  --color-cb-upgrade-text: #ffffff;
+  --color-cb-danger: #ef4444;
   --card: oklch(0.1400 0 0);
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.1800 0 0);
@@ -109,6 +142,22 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #0D0D0D;
+  --color-bg-card: #141414;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+  --color-accent-secondary: #D4D4D8;
+  --color-accent-hover: #E4E4E7;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+}
+
+/* Landing page accent override — scope to /overview routes */
+.overview-wrapper {
+  --accent: #FFFFFF;
+  --color-accent: #FFFFFF;
 }
 
 @layer base {
@@ -321,7 +370,7 @@ body {
   }
 
   /* Exclusions: keep solid colors for interactive controls */
-  :where(button, [role="button"], input, textarea, select,
+  :where(button, [role="button"], a, input, textarea, select,
     .btn, .button, .shadcn-button, .ui-button) {
     -webkit-background-clip: initial;
     background-clip: initial;
@@ -329,7 +378,7 @@ body {
     color: inherit; /* allow Tailwind text utilities to apply */
   }
 
-  :where(button, [role="button"], .btn, .button, .shadcn-button, .ui-button) :where(*) {
+  :where(button, [role="button"], a, .btn, .button, .shadcn-button, .ui-button) :where(*) {
     -webkit-background-clip: initial;
     background-clip: initial;
     background-image: none !important;
@@ -344,6 +393,49 @@ body {
     background-image: none !important;
     color: inherit !important;
   }
+
+  /* Exclude chat workspace from global gradient text */
+  #chat-workspace * {
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    background-image: none !important;
+    color: inherit;
+  }
+}
+
+/* Chat workspace scrollbar */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-cb-border-strong);
+  border-radius: 999px;
+}
+
+/* Chat keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.25s ease-out forwards;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 /* subtle moving shine for beta badge */
@@ -352,15 +444,7 @@ body {
   100% { transform: translateX(140%); }
 }
 
-/* Diagonal silver lines animation for hero background */
-@keyframes diagonalDriftUp {
-  0% {
-    transform: translateY(110vh) rotate(60deg);
-  }
-  100% {
-    transform: translateY(-20vh) rotate(60deg);
-  }
-}
+
 
 /* Falling star animation for build page */
 @keyframes fall {
@@ -380,22 +464,26 @@ body {
   }
 }
 
-.hero-star-field {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
+
+
+/* Landing page animations */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up-landing {
+  animation: fadeInUp 0.5s ease-out forwards;
 }
 
-.hero-star-line {
-  position: absolute;
-  top: -10vh;
-  background: rgba(192, 192, 192, 0.35);
-  border-radius: 9999px;
-  transform: rotate(60deg);
-  animation-name: diagonalDriftUp;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-  box-shadow: 0 0 12px rgba(192, 192, 192, 0.25);
-}
+

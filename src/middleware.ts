@@ -2,12 +2,13 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 const isPublicRoute = createRouteMatcher([
     "/",
+    "/overview(.*)",
     "/sign-in(.*)",
     "/sign-up(.*)",
-    "/chat(.*)",
     "/api/inngest(.*)",
     "/api/trpc(.*)",
     "/api/chat(.*)",
+    "/api/razorpay(.*)",
 ])
 
 

@@ -24,12 +24,13 @@ export async function POST(
     return new Response("Not found", { status: 404 });
   }
 
-  const { message, model: reqModel } = await req.json();
+  const { message, model: reqModel, sources: reqSources } = await req.json();
   if (!message || typeof message !== "string") {
     return new Response("Message required", { status: 400 });
   }
 
   const model = typeof reqModel === "string" ? reqModel : (conversation.model || DEFAULT_MODEL);
+  const sources = Array.isArray(reqSources) ? reqSources : [];
 
   // Get message history for context (last 6)
   const history = await prisma.message.findMany({
@@ -56,6 +57,9 @@ export async function POST(
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        // Send assistant message id so frontend can track the streaming message
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ messageId: assistantMessage.id })}\n\n`));
+
         const systemPrompt = "You are Cobentt, an AI assistant built by Cogerphere AI Labs. You help users with coding, development, and general questions. Be concise, helpful, and accurate. When sharing code, use markdown code blocks with proper language tags.";
 
         const messages = [
@@ -96,6 +100,7 @@ export async function POST(
         if (!reader) throw new Error("No response body");
 
         let fullContent = "";
+        let fullThinking = "";
         const decoder = new TextDecoder();
         let buffer = "";
 
@@ -115,10 +120,17 @@ export async function POST(
 
             try {
               const parsed = JSON.parse(data);
-              const token = parsed.choices?.[0]?.delta?.content || "";
+              const delta = parsed.choices?.[0]?.delta;
+              if (!delta) continue;
+              const token = delta.content || "";
+              const reasoning = delta.reasoning || delta.reasoning_content || "";
               if (token) {
                 fullContent += token;
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
+              }
+              if (reasoning) {
+                fullThinking += reasoning;
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ thinking: reasoning })}\n\n`));
               }
             } catch {
               // skip malformed JSON
@@ -126,13 +138,18 @@ export async function POST(
           }
         }
 
-        // Persist the full response
+        // Persist the full response with thinking and sources
         await prisma.message.update({
           where: { id: assistantMessage.id },
-          data: { content: fullContent, status: "COMPLETE" },
+          data: {
+            content: fullContent,
+            status: "COMPLETE",
+            thinking: fullThinking || undefined,
+            sources: sources.length > 0 ? sources : undefined,
+          },
         });
 
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, model, thinking: fullThinking || undefined, sources: sources.length > 0 ? sources : undefined })}\n\n`));
         controller.close();
       } catch (err: any) {
         await prisma.message.update({
