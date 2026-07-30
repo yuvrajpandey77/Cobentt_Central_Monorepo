@@ -60,27 +60,33 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4 text-gray-300">Products</h3>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <Link href="/" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Cobentt</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Cobentt</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/dapp-studio" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Contract Builder</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/dapp-studio" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Contract Builder</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/all-projects" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">My Projects</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/all-projects" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>My Projects</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/overview/pricing" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Pricing</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/developers" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Developers</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </li>
+              <li>
+                <Link href="/overview/pricing" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Pricing</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
             </ul>
@@ -91,27 +97,33 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4 text-gray-300">Resources</h3>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <Link href="/docs" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Documentation</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/docs" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Documentation</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/overview/features" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Features</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/features" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Features</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Support</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/blog" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Blog</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/community" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Community</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Support</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </li>
+              <li>
+                <Link href="/community" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Community</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
             </ul>
@@ -122,28 +134,72 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4 text-gray-300">Company</h3>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">About</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>About</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/overview/research" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Research</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/research" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Research</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/careers" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Careers</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/careers" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Careers</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
-                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center group">
-                  <span className="group-hover:translate-x-1 transition-transform duration-200">Contact</span>
-                  <ChevronRight className="h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                  <span>Contact</span>
+                  <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-semibold mb-4 text-gray-300">Legal</h3>
+            <ul className="space-y-3 text-gray-400">
+              <li>
+                <Link href="/overview/privacy" className="hover:text-white transition-colors duration-200">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/overview/terms" className="hover:text-white transition-colors duration-200">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/overview/ai-disclosure" className="hover:text-white transition-colors duration-200">
+                  AI Disclosure
+                </Link>
+              </li>
+              <li>
+                <Link href="/overview/licenses" className="hover:text-white transition-colors duration-200">
+                  Licenses
+                </Link>
+              </li>
+              <li>
+                <Link href="/overview/account-deletion" className="hover:text-white transition-colors duration-200">
+                  Account Deletion
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Connect */}
+          <div>
+            <h3 className="font-semibold mb-4 text-gray-300">Connect</h3>
+            <ul className="space-y-3 text-gray-400">
+              <li>
+                <a href="mailto:cogerphereailabs@gmail.com" className="hover:text-white transition-colors duration-200">
+                  Contact
+                </a>
               </li>
             </ul>
           </div>
@@ -153,17 +209,6 @@ export const Footer = () => {
         <div className="border-t border-gray-800 py-10 mt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
             <p>&copy; {new Date().getFullYear()} Cogerphere AI Labs. All rights reserved.</p>
-            <div className="flex gap-6">
-              <Link href="/overview/privacy" className="hover:text-white transition-colors duration-200">
-                Privacy Policy
-              </Link>
-              <Link href="/overview/terms" className="hover:text-white transition-colors duration-200">
-                Terms of Service
-              </Link>
-              <Link href="/overview/ai-disclosure" className="hover:text-white transition-colors duration-200">
-                AI Disclosure
-              </Link>
-            </div>
           </div>
         </div>
       </div>

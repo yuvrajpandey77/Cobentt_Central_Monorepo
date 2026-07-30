@@ -215,8 +215,8 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
                                     onBlur={() => setIsFocused(false)}
                                     minRows={1}
                                     maxRows={6}
-                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white/60 placeholder:text-white/30 cursor-text"
                                     placeholder="Hello there. Let's move forward. What's the vision?"
+                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white/60 placeholder:text-[#666] cursor-text"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
                                             e.preventDefault();

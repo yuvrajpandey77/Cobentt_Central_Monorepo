@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/overview/navbar";
-import { Footer } from "@/components/overview/footer";
+import { Footer } from "@/components/layout/footer";
 
 export default function OverviewLayout({
   children,

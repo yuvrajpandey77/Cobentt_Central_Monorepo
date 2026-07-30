@@ -30,7 +30,7 @@ export function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
 
   if (isCollapsed) {
     return (
-      <div className="flex-shrink-0 flex flex-col items-center gap-2 pb-2">
+      <div className="flex-shrink-0 flex flex-col items-center gap-2 pb-1">
         <Link href="/settings/user" aria-label="Settings">
           <motion.div
             whileTap={{ scale: 0.9 }}
@@ -44,7 +44,7 @@ export function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
   }
 
   return (
-    <div className="flex-shrink-0 space-y-1.5 pb-2">
+    <div className="flex-shrink-0 space-y-1.5 pb-1">
       <div className="px-2.5 relative" ref={dropdownRef}>
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -78,6 +78,13 @@ export function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
               Account
             </Link>
             <Link
+              href="/settings/user"
+              onClick={() => setDropdownOpen(false)}
+              className="block px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-card/40 transition-colors"
+            >
+              Settings
+            </Link>
+            <Link
               href="/overview/pricing"
               onClick={() => setDropdownOpen(false)}
               className="block px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-card/40 transition-colors"
@@ -95,17 +102,6 @@ export function SidebarFooter({ isCollapsed }: SidebarFooterProps) {
             </SignOutButton>
           </motion.div>
         )}
-      </div>
-
-      <div className="mx-2.5 flex items-center justify-start">
-        <Link href="/settings/user" aria-label="Settings">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-card/40 transition-all duration-150"
-          >
-            <Settings className="w-3 h-3" />
-          </motion.div>
-        </Link>
       </div>
     </div>
   );

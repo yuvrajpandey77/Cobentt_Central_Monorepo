@@ -1,323 +1,477 @@
-import fs from "fs";
-import path from "path";
-import Image from "next/image";
-import Link from "next/link";
+"use client";
+
+import { useCallback, useState, useEffect } from "react";
 import {
-  BookOpen,
-  Settings2,
-  Search,
-  ShieldCheck,
-  GitBranch,
-  Users,
-  FileText,
-  Wand2,
-  FolderGit2,
-  Network,
-  Layers,
   Sparkles,
-  Info,
+  Clipboard,
+  Check,
+  BookOpen,
+  Bot,
+  Code2,
+  Globe,
+  Shield,
+  Workflow,
+  Cpu,
+  Layers,
+  Zap,
+  Network,
+  FileText,
+  Search,
+  MessageSquare,
 } from "lucide-react";
-import FeedbackButtons from "@/app/docs/FeedbackButtons";
-import SearchBox from "./SearchBox";
+import { Navbar } from "@/components/overview/navbar";
+import { Footer } from "@/components/layout/footer";
 
-interface PageProps {
-  searchParams?: Promise<{ file?: string }>;
-}
+const SECTIONS = [
+  { id: "what-is-cobentt", label: "What is Cobentt?" },
+  { id: "key-features", label: "Key Features" },
+  { id: "how-it-works", label: "How It Works" },
+  { id: "getting-started", label: "Getting Started" },
+  { id: "use-cases", label: "Use Cases" },
+  { id: "faq", label: "FAQ" },
+];
 
-const DOCS_ROOT = path.join(process.cwd(), "docs");
-const docCache = new Map<string, { mtimeMs: number; content: string }>();
-let groupsCached: { folder: string; files: string[] }[] | null = null;
-const indexCache = new Map<string, { items: { path: string; title: string; excerpt: string }[] }>();
+const FEATURES = [
+  {
+    icon: MessageSquare,
+    title: "AI Chat & Workspace",
+    desc: "Conversational interface powered by multiple AI models. Chat, iterate, and refine your ideas in real time with context-aware assistance.",
+  },
+  {
+    icon: Code2,
+    title: "Smart Contract Builder",
+    desc: "Design, deploy, and verify smart contracts across multiple blockchains. No deep Solidity knowledge required — describe what you want and let AI handle the rest.",
+  },
+  {
+    icon: Globe,
+    title: "Web App Generator",
+    desc: "Generate full-stack web applications from natural language prompts. React, TypeScript, Node.js — production-ready code in minutes.",
+  },
+  {
+    icon: Search,
+    title: "Deep Research",
+    desc: "Conduct comprehensive research across web sources, academic papers, and documents. AI synthesizes findings into structured reports with citations.",
+  },
+  {
+    icon: FileText,
+    title: "Document & Knowledge Management",
+    desc: "Upload, organize, and query documents. The context engine retrieves relevant information across your entire knowledge base instantly.",
+  },
+  {
+    icon: Shield,
+    title: "Enterprise Security",
+    desc: "Local-first architecture, end-to-end encryption, and granular access controls. Your data stays yours — we never train on your content.",
+  },
+  {
+    icon: Workflow,
+    title: "Agent Orchestration",
+    desc: "Deploy autonomous AI agents that plan, reason, call tools, and execute complex multi-step tasks across your workflow.",
+  },
+  {
+    icon: Network,
+    title: "Multi-Model Platform",
+    desc: "Access GPT-4, Claude, Gemini, Llama, and more from a single interface. Meridian routes each task to the optimal model automatically.",
+  },
+];
 
-function listDocs(): { folder: string; files: string[] }[] {
-  if (groupsCached) return groupsCached;
-  if (!fs.existsSync(DOCS_ROOT)) return [];
-  const entries = fs.readdirSync(DOCS_ROOT, { withFileTypes: true });
-  const groups: { folder: string; files: string[] }[] = [];
-
-  if (entries.find((e) => e.isFile() && e.name.toLowerCase() === "readme.md")) {
-    groups.push({ folder: "root", files: ["README.md"] });
-  }
-
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const dirPath = path.join(DOCS_ROOT, entry.name);
-      const files = fs
-        .readdirSync(dirPath)
-        .filter((f) => f.toLowerCase().endsWith(".md"))
-        .map((f) => `${entry.name}/${f}`);
-      if (files.length > 0) groups.push({ folder: entry.name, files });
-    }
-  }
-  groupsCached = groups;
-  return groups;
-}
-
-function readMarkdownFile(relPath: string): string | null {
-  try {
-    const abs = path.join(DOCS_ROOT, relPath);
-    if (!abs.startsWith(DOCS_ROOT)) return null;
-    const stat = fs.statSync(abs);
-    const cached = docCache.get(abs);
-    if (cached && cached.mtimeMs === stat.mtimeMs) {
-      return cached.content;
-    }
-    const content = fs.readFileSync(abs, "utf8");
-    docCache.set(abs, { mtimeMs: stat.mtimeMs, content });
-    return content;
-  } catch {
-    return null;
-  }
-}
-
-function renderBasicMarkdown(md: string): string {
-  // very small subset: headings, lists, code fences, paragraphs, links, inline code
-  const lines = md.replace(/\r\n?/g, "\n").split("\n");
-  let html = "";
-  let inCode = false;
-  for (const line of lines) {
-    if (line.startsWith("```")) {
-      if (inCode) {
-        html += "</code></pre>";
-        inCode = false;
-      } else {
-        const lang = line.slice(3).trim();
-        html += `<pre class=\"rounded-md bg-zinc-950/95 text-zinc-100 p-4 overflow-x-auto text-sm mb-4\"><code class=\"language-${lang}\">`;
-        inCode = true;
-      }
-      continue;
-    }
-    if (inCode) {
-      html += line.replaceAll("&", "&amp;").replaceAll("<", "&lt;") + "\n";
-      continue;
-    }
-    const h = /^(#{1,3})\s+(.*)$/.exec(line);
-    if (h) {
-      const lvl = h[1].length;
-      const text = h[2];
-      const id = slugify(text);
-      html += `<h${lvl} id="${id}" class="scroll-mt-24">${inline(text)}</h${lvl}>`;
-      continue;
-    }
-    if (/^\s*[-*]\s+/.test(line)) {
-      // single-level list
-      html += `<ul class=\"list-disc pl-6 mb-2\"><li>${inline(line.replace(/^\s*[-*]\s+/, ""))}</li></ul>`;
-      continue;
-    }
-    if (line.trim() === "") {
-      html += "";
-      continue;
-    }
-    html += `<p class=\"leading-7 text-muted-foreground\">${inline(line)}</p>`;
-  }
-  return html;
-}
-
-function inline(t: string): string {
-  let out = t;
-  out = out.replace(/`([^`]+)`/g, (_, c) => `<code>${c.replaceAll("&", "&amp;").replaceAll("<", "&lt;")}</code>`);
-  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => `<a href=\"${href}\" class=\"underline\">${label}</a>`);
-  out = out.replace(/\*\*([^*]+)\*\*/g, (_, b) => `<strong>${b}</strong>`);
-  out = out.replace(/\*([^*]+)\*/g, (_, i) => `<em>${i}</em>`);
-  return out;
-}
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/[\s-]+/g, "-");
-}
-
-export default async function DocsPage({ searchParams }: PageProps) {
-  const groups = listDocs();
-  const sp = await searchParams;
-  const selected = sp?.file ?? "README.md";
-  const content = readMarkdownFile(selected) ?? "# Not found\nThe selected document does not exist.";
-  const html = renderBasicMarkdown(content);
-
-  // Derive page title from the first markdown heading, fallback to file name
-  const firstHeadingMatch = /^(?:#|##|###)\s+(.+)$/m.exec(content);
-  const pageTitle = firstHeadingMatch?.[1] ?? selected.split("/").pop()?.replace(/\.md$/i, "") ?? "Docs";
-  const sectionLabel = selected.includes("/") ? selected.split("/")[0].replace(/[-_]/g, " ") : "Documentation";
-
-  // Build a lightweight table of contents from h2/h3
-  const toc: { id: string; text: string; level: number }[] = [];
-  const headingRegex = /^(#{2,3})\s+(.+)$/gm;
-  let m: RegExpExecArray | null;
-  // eslint-disable-next-line no-cond-assign
-  while ((m = headingRegex.exec(content))) {
-    const level = m[1].length;
-    const text = m[2].trim();
-    toc.push({ id: slugify(text), text, level });
-  }
-
-  // Build and cache search index once per doc mtimes snapshot
-  const snapshotKey = JSON.stringify(
-    groups.flatMap(({ files }) => files).map((f) => {
-      const abs = path.join(DOCS_ROOT, f);
-      try {
-        return [f, fs.statSync(abs).mtimeMs];
-      } catch {
-        return [f, 0];
-      }
-    })
-  );
-  let searchIndex: { path: string; title: string; excerpt: string }[] | undefined = indexCache.get(snapshotKey)?.items;
-  if (!searchIndex) {
-    searchIndex = groups.flatMap(({ files }) => files).map((f) => {
-      const md = readMarkdownFile(f) ?? "";
-      const titleMatch = /^(?:#|##|###)\s+(.+)$/m.exec(md || "");
-      const title = titleMatch?.[1] ?? f.split("/").pop()?.replace(/\.md$/i, "") ?? f;
-      const plain = md
-        .replace(/```[\s\S]*?```/g, " ")
-        .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
-        .replace(/[#*_>`]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      const excerpt = plain.slice(0, 160);
-      return { path: f, title, excerpt };
+function CodeSnippet({ code, language }: { code: string; language: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     });
-    indexCache.set(snapshotKey, { items: searchIndex });
-  }
+  }, [code]);
 
   return (
-    <div className="">
-      {/* Top Navigation */}
-      <div className="sticky top-0 z-30 backdrop-blur supports-[backdrop-filter]:bg-black/50 bg-[#121212]/70 border-b border-white/10">
-        <div className="px-4 sm:px-6 lg:px-8 h-14 flex items-center gap-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Image src="/cobentttransparent.webp" alt="Cobentt" width={28} height={28} className="rounded" />
-            <span className="text-sm font-semibold tracking-wide">COBENTT Docs</span>
-          </div>
-          {/* Search */}
-          <div className="flex-1 max-w-2xl mx-auto hidden md:block">
-            <SearchBox index={searchIndex} />
-          </div>
-          {/* Actions */}
-          <div className="ml-auto flex items-center gap-2">
-            <Link href="/overview/about" className="hidden sm:inline-flex h-9 items-center px-3 rounded-md border border-white/15 hover:bg-white/5 text-sm">
-              Contact support
-            </Link>
-            <Link href="/" className="inline-flex h-9 items-center px-3 rounded-md bg-[#00AEEF] text-black font-medium hover:brightness-110">
-              Open app
-            </Link>
-          </div>
-        </div>
+    <div className="relative group">
+      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border border-white/10 border-b-0 rounded-tl-[8px] rounded-tr-[8px]">
+        <span className="text-[11px] font-medium text-white/40 font-mono uppercase tracking-wider">{language}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors"
+        >
+          {copied ? <><Check className="w-3 h-3" /> Copied</> : <><Clipboard className="w-3 h-3" /> Copy</>}
+        </button>
       </div>
-
-      <div className="px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_240px] gap-6 w-full">
-      <aside className="hidden lg:flex flex-col sticky top-20 self-start h-[calc(100vh-6rem)] overflow-auto pr-2">
-        <div className="rounded-xl p-3 bg-gradient-to-b from-[#1C1C1C] to-[#121212] border border-white/10 shadow-2xl shadow-black/30">
-        <nav className="space-y-4 text-sm">
-          {groups.map(({ folder, files }) => (
-            <div key={folder}>
-              <div className="text-xs uppercase text-muted-foreground tracking-wide mb-2">{folder}</div>
-              <ul className="space-y-1">
-                {files.map((f) => {
-                  const isActive = selected === f;
-                  const label = f.split("/").pop()?.replace(/\.md$/i, "") || f;
-                  const icon = getIconFor(label);
-                  return (
-                    <li key={f}>
-                      <Link
-                        href={{ pathname: "/docs", query: { file: f } }}
-                        className={`group relative flex items-center gap-2 px-2 py-1 rounded-md transition-colors ${
-                          isActive
-                            ? "bg-white/10 ring-1 ring-[#00AEEF]/40"
-                            : "hover:bg-white/5"
-                        }`}
-                      >
-                        {isActive && <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#00AEEF] rounded-r blur-[0.5px]" />}
-                        <span className="shrink-0 text-white/70">{icon}</span>
-                        <span className={`truncate ${isActive ? "font-medium" : ""}`}>{label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-        </div>
-      </aside>
-
-      <main className="prose prose-neutral dark:prose-invert max-w-none prose-pre:p-0 prose-code:before:content-[''] prose-code:after:content-['']">
-        <header className="mb-6 border-b pb-4">
-          <div className="text-sm text-muted-foreground mb-2">{sectionLabel}</div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="m-0 text-3xl font-semibold tracking-tight">{pageTitle}</h1>
-            {/* Plan badge mimic */}
-            <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border bg-white/5 border-white/10 text-white/80">
-              <Info className="h-3.5 w-3.5" /> This feature is available on the Ultimate site plan.
-            </span>
-          </div>
-        </header>
-        {/* Subtitle and description */}
-        <p className="mt-0 text-[15px] text-white/80">
-          Deliver a tailored documentation experience based on who’s reading.
-        </p>
-
-        {/* Decorative illustration / gradient card */}
-        <div className="my-6 rounded-xl border border-white/10 overflow-hidden shadow-lg bg-gradient-to-br from-blue-500/20 via-slate-500/10 to-blue-600/20">
-          <div className="h-56 sm:h-72 w-full bg-[radial-gradient(700px_200px_at_50%_-20%,rgba(59,130,246,0.35),transparent),radial-gradient(400px_200px_at_80%_20%,rgba(0,174,239,0.35),transparent)]" />
-        </div>
-        {/* eslint-disable-next-line react/no-danger */}
-        <div className="prose-headings:scroll-mt-24" dangerouslySetInnerHTML={{ __html: html }} />
-
-        {/* Helpful feedback row */}
-        <div className="mt-10 pt-6 border-t flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Was this helpful?</span>
-          <div className="flex items-center gap-2">
-            <button className="h-8 w-8 rounded-md border hover:bg-accent/50" aria-label="Helpful">🙂</button>
-            <button className="h-8 w-8 rounded-md border hover:bg-accent/50" aria-label="Neutral">😐</button>
-            <button className="h-8 w-8 rounded-md border hover:bg-accent/50" aria-label="Not helpful">🙁</button>
-          </div>
-        </div>
-      </main>
-
-      {/* Right rail: actions and ToC */}
-      <aside className="hidden xl:block sticky top-20 self-start h-[calc(100vh-6rem)] pl-2">
-        <div className="flex items-center justify-end mb-4">
-          <Link href="/overview/about" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border hover:bg-accent/50 text-sm">Ask</Link>
-        </div>
-        <div className="rounded-md border bg-card/50 p-3 text-sm">
-          <div className="mb-2">Was this helpful?</div>
-          <FeedbackButtons pagePath={selected} alignment="row" />
-        </div>
-        {toc.length > 0 && (
-          <div className="mt-6 text-sm">
-            <div className="text-xs uppercase text-muted-foreground tracking-wide mb-2">On this page</div>
-            <ul className="space-y-1">
-              {toc.map((h) => (
-                <li key={h.id} className={h.level === 3 ? "pl-3" : ""}>
-                  <a href={`#${h.id}`} className="text-muted-foreground hover:text-foreground">{h.text}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </aside>
-      </div>
+      <pre className="p-4 bg-black/40 border border-white/10 rounded-bl-[8px] rounded-br-[8px] overflow-x-auto">
+        <code className="text-sm font-mono leading-relaxed text-white/80">{code}</code>
+      </pre>
     </div>
   );
 }
 
-function getIconFor(label: string) {
-  const lower = label.toLowerCase();
-  if (lower.includes("guide") || lower.includes("docs")) return <BookOpen className="h-4 w-4" />;
-  if (lower.includes("api") || lower.includes("schema")) return <Layers className="h-4 w-4" />;
-  if (lower.includes("auth") || lower.includes("secure")) return <ShieldCheck className="h-4 w-4" />;
-  if (lower.includes("collab") || lower.includes("team")) return <Users className="h-4 w-4" />;
-  if (lower.includes("change") || lower.includes("changelog")) return <GitBranch className="h-4 w-4" />;
-  if (lower.includes("config") || lower.includes("settings")) return <Settings2 className="h-4 w-4" />;
-  if (lower.includes("ai") || lower.includes("assistant")) return <Sparkles className="h-4 w-4" />;
-  if (lower.includes("server") || lower.includes("network")) return <Network className="h-4 w-4" />;
-  if (lower.includes("repo") || lower.includes("git")) return <FolderGit2 className="h-4 w-4" />;
-  if (lower.includes("magic") || lower.includes("auto")) return <Wand2 className="h-4 w-4" />;
-  return <FileText className="h-4 w-4" />;
+function SectionDivider() {
+  return <div className="border-t border-white/5" />;
 }
 
+function DocsContent() {
+  const [activeId, setActiveId] = useState(SECTIONS[0]?.id ?? "");
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const scrollToId = useCallback((id: string) => {
+    setActiveId(id);
+    const target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.history.pushState(null, "", `#${id}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPos = window.scrollY + 120;
+      for (let i = SECTIONS.length - 1; i >= 0; i--) {
+        const el = document.getElementById(SECTIONS[i].id);
+        if (el && el.offsetTop <= scrollPos) {
+          setActiveId(SECTIONS[i].id);
+          break;
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div className="pt-14 lg:pt-16">
+      <Navbar />
+
+      {/* ── Content + Sidebar ── */}
+      <div className="mx-auto max-w-[1440px] px-6 lg:px-10 pt-12 pb-20 lg:pb-28">
+        <div className="flex gap-10">
+          {/* ── Main content ── */}
+          <div className="flex-1 min-w-0 max-w-[760px]">
+            <div className="flex flex-col gap-10">
+
+              {/* What is Cobentt? */}
+              <section id="what-is-cobentt">
+                <h2 className="text-xl font-bold text-white mb-4">What is Cobentt?</h2>
+                <p className="text-sm text-white/50 leading-relaxed mb-4">
+                  Cobentt is an integrated AI workspace that combines conversational intelligence,
+                  smart contract development, web application generation, deep research, and
+                  document management into a single, unified platform.
+                </p>
+                <p className="text-sm text-white/50 leading-relaxed mb-4">
+                  Unlike single-purpose AI tools, Cobentt gives you access to multiple leading AI
+                  models — GPT-4, Claude, Gemini, Llama, and more — through a single interface.
+                  Our proprietary Meridian orchestration layer intelligently routes each task to
+                  the optimal model, ensuring you always get the best results.
+                </p>
+                <p className="text-sm text-white/50 leading-relaxed">
+                  Whether you are a developer shipping smart contracts, a researcher synthesizing
+                  papers, or a creator bringing ideas to life, Cobentt adapts to your workflow
+                  — not the other way around.
+                </p>
+              </section>
+
+              <SectionDivider />
+
+              {/* Key Features */}
+              <section id="key-features">
+                <h2 className="text-xl font-bold text-white mb-6">Key Features</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {FEATURES.map((f) => (
+                    <div
+                      key={f.title}
+                      className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
+                    >
+                      <div className="w-8 h-8 rounded-tr-[5px] rounded-bl-[5px] rounded-tl-[3px] rounded-br-[3px] bg-white/10 flex items-center justify-center mb-3">
+                        <f.icon className="w-4 h-4 text-white/70" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-white mb-1">{f.title}</h3>
+                      <p className="text-xs text-white/40 leading-relaxed">{f.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <SectionDivider />
+
+              {/* How It Works */}
+              <section id="how-it-works">
+                <h2 className="text-xl font-bold text-white mb-4">How It Works</h2>
+
+                <div className="flex flex-col gap-5">
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-white/70">1</span>
+                      </div>
+                      <div className="w-px flex-1 bg-white/10 mt-2" />
+                    </div>
+                    <div className="pb-5">
+                      <h3 className="text-sm font-semibold text-white mb-1">Choose your task</h3>
+                      <p className="text-sm text-white/40 leading-relaxed">
+                        Describe what you want to build, research, or create in natural language.
+                        Cobentt understands intent across chat, code, contracts, documents, and research.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-white/70">2</span>
+                      </div>
+                      <div className="w-px flex-1 bg-white/10 mt-2" />
+                    </div>
+                    <div className="pb-5">
+                      <h3 className="text-sm font-semibold text-white mb-1">Meridian routes intelligently</h3>
+                      <p className="text-sm text-white/40 leading-relaxed">
+                        Our Meridian orchestration layer analyzes your request, retrieves relevant
+                        context, plans the execution strategy, and selects the best AI model for the job.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-white/70">3</span>
+                      </div>
+                      <div className="w-px flex-1 bg-white/10 mt-2" />
+                    </div>
+                    <div className="pb-5">
+                      <h3 className="text-sm font-semibold text-white mb-1">AI executes and iterates</h3>
+                      <p className="text-sm text-white/40 leading-relaxed">
+                        The selected model executes your task — generating code, analyzing data,
+                        writing content, or deploying contracts. You can iterate, refine, and
+                        steer results in real time.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-white/70">4</span>
+                      </div>
+                      <div className="w-px flex-1 bg-white/10" />
+                    </div>
+                    <div className="pb-5">
+                      <h3 className="text-sm font-semibold text-white mb-1">Deploy and share</h3>
+                      <p className="text-sm text-white/40 leading-relaxed">
+                        Once ready, deploy your smart contracts, publish web apps, or export
+                        research reports — all from within the Cobentt workspace.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <SectionDivider />
+
+              {/* Getting Started */}
+              <section id="getting-started">
+                <h2 className="text-xl font-bold text-white mb-4">Getting Started</h2>
+                <p className="text-sm text-white/50 mb-4 leading-relaxed">
+                  Getting started with Cobentt is straightforward. Here is how to begin:
+                </p>
+
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-white/70 mb-2">Step 1: Create an account</p>
+                    <p className="text-sm text-white/40 mb-2 leading-relaxed">
+                      Sign up at cobentt.com with your email or GitHub account. No credit card
+                      required for the free tier.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-white/70 mb-2">Step 2: Start a conversation</p>
+                    <p className="text-sm text-white/40 mb-2 leading-relaxed">
+                      Open the chat workspace and describe what you want to build or explore.
+                      Cobentt will guide you through the process.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-white/70 mb-2">Step 3: Choose your path</p>
+                    <p className="text-sm text-white/40 mb-2 leading-relaxed">
+                      Select a project type — web app, smart contract, research, document, or slide
+                      deck — and Cobentt tailors the experience accordingly.
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-white/70 mb-2">Step 4: Build and deploy</p>
+                    <p className="text-sm text-white/40 leading-relaxed">
+                      Iterate with AI assistance until you are happy with the result, then deploy
+                      directly from the platform.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <SectionDivider />
+
+              {/* Use Cases */}
+              <section id="use-cases">
+                <h2 className="text-xl font-bold text-white mb-4">Use Cases</h2>
+                <div className="space-y-4">
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]">
+                    <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                      <Bot className="w-4 h-4 text-white/50" />
+                      Smart Contract Development
+                    </h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Describe your contract logic in plain English. Cobentt generates Solidity code,
+                      tests it, and helps you deploy to Ethereum, Polygon, or any EVM-compatible chain.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]">
+                    <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-white/50" />
+                      Web Application Development
+                    </h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Generate full-stack web applications from natural language descriptions.
+                      React, Next.js, TypeScript, and Node.js — complete with authentication,
+                      databases, and deployment.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]">
+                    <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                      <Search className="w-4 h-4 text-white/50" />
+                      Research & Analysis
+                    </h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Conduct deep research across web sources and academic databases. AI synthesizes
+                      findings into structured reports with citations and summaries.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]">
+                    <h3 className="text-sm font-semibold text-white mb-1 flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-white/50" />
+                      Document Management
+                    </h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Upload documents, query them with natural language, and let AI extract
+                      insights, summarize content, and connect information across your knowledge base.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <SectionDivider />
+
+              {/* FAQ */}
+              <section id="faq">
+                <h2 className="text-xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+                <div className="space-y-3">
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+                    <h3 className="text-sm font-semibold text-white mb-1">What AI models does Cobentt support?</h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Cobentt supports GPT-4, GPT-4o, Claude 3.5 Sonnet, Opus, Gemini Pro, Gemini Ultra,
+                      Llama 3, Mistral, and open-weight models via Ollama. Meridian routes each task to
+                      the best model automatically.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+                    <h3 className="text-sm font-semibold text-white mb-1">Is my data private?</h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Yes. Cobentt uses a local-first architecture with end-to-end encryption. We never
+                      train on your data. You control what is stored and shared.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+                    <h3 className="text-sm font-semibold text-white mb-1">Do I need coding experience?</h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Not at all. Cobentt is designed for both developers and non-developers. Describe
+                      what you want in natural language and AI handles the implementation.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+                    <h3 className="text-sm font-semibold text-white mb-1">What blockchains do you support?</h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Cobentt supports Ethereum, Polygon, Arbitrum, Optimism, Base, and other
+                      EVM-compatible chains for smart contract deployment.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-white/[0.03] border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+                    <h3 className="text-sm font-semibold text-white mb-1">Is there a free tier?</h3>
+                    <p className="text-xs text-white/40 leading-relaxed">
+                      Yes. Cobentt offers a free tier with generous usage limits. Upgrade to a paid
+                      plan for higher quotas, priority models, and team features.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+
+          {/* ── Desktop outline sidebar ── */}
+          {!isMobile && (
+            <aside className="w-56 shrink-0" style={{ position: "sticky", top: 100, alignSelf: "start" }}>
+              <nav role="complementary" aria-label="On this page">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
+                  On this page
+                </h3>
+                <ul className="flex flex-col gap-1">
+                  {SECTIONS.map((section) => (
+                    <li key={section.id}>
+                      <button
+                        onClick={() => scrollToId(section.id)}
+                        className={`text-left text-sm w-full px-3 py-1.5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] transition-colors ${
+                          activeId === section.id
+                            ? "bg-white/10 text-white font-medium"
+                            : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                        }`}
+                      >
+                        {section.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </aside>
+          )}
+        </div>
+
+        {/* ── Mobile outline selector ── */}
+        {isMobile && (
+          <div className="mt-6">
+            <select
+              value={activeId}
+              onChange={(e) => scrollToId(e.target.value)}
+              className="w-full px-3 py-2.5 text-sm bg-white/5 border border-white/10 text-white/70 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] appearance-none cursor-pointer"
+              style={{
+                backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 12px center",
+                backgroundSize: "14px",
+              }}
+            >
+              {SECTIONS.map((section) => (
+                <option key={section.id} value={section.id}>{section.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      <Footer />
+    </div>
+  );
+}
+
+export default function DocsPage() {
+  return <DocsContent />;
+}
