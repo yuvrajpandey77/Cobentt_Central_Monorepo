@@ -1,4 +1,5 @@
-import { openai, createAgent } from "@inngest/agent-kit";
+import { createAgent } from "@inngest/agent-kit";
+import { agentModel } from "@/lib/ai/agent-model";
 import { EnhancedContractConfig } from '@/types/contract-config';
 import { 
   buildContractGenerationPrompt, 
@@ -48,9 +49,7 @@ export async function generateCompleteContract(
       name: "Contract-Generator",
       description: "An expert Solidity developer that generates complete smart contracts",
       system: "You are an expert Solidity developer. Generate complete, production-ready smart contracts.",
-      model: openai({
-        model: "gpt-4.1",
-      }),
+      model: agentModel("gpt-4.1"),
     });
 
     // Create timeout promise (5 minutes per AI call)
@@ -104,9 +103,7 @@ export async function validateContractWithAI(
       name: "Contract-Validator",
       description: "An expert Solidity auditor that validates smart contracts",
       system: "You are an expert Solidity auditor. Analyze contracts and provide detailed validation feedback.",
-      model: openai({
-        model: "gpt-4.1",
-      }),
+      model: agentModel("gpt-4.1"),
     });
 
     const { output } = await contractValidator.run(prompt);
@@ -173,9 +170,7 @@ export async function refineContract(
       name: "Contract-Refiner",
       description: "An expert Solidity developer that fixes contract issues",
       system: "You are an expert Solidity developer. Fix contract issues and regenerate complete, corrected code.",
-      model: openai({
-        model: "gpt-4.1",
-      }),
+      model: agentModel("gpt-4.1"),
     });
 
     // Create timeout promise (5 minutes per AI call)
@@ -430,9 +425,7 @@ contract MyNFT is ERC721, ERC721URIStorage, Ownable {
 }
 
 Generate COMPLETE, CORRECTED contract code that will compile successfully with Forge.`,
-      model: openai({
-        model: "gpt-4.1",
-      }),
+      model: agentModel("gpt-4.1"),
     });
 
     // Create timeout promise (5 minutes per AI call)

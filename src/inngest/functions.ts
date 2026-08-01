@@ -1,8 +1,9 @@
 import { inngest } from "./client";
-import { openai, createAgent, createTool, createNetwork, AnyZodType, Tool, Message, createState } from "@inngest/agent-kit";
+import { createAgent, createTool, createNetwork, AnyZodType, Tool, Message, createState } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
+import { agentModel } from "@/lib/ai/agent-model";
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { SANDBOX_TIMEOUT } from "./types";
@@ -72,9 +73,7 @@ export const CobenttAgent = inngest.createFunction(
       name: "Coding-Agent",
       description: "An expert coding agent",
       system: PROMPT,
-      model: openai({
-        model: "gpt-5",
-      }),
+      model: agentModel("gpt-5"),
       tools: [
         createTool({
           name: "terminal",
@@ -229,17 +228,13 @@ export const CobenttAgent = inngest.createFunction(
       name:"fragment-title-generator",
       description:"A agent that generates a title for a code fragment",
       system:FRAGMENT_TITLE_PROMPT,
-      model:openai({
-        model:"gpt-5",
-      }),
+      model: agentModel("gpt-5"),
     });
     const responseGenerator = createAgent({
       name:"response-generator",
       description:"A agent that generates a response for a code fragment",
       system:RESPONSE_PROMPT,
-      model:openai({
-        model:"gpt-5",
-      }),
+      model: agentModel("gpt-5"),
     });
 
     const fragmentTitleResult = await fragmentTitleGenerator.run(result.state.data.summary);

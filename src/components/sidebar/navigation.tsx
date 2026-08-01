@@ -13,6 +13,8 @@ import {
   BookOpen,
   Bot,
   ChevronDown,
+  Presentation,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +27,10 @@ interface NavItem {
 const visibleItems: NavItem[] = [
   { label: "Chats", href: "/chat", icon: <MessageCircle className="w-[15px] h-[15px]" /> },
   { label: "Projects", href: "/all-projects", icon: <FolderOpen className="w-[15px] h-[15px]" /> },
-  { label: "Documents", href: "#", icon: <FileText className="w-[15px] h-[15px]" /> },
-  { label: "Sheets", href: "#", icon: <FileSpreadsheet className="w-[15px] h-[15px]" /> },
+  { label: "Slides", href: "/slides", icon: <Presentation className="w-[15px] h-[15px]" /> },
+  { label: "Documents", href: "/document", icon: <FileText className="w-[15px] h-[15px]" /> },
+  { label: "Sheets", href: "/sheet", icon: <FileSpreadsheet className="w-[15px] h-[15px]" /> },
+  { label: "Deep Research", href: "/deep-research", icon: <Search className="w-[15px] h-[15px]" /> },
   { label: "Websites", href: "/all-projects?type=website", icon: <Globe className="w-[15px] h-[15px]" /> },
 ];
 

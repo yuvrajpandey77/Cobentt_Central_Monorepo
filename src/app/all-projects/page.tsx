@@ -185,7 +185,7 @@ const AllProjectsContent = () => {
             {/* Main Content */}
             <div className={cn(
                 "flex-1 transition-all duration-500 ease-in-out",
-                isCollapsed ? "lg:ml-16" : "lg:ml-64"
+                isCollapsed ? "lg:ml-[52px]" : "lg:ml-[240px]"
             )}>
                 <Header />
                 

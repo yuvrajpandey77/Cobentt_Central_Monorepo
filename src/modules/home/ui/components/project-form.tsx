@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "./constants";
 import { ProjectLoading } from "@/components/ui/project-loading";
 import { useClerk } from "@clerk/nextjs";
+import { useMode } from "@/contexts/mode-context";
 
 
 
@@ -27,7 +28,15 @@ interface Props {
     projectCategory?: string | null;
     onCategoryClear?: () => void;
     onStartChat?: (prompt: string) => void;
+    onModePrompt?: (mode: string, prompt: string, templateId?: string) => void;
 }
+
+const MODE_CATEGORY_MAP: Record<string, string> = {
+    slides: "slides",
+    docs: "document",
+    sheet: "sheet",
+    "deep research": "deep-research",
+};
 
 const formSchema = z.object({
     value: z.string().min(1, { message: "Value is required" }).max(10000, { message: "Value must be less than 10000 characters" }),
@@ -36,11 +45,12 @@ const formSchema = z.object({
 
 
 
-export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, projectCategory, onCategoryClear, onStartChat }: Props) => {
+export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, projectCategory, onCategoryClear, onStartChat, onModePrompt }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
     const trpc = useTRPC();
+    const { templateId } = useMode();
     const [showLoading, setShowLoading] = useState(false);
     const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
     const [showIdeas, setShowIdeas] = useState(false);
@@ -142,6 +152,13 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
                 toast.error("Failed to analyze contract. Please try again.");
                 setIsAnalyzingContract(false);
             }
+            return;
+        }
+
+        // Mode categories (slides/docs/sheet/deep research) → mode conversation
+        if (projectCategory && onModePrompt && MODE_CATEGORY_MAP[projectCategory]) {
+            const targetMode = MODE_CATEGORY_MAP[projectCategory];
+            onModePrompt(targetMode, values.value, templateId || undefined);
             return;
         }
 

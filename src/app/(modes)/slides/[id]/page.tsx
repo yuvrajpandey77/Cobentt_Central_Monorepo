@@ -1,24 +1,13 @@
 "use client";
 
 import { use } from "react";
-import { useRouter } from "next/navigation";
-import { Presentation, ArrowLeft } from "lucide-react";
+import { ModeCanvas } from "@/components/modes/mode-canvas";
 
 export default function SlidesContentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 flex-shrink-0">
-        <button onClick={() => router.push("/slides")} className="flex items-center gap-3 text-white/60 hover:text-white transition-colors"><ArrowLeft className="h-5 w-5" /> Back</button>
-      </div>
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center space-y-4 p-8">
-          <Presentation className="w-16 h-16 text-purple-400/50 mx-auto" />
-          <p className="text-white/40">Slide deck editor will render here</p>
-          <p className="text-xs text-white/20">ID: {id}</p>
-        </div>
-      </div>
+    <div className="flex-1 flex h-full overflow-hidden">
+      <ModeCanvas mode="slides" conversationId={id} />
     </div>
   );
 }

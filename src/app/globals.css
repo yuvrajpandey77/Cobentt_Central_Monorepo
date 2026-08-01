@@ -507,6 +507,17 @@ body {
     color: inherit; /* allow Tailwind text utilities to apply */
   }
 
+  /* Neutralize gradient text on light surfaces (white paper/doc/report) */
+  .light-surface,
+  .light-surface :where(h1, h2, h3, h4, h5, h6,
+    p, span, small, strong, em, li, blockquote, code, kbd,
+    mark, time, th, td, dt, dd) {
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    background-image: none !important;
+    color: inherit;
+  }
+
   :where(button, [role="button"], a, .btn, .button, .shadcn-button, .ui-button) :where(*) {
     -webkit-background-clip: initial;
     background-clip: initial;

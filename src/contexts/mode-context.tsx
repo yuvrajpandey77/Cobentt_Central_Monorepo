@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 export const MODES = [
   { id: "chat", label: "Chat", icon: "MessageCircle" },
@@ -17,15 +17,18 @@ export type ModeId = (typeof MODES)[number]["id"];
 interface ModeContextType {
   mode: ModeId;
   setMode: (mode: ModeId) => void;
+  templateId: string;
+  setTemplateId: (id: string) => void;
 }
 
 const ModeContext = createContext<ModeContextType | undefined>(undefined);
 
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<ModeId>("chat");
+  const [templateId, setTemplateId] = useState<string>("");
 
   return (
-    <ModeContext.Provider value={{ mode, setMode }}>
+    <ModeContext.Provider value={{ mode, setMode, templateId, setTemplateId }}>
       {children}
     </ModeContext.Provider>
   );

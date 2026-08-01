@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useChat } from "@/lib/chat-store";
-import { ChatContent } from "../page";
+import { ChatContent } from "../chat-content";
 
 export default function ConversationPage({
   params,

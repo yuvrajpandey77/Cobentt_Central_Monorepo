@@ -2,6 +2,7 @@ import prisma from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { DEFAULT_MODEL } from "@/lib/models";
+import { chatCompletion, ChatMessage } from "@/lib/ai/client";
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -62,33 +63,17 @@ export async function POST(
 
         const systemPrompt = "You are Cobentt, an AI assistant built by Cogerphere AI Labs. You help users with coding, development, and general questions. Be concise, helpful, and accurate. When sharing code, use markdown code blocks with proper language tags.";
 
-        const messages = [
+        const messages: ChatMessage[] = [
           { role: "system", content: systemPrompt },
-          ...history.map((m) => ({ role: m.role.toLowerCase(), content: m.content })),
+          ...history.map((m) => ({ role: (m.role.toLowerCase() === "assistant" ? "assistant" : "user") as ChatMessage["role"], content: m.content })),
           { role: "user", content: message },
         ];
 
-        const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
-        const baseUrl = process.env.OPENROUTER_API_KEY
-          ? "https://openrouter.ai/api/v1"
-          : "https://api.openai.com/v1";
-
-        const response = await fetch(`${baseUrl}/chat/completions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-            ...(process.env.OPENROUTER_API_KEY ? {
-              "HTTP-Referer": "https://cobentt.com",
-              "X-Title": "Cobentt",
-            } : {}),
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            stream: true,
-            max_tokens: 4096,
-          }),
+        const response = await chatCompletion({
+          model,
+          messages,
+          stream: true,
+          maxTokens: 4096,
         });
 
         if (!response.ok) {
@@ -151,15 +136,17 @@ export async function POST(
 
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, model, thinking: fullThinking || undefined, sources: sources.length > 0 ? sources : undefined })}\n\n`));
         controller.close();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
+        const message = err?.message || "An error occurred";
         await prisma.message.update({
           where: { id: assistantMessage.id },
           data: {
-            content: err.message || "An error occurred",
+            content: message,
             status: "ERROR",
           },
         });
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: err.message })}\n\n`));
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`));
         controller.close();
       }
     },

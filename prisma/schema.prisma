@@ -65,6 +65,7 @@ model Conversation {
   userId     String
   mode       String    @default("chat")
   model      String    @default("openai/gpt-4o-mini")
+  template   String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   isPinned   Boolean   @default(false)
@@ -134,9 +135,12 @@ model Fragment {
   messageId String @unique
   message Message @relation(fields: [messageId], references: [id] , onDelete: Cascade)
 
-  sandboxUrl String
+  sandboxUrl String?
   title String
   files Json
+
+  mode String?
+  meta Json?
 
 
   createdAt DateTime @default(now())

@@ -12,20 +12,56 @@ import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
+import { ModeProvider } from "@/contexts/mode-context";
+import { TemplatePicker } from "@/components/mode-template-picker";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
 import { ArrowDown, Sparkles, Zap, Code2, Rocket, ArrowRight, Loader2, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { getDailyGreeting } from "@/lib/greetings";
+import { MODE_DEFAULTS } from "@/lib/models";
+import { toast } from "sonner";
+
+const MODE_CATEGORY_MAP: Record<string, string> = {
+    slides: "slides",
+    docs: "document",
+    sheet: "sheet",
+    "deep research": "deep-research",
+};
 
 const PageContent = () => {
     const { isCollapsed } = useSidebar();
     const router = useRouter();
     const trpc = useTRPC();
+    const queryClient = useQueryClient();
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const [projectType, setProjectType] = useState<"webapp" | "contract">("webapp");
     const [greeting] = useState(getDailyGreeting);
     const [projectCategory, setProjectCategory] = useState<string | null>(null);
+    const { userId } = useAuth();
+
+    const createModeConversation = useMutation(trpc.conversations.create.mutationOptions({
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(trpc.conversations.getAll.queryOptions());
+            router.push(`/${data.mode || "chat"}/${data.id}`);
+        },
+        onError: (err) => toast.error(err.message || "Failed to create"),
+    }));
+
+    const handleModePrompt = (mode: string, prompt: string, templateId?: string) => {
+        if (!userId) {
+            router.push("/sign-in");
+            return;
+        }
+        createModeConversation.mutate({
+            initialMessage: prompt,
+            mode,
+            ...(templateId ? { template: templateId } : {}),
+            ...(MODE_DEFAULTS[mode as keyof typeof MODE_DEFAULTS]
+                ? { model: MODE_DEFAULTS[mode as keyof typeof MODE_DEFAULTS] }
+                : {}),
+        });
+    };
 
     const handleContractPromptAnalysis = async (userPrompt: string) => {
         // Redirect to DApp Studio with the prompt
@@ -52,8 +88,6 @@ const PageContent = () => {
         getNextPageParam: (lastPage: any) => lastPage.nextCursor,
     });
 
-    const { userId } = useAuth();
-    const queryClient = useQueryClient();
     const copyProject = useMutation(trpc.projects.copyProject.mutationOptions({
         onSuccess: () => {
             queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
@@ -87,7 +121,7 @@ const PageContent = () => {
             {/* Main Content - Scrollable */}
             <div className={cn(
                 "flex-1 transition-all duration-500 ease-in-out",
-                isCollapsed ? "lg:ml-16" : "lg:ml-64"
+                isCollapsed ? "lg:ml-[52px]" : "lg:ml-[240px]"
             )}>
                 <Header />
                 
@@ -103,12 +137,20 @@ const PageContent = () => {
 
                             {/* Project Form */}
                             <div className="max-w-3xl mx-auto space-y-8 mt-8">
-                                <ProjectForm 
-                                    onContractPrompt={handleContractPromptAnalysis}
-                                    projectCategory={projectCategory}
-                                    onCategoryClear={() => setProjectCategory(null)}
-                                    onStartChat={(prompt) => router.push(`/chat?q=${encodeURIComponent(prompt)}`)}
-                                />
+                                <ModeProvider>
+                                    <ProjectForm 
+                                        onContractPrompt={handleContractPromptAnalysis}
+                                        projectCategory={projectCategory}
+                                        onCategoryClear={() => setProjectCategory(null)}
+                                        onStartChat={(prompt) => router.push(`/chat?q=${encodeURIComponent(prompt)}`)}
+                                        onModePrompt={handleModePrompt}
+                                    />
+                                    {projectCategory && MODE_CATEGORY_MAP[projectCategory] && (
+                                        <div className="flex justify-center">
+                                            <TemplatePicker mode={MODE_CATEGORY_MAP[projectCategory]} />
+                                        </div>
+                                    )}
+                                </ModeProvider>
 
                                 <div className="flex items-center justify-center">
                                     <div className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/5 p-1 backdrop-blur">

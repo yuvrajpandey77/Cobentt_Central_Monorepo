@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { createTRPCRouter, baseProcedure, protectedProcedure } from "@/trpc/init";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { DEFAULT_MODEL } from "@/lib/models";
@@ -48,6 +48,7 @@ export const conversationsRouter = createTRPCRouter({
       initialMessage: z.string().min(1).max(10000),
       model: z.string().optional(),
       mode: z.string().optional(),
+      template: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const conversation = await prisma.conversation.create({
@@ -56,6 +57,7 @@ export const conversationsRouter = createTRPCRouter({
           title: input.title || input.initialMessage.slice(0, 100),
           mode: input.mode || "chat",
           model: input.model || DEFAULT_MODEL,
+          template: input.template || null,
           messages: {
             create: {
               content: input.initialMessage,

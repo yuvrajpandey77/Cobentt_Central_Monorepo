@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openai } from '@inngest/agent-kit';
-import { buildPrompt } from '@/lib/prompts';
 import { EnhancedContractConfig } from '@/types/contract-config';
 import { auth } from '@clerk/nextjs/server';
 import { enforceQuota } from '@/lib/quota-enforcement';
 import { recordTokenUsage } from '@/lib/token-usage';
+import { chatCompletion } from '@/lib/ai/client';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -32,12 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build the AI prompt with full Dapp Builder context
-    const systemPrompt = buildPrompt(userPrompt, 'analysis');
-
-    // Call OpenAI with the context
-    const model = openai({ model: 'gpt-4.1' });
-    
     // Enhanced system prompt for detailed analysis
     const enhancedSystemPrompt = `You are a blockchain expert. Analyze user requirements and provide detailed configuration including:
 
@@ -115,27 +108,19 @@ Analysis Guidelines:
 - Include reasoning for each custom requirement detected`;
 
     // Call the AI
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4.1',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert blockchain developer assistant. Respond ONLY with valid JSON, no markdown formatting.',
-          },
-          {
-            role: 'user',
-            content: analysisPrompt,
-          },
-        ],
-        
-        max_completion_tokens: 1000,
-      }),
+    const response = await chatCompletion({
+      model: 'openai/gpt-4.1',
+      maxTokens: 1000,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert blockchain developer assistant. Respond ONLY with valid JSON, no markdown formatting.',
+        },
+        {
+          role: 'user',
+          content: analysisPrompt,
+        },
+      ],
     });
 
     if (!response.ok) {

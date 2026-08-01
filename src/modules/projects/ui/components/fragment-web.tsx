@@ -29,6 +29,7 @@ export const FragmentWeb = ({ data, isRestoring = false, onSandboxStateChange }:
     }
 
     const handleCopy = () => {
+        if (!data.sandboxUrl) return;
         navigator.clipboard.writeText(data.sandboxUrl);
         setCopied(true);
         setTimeout(() => {
@@ -95,7 +96,7 @@ export const FragmentWeb = ({ data, isRestoring = false, onSandboxStateChange }:
                 className="h-full w-full"
                 sandbox="allow-scripts allow-forms allow-same-origin "
                 loading="lazy"
-                src={data.sandboxUrl}
+                src={data.sandboxUrl || undefined}
                 onLoad={() => {
                     if (loadTimeoutRef.current) {
                         window.clearTimeout(loadTimeoutRef.current);

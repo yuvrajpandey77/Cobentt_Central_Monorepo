@@ -255,7 +255,7 @@ const PageShell = () => {
       <div
         className={cn(
           "flex-1 min-h-screen transition-all duration-500",
-          isCollapsed ? "lg:ml-16" : "lg:ml-64",
+          isCollapsed ? "lg:ml-[52px]" : "lg:ml-[240px]",
         )}
       >
         <Header />

@@ -256,7 +256,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/20 via-transparent to-secondary/20" />
         </div>
 
-        <div className="px-2.5 py-3 h-full flex flex-col relative z-10 overflow-x-hidden gap-2">
+        <div className="px-2.5 pt-0 pb-3 h-full flex flex-col relative z-10 overflow-x-hidden gap-2">
           {/* Fixed top: Header */}
           <SidebarHeader isCollapsed={isCollapsed} onToggle={toggleSidebar} />
 

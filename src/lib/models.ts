@@ -131,6 +131,15 @@ export const MODELS: ModelInfo[] = [
 
 export const DEFAULT_MODEL = "openrouter/free";
 
+export type ModeKey = "slides" | "document" | "sheet" | "deep-research";
+
+export const MODE_DEFAULTS: Record<ModeKey, string> = {
+  slides: "openai/gpt-4o-mini",
+  document: "openai/gpt-4o-mini",
+  sheet: "openai/gpt-4o",
+  "deep-research": "openai/gpt-4o",
+};
+
 export const TIER_LABELS: Record<string, string> = {
   fast: "Fast & Cheap",
   balanced: "Balanced",
