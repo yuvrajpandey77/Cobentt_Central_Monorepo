@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Plus, Globe, Send, Loader2, Check, Copy, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ResearchProgress } from "@/components/ui/research-progress";
 
 export interface ModeChatMessage {
   id: string;
@@ -20,6 +21,8 @@ interface ModeChatPanelProps {
   emptyText?: string;
   running?: boolean;
   runningText?: string;
+  currentPhase?: string;
+  progress?: number;
 }
 
 const ADS = [
@@ -196,6 +199,8 @@ export function ModeChatPanel({
   emptyText = "Ask the AI to help build or edit this content.",
   running,
   runningText = "Working...",
+  currentPhase,
+  progress,
 }: ModeChatPanelProps) {
   const [width, setWidth] = useState(340);
   const draggingRef = useRef(false);
@@ -273,8 +278,19 @@ export function ModeChatPanel({
                       <ChatMarkdown content={msg.content} />
                     </div>
                   ) : (
-                    <div className="bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[4px] px-3 py-2.5 flex items-center gap-2 text-[12px] text-[var(--color-cb-text-muted)]">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Thinking...
+                    <div className="relative bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[4px] px-3 py-2.5 flex items-center gap-2 text-[12px] text-[var(--color-cb-text-muted)] min-h-[36px]">
+                      {running && progress !== undefined ? (
+                        <ResearchProgress
+                          currentPhase={currentPhase}
+                          progress={progress}
+                          running={running}
+                          runningText={runningText}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Thinking...
+                        </div>
+                      )}
                     </div>
                   )}
                   {msg.content && (

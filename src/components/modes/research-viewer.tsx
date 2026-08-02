@@ -7,8 +7,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   FileDown,
-  Check,
-  Loader2,
   MessageSquare,
   ExternalLink,
   Search,
@@ -21,6 +19,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ModeChatPanel, ModeChatMessage } from "@/components/modes/mode-chat-panel";
 import { ResearchMarkdown } from "@/components/modes/renderers";
+import { DocumentSkeleton } from "@/components/ui/skeleton";
+import { ResearchProgress } from "@/components/ui/research-progress";
 
 interface ResearchArtifact {
   title: string;
@@ -28,8 +28,6 @@ interface ResearchArtifact {
   sections: { heading: string; content: string }[];
   sources: { title: string; url: string }[];
 }
-
-const PHASES = ["Planning", "Searching sources", "Writing", "Summarizing findings", "Compiling report", "Complete"];
 
 function parseArtifact(raw: unknown): ResearchArtifact | null {
   try {
@@ -238,47 +236,21 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                 <p className="text-sm text-white/60">Describe a topic to research</p>
                 <p className="text-xs text-white/30">Use the chat panel to start deep research</p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-white/70">{currentPhase || "Idle"}</span>
-                  <span className="text-xs text-white/40">{progress}%</span>
-                </div>
-                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-violet-500 to-primary rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {PHASES.map((phase, i) => {
-                    const phaseIndex = PHASES.indexOf(currentPhase);
-                    const isActive = running && i === phaseIndex && phase !== "Complete";
-                    const done = running ? i < phaseIndex || phase === "Complete" && phaseIndex === PHASES.length - 1 : hasReport;
-                    return (
-                      <span
-                        key={phase}
-                        className={cn(
-                          "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] border transition-colors",
-                          isActive
-                            ? "bg-primary/30 border-primary/50 text-white"
-                            : done
-                              ? "bg-primary/20 border-primary/30 text-white"
-                              : "border-white/10 text-white/30"
-                        )}
-                      >
-                        {isActive ? (
-                          <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                        ) : done ? (
-                          <Check className="h-2.5 w-2.5" />
-                        ) : null}
-                        {phase}
-                      </span>
-                    );
-                  })}
+            ) : running ? (
+              <div className="py-4">
+                <div className="relative max-w-2xl mx-auto px-4">
+                  <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                    <ResearchProgress
+                      currentPhase={currentPhase}
+                      progress={progress}
+                      running={running}
+                      runningText="Researching..."
+                    />
+                  </div>
+                  <DocumentSkeleton className="opacity-40" />
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Report */}
