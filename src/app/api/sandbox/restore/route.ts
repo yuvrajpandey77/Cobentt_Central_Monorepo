@@ -1,12 +1,23 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
 import { Sandbox } from "@e2b/code-interpreter";
 import { SANDBOX_TIMEOUT } from "@/inngest/types";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const session = await auth();
+  if (!session?.userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(`sandbox:restore:${session.userId}`);
+  if (!rateLimit.success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   try {
     const { fragmentId } = await req.json();
     if (!fragmentId) {
@@ -15,40 +26,48 @@ export async function POST(req: Request) {
 
     const fragment = await prisma.fragment.findUnique({
       where: { id: fragmentId },
-    } as any);
+      select: { files: true, messageId: true },
+    });
 
     const files = (fragment?.files || {}) as Record<string, string>;
     if (!files || Object.keys(files).length === 0) {
-      return NextResponse.json({ error: "No files to restore for this fragment" }, { status: 404 });
+      return NextResponse.json({ error: "No files to restore" }, { status: 404 });
     }
 
-    // Enforce per-user daily restore limit (30/day)
     const message = await prisma.message.findUnique({
-      where: { id: fragment?.messageId },
+      where: { id: fragment?.messageId || "" },
       select: { projectId: true },
-    } as any);
-    const projectId = message?.projectId ?? undefined;
+    });
+    const projectId = message?.projectId;
     if (!projectId) {
-      return NextResponse.json({ error: "Invalid fragment: missing project" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid fragment" }, { status: 400 });
     }
+
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       select: { userId: true },
-    } as any);
-    if (!project?.userId) {
-      return NextResponse.json({ error: "Invalid project" }, { status: 400 });
+    });
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    if (project.userId !== session.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const restoresToday = await prisma.message.count({
       where: {
-        project: { userId: project.userId },
+        project: { userId: session.userId },
         content: "SANDBOX_RESTORE_LOG",
         createdAt: { gte: since },
       },
-    } as any);
+    });
     if (restoresToday >= 30) {
-      return NextResponse.json({ error: "Daily restore limit reached (30/day). Try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Daily restore limit (30/day) reached" },
+        { status: 429 }
+      );
     }
 
     const sandbox = await Sandbox.create("cogerphereailabsbeta1");
@@ -59,17 +78,17 @@ export async function POST(req: Request) {
     const host = sandbox.getHost(3000);
     const sandboxUrl = `https://${host}`;
 
-    // Persist new URL so future loads use it
     try {
-      await (prisma as any).fragment.update({
+      await prisma.fragment.update({
         where: { id: fragmentId },
         data: { sandboxUrl },
       });
-    } catch {}
+    } catch {
+      // Non-critical
+    }
 
-    // Log the restore as a message (used for daily limit accounting)
     try {
-      await (prisma as any).message.create({
+      await prisma.message.create({
         data: {
           projectId,
           role: "ASSISTANT",
@@ -77,12 +96,13 @@ export async function POST(req: Request) {
           content: "SANDBOX_RESTORE_LOG",
         },
       });
-    } catch {}
+    } catch {
+      // Non-critical
+    }
 
     return NextResponse.json({ sandboxUrl });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || "Restore failed" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Restore failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
-

@@ -3,6 +3,7 @@ import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 import { auth } from '@clerk/nextjs/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,15 @@ export async function POST(
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Rate limiting: 15 requests per minute per user (AI generation is expensive)
+    const rateLimit = await checkRateLimit(`ai:generate:${userId}`);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.reset - Date.now()) / 1000)) } }
       );
     }
 

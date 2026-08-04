@@ -128,6 +128,10 @@ model Message {
   sources  Json?   @default("[]")
 
   tokenUsage TokenUsage[]
+
+  @@index([conversationId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([status])
 }
 
 model Fragment {
@@ -205,6 +209,10 @@ model BuildJob {
   sandboxId String? // E2B sandbox ID for the build environment
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([projectId, createdAt])
+  @@index([projectId, status])
+  @@index([status, createdAt])
 }
 
 // ============================================================
@@ -278,16 +286,136 @@ model AllowedUser {
   webhookSecret        String?
   webhookEvents        String[]            @default([])
   
-  // Billing
+  // Billing (Razorpay)
+  razorpayCustomerId   String?
+  razorpaySubscriptionId String?
+  billingEmail         String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean             @default(false)
+  subscriptionStatus   SubscriptionStatus  @default(ACTIVE)
+  
+  // Audit
+  lastPaymentAt        DateTime?
+  lastPaymentId        String?
+
+  // Legacy Stripe fields (kept for migration, unused)
   stripeCustomerId     String?
   stripeSubscriptionId String?
-  billingEmail         String?
   
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
+  payments             PaymentRecord[]
+  
   @@index([clerkUserId])
   @@map("allowed_users")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+  PAUSED
+}
+
+model PaymentRecord {
+  id                   String              @id @default(uuid())
+  clerkUserId          String
+  allowedUserId        String?
+  
+  // Razorpay identifiers (immutable)
+  razorpayOrderId      String              @unique
+  razorpayPaymentId    String?             @unique
+  razorpaySubscriptionId String?
+  
+  // Payment details
+  amount               Int                 // in paise
+  currency             String              @default("INR")
+  plan                 UserPlan
+  billingCycle         String              @default("monthly")
+  
+  // Status tracking
+  status               PaymentStatus       @default(CREATED)
+  receipt              String?
+  
+  // Verification
+  verifiedAt           DateTime?
+  signatureVerified    Boolean             @default(false)
+  
+  // Refund
+  refundId             String?
+  refundAmount         Int?
+  refundReason         String?
+  refundedAt           DateTime?
+  refundStatus         RefundStatus?
+  
+  // Subscription period
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  
+  // Audit
+  correlationId        String?
+  ipAddress            String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  allowedUser          AllowedUser?        @relation(fields: [allowedUserId], references: [id])
+  auditLogs            PaymentAuditLog[]
+  
+  @@index([clerkUserId, createdAt])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+  @@index([status])
+  @@map("payment_records")
+}
+
+enum PaymentStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  DISPUTED
+  EXPIRED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+model PaymentAuditLog {
+  id                   String              @id @default(uuid())
+  paymentRecordId      String?
+  clerkUserId          String?
+  
+  // Event details
+  event                String              // e.g. "order.created", "payment.captured", "refund.initiated"
+  actor                String              // "system", "user", "admin", "webhook"
+  
+  // Context
+  razorpayOrderId      String?
+  razorpayPaymentId    String?
+  correlationId        String?
+  ipAddress            String?
+  
+  // Result
+  success              Boolean             @default(true)
+  details              Json?
+  errorMessage         String?
+  
+  createdAt            DateTime            @default(now())
+
+  paymentRecord        PaymentRecord?      @relation(fields: [paymentRecordId], references: [id])
+  
+  @@index([clerkUserId, createdAt])
+  @@index([razorpayOrderId])
+  @@index([event])
+  @@map("payment_audit_logs")
 }
 
 model UserUsage {
@@ -350,6 +478,7 @@ model TokenUsage {
 
   @@index([userId, createdAt])
   @@index([projectId, createdAt])
+  @@index([endpoint, createdAt])
   @@map("token_usage")
 }
 
@@ -399,4 +528,72 @@ model UsageAlert {
 
   @@index([userId, sentAt])
   @@map("usage_alerts")
+}
+
+// ============================================================
+// SETTINGS PLATFORM MODELS
+// ============================================================
+
+model ApiKey {
+  id             String   @id @default(uuid())
+  clerkUserId    String
+  provider       String   // openai, anthropic, openrouter, google, deepseek, mistral
+  name           String   // user-friendly label
+  encryptedKey   String   // AES-256-GCM encrypted
+  keyPrefix      String   // first 8 chars for display: "sk-abc1..."
+  keySuffix      String   // last 4 chars for display
+  iv             String   // initialization vector for AES-GCM
+  authTag        String   // GCM auth tag
+  isActive       Boolean  @default(true)
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([clerkUserId])
+  @@map("api_keys")
+}
+
+model UserProfile {
+  id             String   @id @default(uuid())
+  clerkUserId    String   @unique
+  bio            String?  @db.Text
+  company        String?
+  website        String?
+  location       String?
+  timezone       String?
+  socialLinks    Json?    // { github, twitter, linkedin }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+model UserAuditLog {
+  id             String   @id @default(uuid())
+  clerkUserId    String
+  event          String   // "profile.updated", "api_key.created", "password.changed", etc.
+  actor          String   @default("user") // "user", "system"
+  details        Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([clerkUserId, createdAt])
+  @@index([event, createdAt])
+  @@map("user_audit_logs")
+}
+
+model AccountDeletionRequest {
+  id             String   @id @default(uuid())
+  clerkUserId    String   @unique
+  status         String   @default("PENDING") // PENDING, COMPLETED, CANCELLED
+  requestedAt    DateTime @default(now())
+  executeAt      DateTime // requestedAt + 30 days grace
+  completedAt    DateTime?
+  reason         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("account_deletion_requests")
 }

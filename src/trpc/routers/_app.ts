@@ -3,6 +3,7 @@ import {  createTRPCRouter } from '../init';
 import { messagesRouter } from '@/modules/messages/server/procedures';
 import { usageRouter } from './usage';
 import { adminRouter } from './admin';
+import { settingsRouter } from './settings';
 import { conversationsRouter, chatMessagesRouter } from '@/modules/chat/server/procedures';
 
 export const appRouter = createTRPCRouter({
@@ -10,6 +11,7 @@ export const appRouter = createTRPCRouter({
   projects: projectsRouter,
   usage: usageRouter,
   admin: adminRouter,
+  settings: settingsRouter,
   conversations: conversationsRouter,
   chatMessages: chatMessagesRouter,
 });

@@ -22,7 +22,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [textScale, setTextScaleState] = useState(1);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    document.documentElement.classList.remove("light");
+    document.documentElement.classList.add("dark");
+  }, []);
 
   if (!mounted) return <>{children}</>;
 

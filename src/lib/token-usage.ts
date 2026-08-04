@@ -14,13 +14,9 @@ interface RecordUsageInput {
   durationMs?: number;
 }
 
-const isSameUTCDate = (a: Date, b: Date) =>
-  a.getUTCFullYear() === b.getUTCFullYear() &&
-  a.getUTCMonth() === b.getUTCMonth() &&
-  a.getUTCDate() === b.getUTCDate();
-
 /**
- * Record token usage and update user aggregates
+ * Record token usage and update user aggregates.
+ * Uses atomic SQL to handle daily reset safely under concurrency.
  */
 export async function recordTokenUsage(input: RecordUsageInput) {
   if (!input?.userId) {
@@ -36,7 +32,6 @@ export async function recordTokenUsage(input: RecordUsageInput) {
     input.completionTokens
   );
 
-  // Add debug log
   console.log("[usage] recordTokenUsage", {
     userId: input.userId,
     model: input.model,
@@ -63,50 +58,50 @@ export async function recordTokenUsage(input: RecordUsageInput) {
         },
       });
 
-      // Update user aggregates with daily reset logic
-      const now = new Date();
-      const existing = await tx.userUsage.upsert({
-        where: { userId: input.userId },
-        create: {
-          userId: input.userId,
-          dailyRequests: 1,
-          dailyTokens: totalTokens,
-          totalRequests: 1,
-          totalTokens: totalTokens,
-          totalCostUsd: new Decimal(costUsd),
-          lastResetAt: now,
-          alert90Sent: false,
-          alert100Sent: false,
-        },
-        update: {},
-      });
-
-      // Check if we need to reset daily counters (midnight UTC)
-      const shouldReset = !isSameUTCDate(existing.lastResetAt, now);
-
-      await tx.userUsage.update({
-        where: { userId: input.userId },
-        data: shouldReset
-          ? {
-              // Reset daily counters
-              dailyRequests: 1,
-              dailyTokens: totalTokens,
-              totalRequests: { increment: 1 },
-              totalTokens: { increment: totalTokens },
-              totalCostUsd: { increment: new Decimal(costUsd) },
-              lastResetAt: now,
-              alert90Sent: false,
-              alert100Sent: false,
-            }
-          : {
-              // Increment all counters
-              dailyRequests: { increment: 1 },
-              dailyTokens: { increment: totalTokens },
-              totalRequests: { increment: 1 },
-              totalTokens: { increment: totalTokens },
-              totalCostUsd: { increment: new Decimal(costUsd) },
-            },
-      });
+      // Atomic daily aggregate update using raw SQL.
+      // Uses a CASE to reset daily counters when the bucket changes (midnight UTC).
+      // This avoids the read-check-write race in the previous implementation.
+      await tx.$executeRawUnsafe(`
+        INSERT INTO user_usage (
+          user_id, daily_requests, daily_tokens,
+          total_requests, total_tokens, total_cost_usd,
+          last_reset_at, alert90_sent, alert100_sent
+        ) VALUES ($1, 1, $2, 1, $2, $3, NOW(), false, false)
+        ON CONFLICT (user_id) DO UPDATE SET
+          daily_requests = CASE
+            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage.daily_requests + 1
+            ELSE 1
+          END,
+          daily_tokens = CASE
+            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage.daily_tokens + $2
+            ELSE $2
+          END,
+          total_requests = user_usage.total_requests + 1,
+          total_tokens = user_usage.total_tokens + $2,
+          total_cost_usd = user_usage.total_cost_usd + $3,
+          last_reset_at = CASE
+            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage.last_reset_at
+            ELSE NOW()
+          END,
+          alert90_sent = CASE
+            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage.alert90_sent
+            ELSE false
+          END,
+          alert100_sent = CASE
+            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage.alert100_sent
+            ELSE false
+          END
+      `, input.userId, totalTokens, costUsd);
     });
   } catch (err) {
     console.error("[usage] recordTokenUsage failed; continuing without blocking", {

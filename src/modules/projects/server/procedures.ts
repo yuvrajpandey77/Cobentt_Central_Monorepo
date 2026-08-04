@@ -39,6 +39,7 @@ export const projectsRouter = createTRPCRouter({
                 where: {
                     userId: ctx.auth.userId,
                 },
+                take: 100,
                 orderBy: [
                     { isPinned: "desc" },
                     { updatedAt: "desc" },
@@ -239,6 +240,7 @@ export const projectsRouter = createTRPCRouter({
                 where: {
                     projectId: input.projectId,
                 },
+                take: 50,
                 orderBy: {
                     createdAt: 'desc',
                 },
