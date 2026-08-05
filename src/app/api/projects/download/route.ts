@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import JSZip from "jszip";
+import { auth } from "@clerk/nextjs/server";
+import { verifyProjectOwnership } from "@/lib/project-auth";
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
@@ -10,6 +11,16 @@ export async function POST(req: Request) {
     const { projectId } = await req.json();
     if (!projectId) {
       return NextResponse.json({ error: "projectId required" }, { status: 400 });
+    }
+
+    const session = await auth();
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const ownership = await verifyProjectOwnership(projectId, session.userId);
+    if (!ownership.allowed) {
+      return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
     }
 
     // Get all fragments for the project

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { verifyProjectOwnership } from '@/lib/project-auth';
 
-// Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
@@ -12,7 +13,17 @@ export async function GET(
 ) {
   try {
     const { projectId } = await params;
-    
+
+    const session = await auth();
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const ownership = await verifyProjectOwnership(projectId, session.userId);
+    if (!ownership.allowed) {
+      return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
+
     // Get the latest build job for this project
     const buildJob = await prisma.buildJob.findFirst({
       where: {

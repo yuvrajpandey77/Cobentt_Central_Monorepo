@@ -1,37 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EnhancedContractConfig } from '@/types/contract-config';
-import { auth } from '@clerk/nextjs/server';
-import { enforceQuota } from '@/lib/quota-enforcement';
-import { recordTokenUsage } from '@/lib/token-usage';
 import { chatCompletion } from '@/lib/ai/client';
+import { runAIPipeline, recordAITokens, aiErrorResponse } from '@/lib/ai/pipeline';
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check auth and enforce quota
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Enforce quota before processing (estimate 2000 tokens for analysis)
-    await enforceQuota(userId, 2000);
-
     const { prompt: userPrompt } = await request.json();
 
-    if (!userPrompt || typeof userPrompt !== 'string') {
-      return NextResponse.json(
-        { error: 'Invalid prompt provided' },
-        { status: 400 }
-      );
-    }
+    // Shared pipeline: auth, rate limit, sanitize, injection check, quota
+    const pipeline = await runAIPipeline(userPrompt, {
+      rateLimitKey: "ai",
+      estimatedTokens: 2000,
+    });
+    if (!pipeline.ok) return pipeline.response;
 
-    // Enhanced system prompt for detailed analysis
+    const { userId, sanitizedMessage } = pipeline.ctx;
+
     const enhancedSystemPrompt = `You are a blockchain expert. Analyze user requirements and provide detailed configuration including:
 
 1. Contract Type & Standard Features
@@ -48,12 +34,11 @@ export async function POST(request: NextRequest) {
 
 Return enhanced JSON with customRequirements object.`;
     
-    // Create the enhanced analysis request
     const analysisPrompt = `${enhancedSystemPrompt}
 
 Please analyze the following user request and provide an enhanced JSON configuration:
 
-User Request: "${userPrompt}"
+User Request: "${sanitizedMessage}"
 
 Respond ONLY with valid JSON in this exact format (no markdown, no explanation):
 {
@@ -107,7 +92,7 @@ Analysis Guidelines:
 - Analyze complexity: simple (templates), moderate (modules), complex (AI generation)
 - Include reasoning for each custom requirement detected`;
 
-    // Call the AI
+    const start = Date.now();
     const response = await chatCompletion({
       model: 'openai/gpt-4.1',
       maxTokens: 1000,
@@ -125,37 +110,28 @@ Analysis Guidelines:
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI API error:', error);
-      return NextResponse.json(
-        { error: 'Failed to analyze prompt with AI' },
-        { status: 500 }
-      );
+      throw new Error(`AI API error (${response.status}): ${error}`);
     }
 
     const data = await response.json();
     const aiResponse = data.choices[0]?.message?.content;
-    const usage = data.usage; // { prompt_tokens, completion_tokens, total_tokens }
+    const usage = data.usage;
 
-    // Record token usage
-    if (userId && usage) {
-      await recordTokenUsage({
+    if (usage) {
+      await recordAITokens({
         userId,
-        provider: 'OPENAI',
-        model: 'gpt-4.1',
+        model: 'openai/gpt-4.1',
         promptTokens: usage.prompt_tokens ?? 0,
         completionTokens: usage.completion_tokens ?? 0,
         endpoint: '/api/dapp-studio/analyze',
+        durationMs: Date.now() - start,
       });
     }
 
     if (!aiResponse) {
-      return NextResponse.json(
-        { error: 'No response from AI' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'No response from AI' }, { status: 500 });
     }
 
-    // Parse the JSON response (remove markdown code blocks if present)
     let cleanedResponse = aiResponse.trim();
     if (cleanedResponse.startsWith('```json')) {
       cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
@@ -165,40 +141,16 @@ Analysis Guidelines:
 
     const config: EnhancedContractConfig = JSON.parse(cleanedResponse);
 
-    // Validate the response has required fields
     if (!config.blockchain || !config.contractType) {
-      return NextResponse.json(
-        { error: 'Invalid AI response format' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Invalid AI response format' }, { status: 500 });
     }
 
-    // Ensure customRequirements exists with proper structure
-    if (!config.customRequirements) {
-      config.customRequirements = {};
-    }
+    if (!config.customRequirements) config.customRequirements = {};
+    if (!config.gasOptimizations) config.gasOptimizations = [];
+    if (!config.securityRecommendations) config.securityRecommendations = [];
 
-    // Ensure arrays exist
-    if (!config.gasOptimizations) {
-      config.gasOptimizations = [];
-    }
-    if (!config.securityRecommendations) {
-      config.securityRecommendations = [];
-    }
-
-    return NextResponse.json({
-      success: true,
-      config,
-    });
-  } catch (error) {
-    console.error('Error analyzing prompt:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to analyze prompt',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, config });
+  } catch (error: unknown) {
+    return aiErrorResponse(error, 'Failed to analyze prompt');
   }
 }
-

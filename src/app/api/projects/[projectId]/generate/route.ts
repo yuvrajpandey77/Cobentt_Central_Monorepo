@@ -4,8 +4,8 @@ import prisma from '@/lib/db';
 import { z } from 'zod';
 import { auth } from '@clerk/nextjs/server';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyProjectOwnership } from '@/lib/project-auth';
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 const generateContractSchema = z.object({
@@ -42,6 +42,12 @@ export async function POST(
     }
 
     const { projectId } = await params;
+
+    const ownership = await verifyProjectOwnership(projectId, userId);
+    if (!ownership.allowed) {
+      return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
+
     const body = await request.json();
     const validatedData = generateContractSchema.parse({ ...body, projectId });
 
