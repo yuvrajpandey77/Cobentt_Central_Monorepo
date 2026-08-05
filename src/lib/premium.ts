@@ -23,7 +23,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     label: "Pro",
     price: 20,
     period: "/month",
-    amountPaise: 200000,
+    amountPaise: 2000, // ₹20 = 2000 paise
     description: "Unlimited chats, all models, 10GB storage",
   },
   teams: {
@@ -31,7 +31,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     label: "Teams",
     price: 50,
     period: "/month",
-    amountPaise: 500000,
+    amountPaise: 5000, // ₹50 = 5000 paise
     description: "Everything in Pro, unlimited storage, team collab",
   },
 };

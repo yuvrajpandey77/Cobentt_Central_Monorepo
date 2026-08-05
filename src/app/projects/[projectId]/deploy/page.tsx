@@ -1,5 +1,6 @@
 "use client";
 
+import "@rainbow-me/rainbowkit/styles.css";
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';

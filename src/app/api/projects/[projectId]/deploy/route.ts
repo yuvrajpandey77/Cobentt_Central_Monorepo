@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
@@ -17,9 +18,33 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { projectId } = await params;
+
+    // Ownership check
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { userId: true },
+    });
+    if (!project || project.userId !== userId) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     const validatedData = deployContractSchema.parse({ ...body, projectId });
+
+    // Verify the build job belongs to this project
+    const buildJob = await prisma.buildJob.findUnique({
+      where: { id: validatedData.buildJobId },
+      select: { projectId: true },
+    });
+    if (!buildJob || buildJob.projectId !== projectId) {
+      return NextResponse.json({ error: 'Build job not found' }, { status: 404 });
+    }
 
     // Update the build job with deployment info
     await prisma.buildJob.update({

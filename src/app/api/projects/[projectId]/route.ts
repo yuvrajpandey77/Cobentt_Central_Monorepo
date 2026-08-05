@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import prisma from '@/lib/db';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -9,6 +11,20 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limiting: 60 requests per minute per user
+    const rateLimit = await checkRateLimit(`project:${userId}`);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.reset - Date.now()) / 1000)) } }
+      );
+    }
+
     const { projectId } = await params;
     const project = await prisma.project.findUnique({
       where: {
@@ -31,18 +47,13 @@ export async function GET(
       );
     }
 
-    console.log('🔍 Project API - returning project:', {
-      projectId: project.id,
-      projectName: project.name,
-      contractAddress: project.contractAddress,
-      buildJobsCount: project.buildJobs?.length || 0,
-      latestBuildJob: project.buildJobs?.[0] ? {
-        id: project.buildJobs[0].id,
-        status: project.buildJobs[0].status,
-        contractAddress: project.buildJobs[0].contractAddress,
-        transactionHash: project.buildJobs[0].transactionHash
-      } : null
-    });
+    // Ownership check: non-public projects are only visible to owner
+    if (!project.isPublic && project.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json(project);
   } catch (error) {
@@ -53,4 +64,3 @@ export async function GET(
     );
   }
 }
-

@@ -30,7 +30,7 @@ export const messagesRouter = createTRPCRouter({
                 where: {
                     projectId: input.projectId,
                 },
-
+                take: 200,
                 include: {
                     fragments: true,
                 },

@@ -41,6 +41,8 @@ export const CobenttAgent = inngest.createFunction(
       const messages = await prisma.message.findMany({
         where: {
           projectId: event.data.projectId,
+          // SECURITY: Only fetch messages belonging to the requesting user
+          ...(event.data.userId ? { project: { userId: event.data.userId } } : {}),
         },
         orderBy: {
           createdAt: "desc",
@@ -73,7 +75,7 @@ export const CobenttAgent = inngest.createFunction(
       name: "Coding-Agent",
       description: "An expert coding agent",
       system: PROMPT,
-      model: agentModel("gpt-5"),
+      model: agentModel(event.data.model || "openai/gpt-4o-mini"),
       tools: [
         createTool({
           name: "terminal",
@@ -1637,4 +1639,63 @@ contract ${contractName}Test is Test {
 
     return { testResults: testResult };
   }
-);             
+);
+
+// Subscription expiry checker — runs daily at midnight UTC
+export const checkExpiredSubscriptions = inngest.createFunction(
+  { id: "check-expired-subscriptions" },
+  { cron: "0 0 * * *" },
+  async ({ step }) => {
+    const now = new Date();
+
+    const expiredUsers = await step.run("find-expired", async () => {
+      return prisma.allowedUser.findMany({
+        where: {
+          subscriptionStatus: "ACTIVE",
+          currentPeriodEnd: { lt: now },
+          plan: { not: "FREE" },
+        },
+        select: { clerkUserId: true, plan: true, currentPeriodEnd: true },
+      });
+    });
+
+    if (expiredUsers.length === 0) {
+      return { downgraded: 0 };
+    }
+
+    const results = await step.run("downgrade-expired", async () => {
+      let count = 0;
+      for (const user of expiredUsers) {
+        if (!user.clerkUserId) continue;
+
+        await prisma.allowedUser.updateMany({
+          where: { clerkUserId: user.clerkUserId },
+          data: {
+            plan: "FREE",
+            status: "APPROVED",
+            maxDailyTokens: 200_000,
+            maxDailyRequests: 6,
+            graceTokens: 20_000,
+            subscriptionStatus: "EXPIRED",
+            currentPeriodEnd: null,
+          },
+        });
+
+        try {
+          const { clerkClient } = await import("@clerk/nextjs/server");
+          const client = await clerkClient();
+          await client.users.updateUserMetadata(user.clerkUserId, {
+            publicMetadata: { plan: "FREE", subscriptionStatus: "EXPIRED" },
+          });
+        } catch (clerkErr) {
+          console.error(`[cron] Failed to sync Clerk for ${user.clerkUserId}:`, clerkErr);
+        }
+
+        count++;
+      }
+      return count;
+    });
+
+    return { downgraded: results };
+  }
+);

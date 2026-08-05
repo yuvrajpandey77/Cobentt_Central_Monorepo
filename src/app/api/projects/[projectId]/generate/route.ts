@@ -3,8 +3,9 @@ import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 import { auth } from '@clerk/nextjs/server';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyProjectOwnership } from '@/lib/project-auth';
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 const generateContractSchema = z.object({
@@ -31,7 +32,22 @@ export async function POST(
       );
     }
 
+    // Rate limiting: 15 requests per minute per user (AI generation is expensive)
+    const rateLimit = await checkRateLimit(`ai:generate:${userId}`);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.reset - Date.now()) / 1000)) } }
+      );
+    }
+
     const { projectId } = await params;
+
+    const ownership = await verifyProjectOwnership(projectId, userId);
+    if (!ownership.allowed) {
+      return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
+
     const body = await request.json();
     const validatedData = generateContractSchema.parse({ ...body, projectId });
 

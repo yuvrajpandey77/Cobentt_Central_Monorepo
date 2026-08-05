@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { enforceQuota } from "@/lib/quota-enforcement";
-import { recordTokenUsage } from "@/lib/token-usage";
 import { chatCompletion } from "@/lib/ai/client";
 import { getProviderConfig } from "@/lib/ai/provider";
 import { parseArtifact, buildModePrompt, extractJson } from "@/lib/modes/prompt";
 import { MODE_DEFINITIONS } from "@/lib/modes/definitions";
+import { runAIPipeline, recordAITokens, aiErrorResponse } from "@/lib/ai/pipeline";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,19 +21,19 @@ export async function POST(
       return NextResponse.json({ error: "Unknown mode" }, { status: 400 });
     }
 
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const { conversationId, message } = await req.json();
-    if (!conversationId || !message || typeof message !== "string") {
-      return NextResponse.json({ error: "conversationId and message required" }, { status: 400 });
-    }
-    if (message.length > 10000) {
-      return NextResponse.json({ error: "message too long" }, { status: 413 });
-    }
 
+    // Shared pipeline: auth, rate limit, sanitize, injection check, quota, ownership
+    const pipeline = await runAIPipeline(message, {
+      rateLimitKey: "ai",
+      conversationId,
+      estimatedTokens: 6000,
+    });
+    if (!pipeline.ok) return pipeline.response;
+
+    const { userId, sanitizedMessage } = pipeline.ctx;
+
+    // Fetch conversation with history (pipeline already validated ownership)
     const conversation = await prisma.conversation.findFirst({
       where: { id: conversationId, userId },
       select: { id: true, model: true, template: true, messages: { orderBy: { createdAt: "desc" }, take: 8 } },
@@ -44,20 +42,19 @@ export async function POST(
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
 
-    // Quota check (estimate: 6000 tokens for mode generation)
-    await enforceQuota(userId, 6000);
-
     const history = [...conversation.messages].reverse().map((m) => ({
       role: m.role === "ASSISTANT" ? ("assistant" as const) : ("user" as const),
       content: m.content,
     }));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const prompt = buildModePrompt(mode as any, message, conversation.template ?? undefined);
+    const prompt = buildModePrompt(mode as any, sanitizedMessage, conversation.template ?? undefined);
     const cfg = getProviderConfig();
+    const model = conversation.model || cfg.defaultModel;
+    const start = Date.now();
 
     const response = await chatCompletion({
-      model: conversation.model || cfg.defaultModel,
+      model,
       maxTokens: 8000,
       messages: [
         {
@@ -90,7 +87,6 @@ export async function POST(
       artifact = parseArtifact(content);
     }
 
-    // Create assistant message + fragment for this mode artifact
     const assistantMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -98,7 +94,7 @@ export async function POST(
         role: "ASSISTANT",
         type: "RESULT",
         status: "COMPLETE",
-        modelUsed: conversation.model || cfg.defaultModel,
+        modelUsed: model,
       },
     });
 
@@ -112,21 +108,20 @@ export async function POST(
       },
     });
 
-    if (userId && usage) {
-      await recordTokenUsage({
+    // Record token usage via shared helper
+    if (usage) {
+      await recordAITokens({
         userId,
-        provider: "OPENAI",
-        model: conversation.model || cfg.defaultModel,
+        model,
         promptTokens: usage.prompt_tokens ?? 0,
         completionTokens: usage.completion_tokens ?? 0,
         endpoint: `/api/modes/${mode}/generate`,
+        durationMs: Date.now() - start,
       });
     }
 
     return NextResponse.json({ ok: true, artifact });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Generation failed";
-    console.error(`[modes/${req.url}] generation error:`, error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return aiErrorResponse(error, "Generation failed");
   }
 }

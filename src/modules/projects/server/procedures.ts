@@ -39,6 +39,7 @@ export const projectsRouter = createTRPCRouter({
                 where: {
                     userId: ctx.auth.userId,
                 },
+                take: 100,
                 orderBy: [
                     { isPinned: "desc" },
                     { updatedAt: "desc" },
@@ -235,10 +236,18 @@ export const projectsRouter = createTRPCRouter({
             projectId: z.string().min(1),
         }))
         .query(async ({ input, ctx }) => {
+            const project = await prisma.project.findUnique({
+                where: { id: input.projectId },
+                select: { userId: true },
+            });
+            if (!project || project.userId !== ctx.auth.userId) {
+                throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+            }
             const buildJobs = await prisma.buildJob.findMany({
                 where: {
                     projectId: input.projectId,
                 },
+                take: 50,
                 orderBy: {
                     createdAt: 'desc',
                 },

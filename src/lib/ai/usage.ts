@@ -1,3 +1,5 @@
+import { estimateTokens as gptEstimateTokens } from "@/lib/token-estimator";
+
 export interface UsageRecord {
   model: string;
   provider: string;
@@ -8,7 +10,7 @@ export interface UsageRecord {
 }
 
 export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+  return gptEstimateTokens(text);
 }
 
 export function parseUsage(data: unknown): { input: number; output: number } {

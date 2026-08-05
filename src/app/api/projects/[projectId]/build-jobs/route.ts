@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { verifyProjectOwnership } from '@/lib/project-auth';
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 export async function GET(
@@ -10,32 +11,26 @@ export async function GET(
 ) {
   try {
     const { projectId } = await params;
-    console.log('🔍 Fetching build jobs for project:', projectId);
-    
+
+    const session = await auth();
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const ownership = await verifyProjectOwnership(projectId, session.userId);
+    if (!ownership.allowed) {
+      return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
+
     const buildJobs = await prisma.buildJob.findMany({
       where: {
         projectId: projectId,
       },
+      take: 50,
       orderBy: {
         createdAt: 'desc',
       },
     });
-
-    console.log('📦 Found build jobs:', buildJobs.length);
-    if (buildJobs.length > 0) {
-      const latestJob = buildJobs[0];
-      console.log('🔍 Latest job details:', {
-        jobId: latestJob.id,
-        status: latestJob.status,
-        contractAddress: latestJob.contractAddress,
-        transactionHash: latestJob.transactionHash,
-        hasArtifacts: !!latestJob.artifacts,
-        artifactsType: typeof latestJob.artifacts,
-        artifactsKeys: latestJob.artifacts ? Object.keys(latestJob.artifacts as any) : [],
-        abiLength: (latestJob.artifacts as any)?.abi?.length || 0,
-        bytecodeLength: (latestJob.artifacts as any)?.bytecode?.length || 0
-      });
-    }
 
     return NextResponse.json({ buildJobs });
   } catch (error) {

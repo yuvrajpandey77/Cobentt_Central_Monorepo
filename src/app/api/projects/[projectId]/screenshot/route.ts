@@ -1,7 +1,8 @@
 import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { verifyProjectOwnership } from "@/lib/project-auth";
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 export async function GET(
@@ -11,6 +12,16 @@ export async function GET(
   const { projectId } = await params;
   if (!projectId) {
     return new NextResponse("Bad Request", { status: 400 });
+  }
+
+  const session = await auth();
+  if (!session?.userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const ownership = await verifyProjectOwnership(projectId, session.userId);
+  if (!ownership.allowed) {
+    return new NextResponse(ownership.reason, { status: ownership.reason === 'Project not found' ? 404 : 403 });
   }
 
   const project = await prisma.project.findUnique({

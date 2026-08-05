@@ -27,24 +27,40 @@ export interface QuotaCheck {
 }
 
 /**
- * Check if user can make a request with estimated token usage
+ * Derive a stable advisory lock key from a userId string.
+ * Uses a simple hash to convert string → 32-bit integer for pg_advisory_xact_lock.
  */
-export async function checkQuota(
+function advisoryKey(userId: string): number {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash + userId.charCodeAt(i)) | 0;
+  }
+  return hash || 1;
+}
+
+/**
+ * Check quota with serialized access via advisory lock.
+ * Prevents concurrent requests from double-spending the same quota.
+ */
+async function checkQuotaSerialized(
   userId: string,
   estimatedTokens: number = 0
 ): Promise<QuotaCheck> {
+  const lockKey = advisoryKey(userId);
+
+  // Acquire advisory lock — serializes all quota operations for this user
+  await prisma.$executeRaw`SELECT pg_advisory_xact_lock(${lockKey})`;
+
   // 1. Get user's allowed limits
   let allowedUser = await prisma.allowedUser.findUnique({
     where: { clerkUserId: userId },
   });
 
-  // If user not in allowed_users, auto-create with free tier
   if (!allowedUser) {
-    console.log(`[Auto-provisioning] Creating free tier account for user ${userId}`);
     allowedUser = await prisma.allowedUser.create({
       data: {
         clerkUserId: userId,
-        email: `${userId}@cobentt.local`, // Placeholder, can be updated via profile
+        email: `${userId}@cobentt.local`,
         status: "APPROVED",
         approvedAt: new Date(),
         plan: "FREE",
@@ -66,7 +82,6 @@ export async function checkQuota(
   }
 
   const maxDailyTokens = allowedUser.maxDailyTokens;
-  const maxDailyRequests = allowedUser.maxDailyRequests;
   const graceTokens = allowedUser.graceTokens;
 
   // 2. Get current usage with auto-reset if needed
@@ -76,7 +91,6 @@ export async function checkQuota(
   });
 
   if (!usage) {
-    // First-time user: create usage record
     usage = await prisma.userUsage.create({
       data: {
         userId,
@@ -90,7 +104,6 @@ export async function checkQuota(
       },
     });
   } else if (!isSameUTCDate(usage.lastResetAt, now)) {
-    // Reset daily counters at midnight UTC
     usage = await prisma.userUsage.update({
       where: { userId },
       data: {
@@ -102,7 +115,6 @@ export async function checkQuota(
       },
     });
 
-    // Reset grace period for the user
     await prisma.allowedUser.update({
       where: { clerkUserId: userId },
       data: {
@@ -115,27 +127,18 @@ export async function checkQuota(
   const warnings: string[] = [];
   const percentUsed = (usage.dailyTokens / maxDailyTokens) * 100;
 
-  // 3. Check request limit - REMOVED: No daily request limit, only token limit
-  // Daily requests are tracked but not enforced as a hard limit
-  
-  // 4. Check token limit
+  // 3. Check token limit
   const projectedUsage = usage.dailyTokens + estimatedTokens;
   const willExceedTokens = projectedUsage > maxDailyTokens;
 
   if (willExceedTokens) {
     const overage = projectedUsage - maxDailyTokens;
 
-    // Check if we can use grace tokens
     if (!allowedUser.graceUsed && overage <= graceTokens) {
-      // Allow with grace period warning
       warnings.push(
         `⚠️ You are using grace tokens (${overage.toLocaleString()} of ${graceTokens.toLocaleString()} available)`
       );
-
-      // Send webhook alert
       await sendQuotaExceeded(userId, projectedUsage, maxDailyTokens, overage);
-
-      // Create alert
       await prisma.usageAlert.create({
         data: {
           userId,
@@ -146,7 +149,6 @@ export async function checkQuota(
           tokenLimit: maxDailyTokens,
         },
       });
-
       return {
         allowed: true,
         inGracePeriod: true,
@@ -161,7 +163,6 @@ export async function checkQuota(
         },
       };
     } else {
-      // Hard limit reached
       return {
         allowed: false,
         reason: `Daily token limit exceeded (${maxDailyTokens.toLocaleString()}). ${
@@ -181,15 +182,10 @@ export async function checkQuota(
     }
   }
 
-  // 5. Check for warning thresholds and send alerts
+  // 4. Warning thresholds
   if (percentUsed >= 90 && !usage.alert90Sent) {
-    await prisma.userUsage.update({
-      where: { userId },
-      data: { alert90Sent: true },
-    });
-
+    await prisma.userUsage.update({ where: { userId }, data: { alert90Sent: true } });
     await sendQuotaWarning90(userId, usage.dailyTokens, maxDailyTokens);
-
     await prisma.usageAlert.create({
       data: {
         userId,
@@ -200,20 +196,12 @@ export async function checkQuota(
         tokenLimit: maxDailyTokens,
       },
     });
-
-    warnings.push(
-      `⚠️ You've used ${Math.round(percentUsed)}% of your daily token quota`
-    );
+    warnings.push(`⚠️ You've used ${Math.round(percentUsed)}% of your daily token quota`);
   }
 
   if (percentUsed >= 100 && !usage.alert100Sent) {
-    await prisma.userUsage.update({
-      where: { userId },
-      data: { alert100Sent: true },
-    });
-
+    await prisma.userUsage.update({ where: { userId }, data: { alert100Sent: true } });
     await sendQuotaWarning100(userId, usage.dailyTokens, maxDailyTokens);
-
     await prisma.usageAlert.create({
       data: {
         userId,
@@ -226,11 +214,7 @@ export async function checkQuota(
     });
   }
 
-  // 6. Check lifetime limit (if set)
-  // NOTE: Request limits are tracked but not enforced
-  // Only token limits are enforced to allow unlimited requests within token budget
-
-  // 7. All checks passed
+  // 5. All checks passed
   return {
     allowed: true,
     warnings: warnings.length > 0 ? warnings : undefined,
@@ -246,15 +230,26 @@ export async function checkQuota(
 }
 
 /**
- * Enforce quota - throws error if quota exceeded
+ * Check quota — wraps serialized check in advisory lock transaction.
+ */
+export async function checkQuota(
+  userId: string,
+  estimatedTokens: number = 0
+): Promise<QuotaCheck> {
+  return prisma.$transaction(async () => {
+    return checkQuotaSerialized(userId, estimatedTokens);
+  });
+}
+
+/**
+ * Enforce quota — throws error if quota exceeded.
+ * Uses advisory lock to prevent concurrent double-spend.
  */
 export async function enforceQuota(
   userId: string,
   estimatedTokens?: number
 ): Promise<QuotaCheck> {
-  // Allow bypassing quota checks in development
-  if (process.env.DISABLE_QUOTA_CHECK === 'true') {
-    console.log(`[DEV MODE] Quota check bypassed for user ${userId}`);
+  if (process.env.NODE_ENV === 'development' && process.env.DISABLE_QUOTA_CHECK === 'true') {
     return {
       allowed: true,
       usage: {
@@ -286,10 +281,7 @@ export async function enforceQuota(
 export async function markGraceUsed(userId: string) {
   await prisma.allowedUser.update({
     where: { clerkUserId: userId },
-    data: {
-      graceUsed: true,
-      graceResetAt: new Date(),
-    },
+    data: { graceUsed: true, graceResetAt: new Date() },
   });
 }
 

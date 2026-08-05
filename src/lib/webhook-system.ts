@@ -142,18 +142,24 @@ export async function retryFailedWebhooks(maxAttempts: number = 3) {
       attempts: { lt: maxAttempts },
       nextRetryAt: { lte: now },
     },
-    take: 50, // Process batch of 50
+    take: 50,
   });
 
-  for (const log of failedWebhooks) {
-    const allowedUser = await prisma.allowedUser.findUnique({
-      where: { clerkUserId: log.userId },
-      select: { webhookUrl: true, webhookSecret: true },
-    });
+  if (failedWebhooks.length === 0) return;
 
-    if (!allowedUser?.webhookUrl) {
-      continue;
-    }
+  // Batch-fetch all required allowedUsers in one query (avoids N+1)
+  const userIds = [...new Set(failedWebhooks.map((l) => l.userId))];
+  const allowedUsers = await prisma.allowedUser.findMany({
+    where: { clerkUserId: { in: userIds } },
+    select: { clerkUserId: true, webhookUrl: true, webhookSecret: true },
+  });
+  const userMap = new Map(allowedUsers.map((u) => [u.clerkUserId, u]));
+
+  // Process each webhook (network I/O, cannot batch)
+  const updates: Promise<unknown>[] = [];
+  for (const log of failedWebhooks) {
+    const allowedUser = userMap.get(log.userId);
+    if (!allowedUser?.webhookUrl) continue;
 
     const result = await sendWebhook(
       allowedUser.webhookUrl,
@@ -161,20 +167,23 @@ export async function retryFailedWebhooks(maxAttempts: number = 3) {
       allowedUser.webhookSecret ?? undefined
     );
 
-    // Update log
-    await prisma.webhookLog.update({
-      where: { id: log.id },
-      data: {
-        attempts: { increment: 1 },
-        success: result.success,
-        responseCode: result.statusCode,
-        responseBody: result.error,
-        nextRetryAt: result.success
-          ? null
-          : new Date(Date.now() + Math.pow(2, log.attempts + 1) * 60000), // Exponential backoff
-      },
-    });
+    updates.push(
+      prisma.webhookLog.update({
+        where: { id: log.id },
+        data: {
+          attempts: { increment: 1 },
+          success: result.success,
+          responseCode: result.statusCode,
+          responseBody: result.error,
+          nextRetryAt: result.success
+            ? null
+            : new Date(Date.now() + Math.pow(2, log.attempts + 1) * 60000),
+        },
+      })
+    );
   }
+
+  await Promise.allSettled(updates);
 }
 
 /**

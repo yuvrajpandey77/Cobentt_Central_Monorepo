@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Sandbox } from '@e2b/code-interpreter';
 import prisma from '@/lib/db';
+import { auth } from '@clerk/nextjs/server';
+import { verifyProjectOwnership } from '@/lib/project-auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +12,16 @@ export async function GET(
 ) {
   try {
     const { projectId } = await params;
+
+    const session = await auth();
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const ownership = await verifyProjectOwnership(projectId, session.userId);
+    if (!ownership.allowed) {
+      return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
     
     // Get the latest build job to find the sandbox ID
     const buildJob = await prisma.buildJob.findFirst({

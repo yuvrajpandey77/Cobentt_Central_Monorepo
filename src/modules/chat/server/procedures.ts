@@ -9,6 +9,7 @@ export const conversationsRouter = createTRPCRouter({
     .query(async ({ ctx }) => {
       const conversations = await prisma.conversation.findMany({
         where: { userId: ctx.auth.userId },
+        take: 100,
         orderBy: [
           { isPinned: "desc" },
           { updatedAt: "desc" },
