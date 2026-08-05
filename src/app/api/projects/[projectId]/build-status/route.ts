@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { auth } from '@clerk/nextjs/server';
 import { verifyProjectOwnership } from '@/lib/project-auth';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -22,6 +23,11 @@ export async function GET(
     const ownership = await verifyProjectOwnership(projectId, session.userId);
     if (!ownership.allowed) {
       return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
+
+    const rl = await checkRateLimit(`project:${session.userId}`, RATE_LIMITS.project);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     // Get the latest build job for this project

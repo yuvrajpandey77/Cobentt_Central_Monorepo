@@ -57,7 +57,7 @@ export function SettingsNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="w-64 shrink-0 border-r border-border bg-background">
+    <nav className="w-64 shrink-0 border-r border-border bg-bg-primary pt-14 lg:pt-16">
       <div className="sticky top-0 p-4">
         <h2 className="mb-4 text-lg font-semibold text-foreground">
           Settings

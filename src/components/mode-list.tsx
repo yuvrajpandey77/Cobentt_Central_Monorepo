@@ -32,11 +32,11 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
     <div className="flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-5xl mx-auto space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="text-center sm:text-left space-y-3">
+          <div className="text-center sm:text-left space-y-2">
             <div className={`w-14 h-14 ${iconBg} rounded-2xl flex items-center justify-center mx-auto sm:mx-0`}>
               <div className={iconColor}>{icon}</div>
             </div>
-            <div className="space-y-1">
+            <div>
               <h1 className="text-2xl font-semibold text-white">{title}</h1>
               <p className="text-sm text-white/50">{description}</p>
             </div>

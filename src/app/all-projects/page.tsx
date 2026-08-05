@@ -157,11 +157,11 @@ const AllProjectsContent = () => {
                                 
                                 <div className="flex items-center gap-2 ml-4">
                                     <Link href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}>
-                                        <Button variant="ghost" size="sm" className="text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
+                                        <Button variant="ghost" size="sm" className="text-white/60 hover:text-foreground hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
                                             <Eye className="w-4 h-4" />
                                         </Button>
                                     </Link>
-                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
+                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-foreground hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
                                         <Edit className="w-4 h-4" />
                                     </Button>
                                     <Button variant="ghost" size="sm" className="text-white/60 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 ease-out focus:ring-2 focus:ring-red-400/20 focus:outline-none">
@@ -203,7 +203,7 @@ const AllProjectsContent = () => {
                             </div>
                             
                             <Link href="/">
-                                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full">
                                     <Plus className="w-4 h-4 mr-2" />
                                     New Project
                                 </Button>
@@ -225,7 +225,7 @@ const AllProjectsContent = () => {
                                         placeholder="Search projects..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ease-out hover:border-white/30"
+                                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all duration-200 ease-out hover:border-white/30"
                                     />
                                 </div>
                             </div>
@@ -237,9 +237,10 @@ const AllProjectsContent = () => {
                                     size="sm"
                                     onClick={() => setViewMode('grid')}
                                     className={cn(
+                                        "rounded-full",
                                         viewMode === 'grid' 
-                                            ? 'bg-blue-600 text-white' 
-                                            : 'text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                                            ? 'bg-primary text-primary-foreground' 
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none'
                                     )}
                                 >
                                     <Grid3X3 className="w-4 h-4" />
@@ -249,9 +250,10 @@ const AllProjectsContent = () => {
                                     size="sm"
                                     onClick={() => setViewMode('list')}
                                     className={cn(
+                                        "rounded-full",
                                         viewMode === 'list' 
-                                            ? 'bg-blue-600 text-white' 
-                                            : 'text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-blue-500/20 focus:outline-none'
+                                            ? 'bg-primary text-primary-foreground' 
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all duration-200 ease-out focus:ring-2 focus:ring-primary/20 focus:outline-none'
                                     )}
                                 >
                                     <List className="w-4 h-4" />
@@ -283,7 +285,7 @@ const AllProjectsContent = () => {
                             <Button 
                                 onClick={() => window.location.reload()} 
                                 variant="outline"
-                                className="border-white/20 text-white hover:bg-white/20 hover:text-black"
+                                className="border-white/20 text-white hover:bg-white/20 hover:text-foreground rounded-full"
                             >
                                 Retry
                             </Button>
@@ -304,7 +306,7 @@ const AllProjectsContent = () => {
                             </p>
                             {!searchQuery && (
                                 <Link href="/">
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full">
                                         <Plus className="w-4 h-4 mr-2" />
                                         Create Your First Project
                                     </Button>

@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import JSZip from "jszip";
 import { auth } from "@clerk/nextjs/server";
 import { verifyProjectOwnership } from "@/lib/project-auth";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,11 @@ export async function POST(req: Request) {
     const ownership = await verifyProjectOwnership(projectId, session.userId);
     if (!ownership.allowed) {
       return NextResponse.json({ error: ownership.reason }, { status: ownership.reason === 'Project not found' ? 404 : 403 });
+    }
+
+    const rl = await checkRateLimit(`project:${session.userId}`, RATE_LIMITS.project);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     // Get all fragments for the project

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,11 @@ export async function GET() {
   const session = await auth();
   if (!session?.userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = await checkRateLimit(`payment:${session.userId}`, RATE_LIMITS.payment);
+  if (!rl.success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const payments = await prisma.paymentRecord.findMany({

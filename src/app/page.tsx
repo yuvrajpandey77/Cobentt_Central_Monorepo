@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { getDailyGreeting } from "@/lib/greetings";
 import { MODE_DEFAULTS } from "@/lib/models";
 import { toast } from "sonner";
+import { RoseAnimation } from "@/components/rose-animation";
 
 const MODE_CATEGORY_MAP: Record<string, string> = {
     slides: "slides",
@@ -130,8 +131,10 @@ const PageContent = () => {
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
                         <div className="text-center max-w-[47.52rem] mx-auto">
         
+                            <RoseAnimation />
+
                             {/* Main Heading */}
-                            <h1 className="text-3xl md:text-4xl font-semibold opacity-90 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight ">
+                            <h1 className="text-3xl md:text-4xl font-semibold opacity-90 leading-tight">
                                 {greeting.heading}
                             </h1>
 

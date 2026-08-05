@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`default:${session.userId}`, RATE_LIMITS.default);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await req.json();
     const { pagePath, value } = body ?? {};
     if (!pagePath || !value) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,6 +23,11 @@ export async function POST(
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit(`default:${userId}`, RATE_LIMITS.default);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     const body = await req.json();

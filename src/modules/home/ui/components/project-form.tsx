@@ -325,9 +325,9 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
                                             <button
                                                 type="button"
                                                 onClick={onCategoryClear}
-                                                className="h-4 w-4 rounded-full flex items-center justify-center text-green-400/60 hover:text-green-300 hover:bg-green-500/20 transition-colors"
+                                                className="h-4 w-4 flex items-center justify-center text-green-400/60 hover:text-green-300 hover:bg-green-500/20 transition-colors"
                                             >
-                                                ×
+                                                <span className="text-xs leading-none -mt-px">&times;</span>
                                             </button>
                                         </div>
                                     );

@@ -639,7 +639,7 @@ export const generateContract = inngest.createFunction(
         
         if (event.data.aiConfiguration) {
           config = event.data.aiConfiguration as EnhancedContractConfig;
-          console.log('✅ Enhanced configuration found:', JSON.stringify(config, null, 2));
+          console.log('Enhanced configuration present:', { type: config.contractType, blockchain: config.blockchain });
         } else {
           console.log('❌ No enhanced configuration found, creating default config');
           // Create default config from basic parameters
@@ -677,7 +677,7 @@ export const generateContract = inngest.createFunction(
       console.log('- tokenName:', tokenName);
       console.log('- tokenSymbol:', tokenSymbol);
       console.log('- features:', features);
-      console.log('- userPrompt:', userPrompt);
+      console.log('- userPrompt length:', userPrompt.length);
       
     let generationResult: ContractGenerationResult;
     try {
