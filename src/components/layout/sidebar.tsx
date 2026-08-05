@@ -260,15 +260,15 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
           {/* Fixed top: Header */}
           <SidebarHeader isCollapsed={isCollapsed} onToggle={toggleSidebar} />
 
-          {/* Search */}
-          {!isCollapsed && (
+          {/* Search — hidden in chat context (Composer is the input) */}
+          {!isCollapsed && !isLocal && (
             <SidebarSearch value={searchQuery} onChange={setSearchQuery} isCollapsed={isCollapsed} />
           )}
 
           {/* Collapsed icons */}
           {isCollapsed && (
             <div className="flex flex-col items-center gap-2 flex-shrink-0">
-              <Link href="/chat" className="group">
+              <Link href="/chats" className="group">
                 <div className={iconClasses}>
                   <MessageCircle className="w-3.5 h-3.5 text-white/80 group-hover:text-primary" />
                 </div>

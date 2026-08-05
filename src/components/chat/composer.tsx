@@ -76,6 +76,8 @@ export function Composer({
     };
     onStreamMessage?.(placeholder);
 
+    const webSources = webSearch ? [{ index: 1, title: "Web Search" }] : undefined;
+
     try {
       const res = await fetch(`/api/chat/${conversationId}/stream`, {
         method: "POST",
@@ -83,7 +85,7 @@ export function Composer({
         body: JSON.stringify({
           message: userContent,
           model: modelId || undefined,
-          sources: webSearch ? [{ index: 1, title: "Web Search" }] : undefined,
+          sources: webSources,
         }),
         signal: abortRef.current?.signal,
       });
@@ -99,6 +101,7 @@ export function Composer({
       const decoder = new TextDecoder();
       let buffer = "";
       let fullContent = "";
+      let fullThinking = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -131,17 +134,50 @@ export function Composer({
 
             // Thinking event
             if (parsed.thinking) {
+              fullThinking += parsed.thinking;
               onStreamMessage?.({
                 id: assistantId,
                 role: "assistant",
                 content: fullContent,
                 timestamp: Date.now(),
-                thinking: parsed.thinking,
+                thinking: fullThinking,
               });
             }
 
-            // Done event
+            // Done event: persist completed exchange into getById cache so the
+            // message list never flashes empty while the refetch is in flight.
             if (parsed.done) {
+              const queryKey = trpc.conversations.getById.queryOptions({ id: conversationId }).queryKey;
+              const existing = queryClient.getQueryData(queryKey) as
+                | { id: string; messages?: Array<{ id: string; role: string; content: string }>; title?: string | null }
+                | undefined;
+              const existingMessages = existing?.messages ?? [];
+              const userAlreadyInCache = existingMessages.some(
+                (m) => m.role.toLowerCase() === "user" && m.content === userContent
+              );
+              const now = new Date().toISOString();
+              const merged = [
+                ...existingMessages.filter((m) => m.id !== assistantId),
+                ...(userAlreadyInCache
+                  ? []
+                  : [{ id: `user-${Date.now()}`, content: userContent, role: "USER", type: "RESULT", status: "COMPLETE", createdAt: now }]),
+                {
+                  id: assistantId,
+                  content: fullContent,
+                  role: "ASSISTANT",
+                  type: "RESULT",
+                  status: "COMPLETE",
+                  createdAt: now,
+                  thinking: fullThinking || undefined,
+                  sources: webSources && webSources.length > 0 ? webSources : undefined,
+                  modelUsed: parsed.model || undefined,
+                },
+              ];
+              queryClient.setQueryData(queryKey, {
+                ...(existing ?? {}),
+                id: conversationId,
+                messages: merged,
+              } as never);
               onStreamMessage?.(null);
             }
 

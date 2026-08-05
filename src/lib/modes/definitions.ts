@@ -1,5 +1,14 @@
 import { ModeDefinition } from "./types";
 
+export const SLIDE_THEMES = [
+  { id: "midnight", label: "Midnight", bg: "#0b1220", accent: "#38bdf8", text: "#f1f5f9", muted: "#94a3b8", chip: "#0ea5e9" },
+  { id: "royal", label: "Royal", bg: "#1e1b4b", accent: "#a78bfa", text: "#faf5ff", muted: "#c4b5fd", chip: "#8b5cf6" },
+  { id: "emerald", label: "Emerald", bg: "#022c22", accent: "#34d399", text: "#ecfdf5", muted: "#6ee7b7", chip: "#10b981" },
+  { id: "sunset", label: "Sunset", bg: "#2a0a1a", accent: "#fb923c", text: "#fff7ed", muted: "#fdba74", chip: "#f97316" },
+  { id: "ocean", label: "Ocean", bg: "#082f49", accent: "#22d3ee", text: "#ecfeff", muted: "#67e8f9", chip: "#06b6d4" },
+  { id: "ink", label: "Light", bg: "#fafafa", accent: "#171717", text: "#171717", muted: "#52525b", chip: "#404040" },
+];
+
 export const SLIDES_MODE: ModeDefinition = {
   mode: "slides",
   label: "Slides",
@@ -7,11 +16,12 @@ export const SLIDES_MODE: ModeDefinition = {
     {
       type: "title-slide",
       label: "Title Slide",
-      defaultProps: { title: "New Deck", subtitle: "", author: "" },
+      defaultProps: { title: "New Deck", subtitle: "", author: "", accentColor: "#f97316" },
       properties: [
         { key: "title", label: "Title", type: "text", placeholder: "Slide title" },
         { key: "subtitle", label: "Subtitle", type: "textarea", placeholder: "Optional subtitle" },
         { key: "author", label: "Author", type: "text", placeholder: "Optional author" },
+        { key: "accentColor", label: "Accent color", type: "color" },
       ],
     },
     {
@@ -52,6 +62,26 @@ export const SLIDES_MODE: ModeDefinition = {
         { key: "title", label: "Title", type: "text", placeholder: "Closing message" },
         { key: "subtitle", label: "Subtitle", type: "textarea" },
         { key: "contact", label: "Contact", type: "text", placeholder: "Email / phone / handle" },
+      ],
+    },
+    {
+      type: "stat-slide",
+      label: "Stat Slide",
+      defaultProps: { title: "The Numbers", value: "100%", suffix: "Growth", note: "Year over year" },
+      properties: [
+        { key: "title", label: "Heading", type: "text" },
+        { key: "value", label: "Big number", type: "text", placeholder: "e.g. 2×" },
+        { key: "suffix", label: "Label", type: "text", placeholder: "e.g. Growth" },
+        { key: "note", label: "Note", type: "textarea" },
+      ],
+    },
+    {
+      type: "agenda-slide",
+      label: "Agenda Slide",
+      defaultProps: { title: "Agenda", items: ["Intro", "Key ideas", "Next steps"] },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "items", label: "Agenda items", type: "list" },
       ],
     },
   ],
@@ -110,11 +140,53 @@ export const DOCUMENT_MODE: ModeDefinition = {
       ],
     },
     {
+      type: "image",
+      label: "Image",
+      defaultProps: { url: "", alt: "", caption: "" },
+      properties: [
+        { key: "url", label: "Image URL", type: "text", placeholder: "https://..." },
+        { key: "alt", label: "Alt text", type: "text" },
+        { key: "caption", label: "Caption", type: "text" },
+      ],
+    },
+    {
+      type: "divider",
+      label: "Divider",
+      defaultProps: {},
+      properties: [],
+    },
+    {
       type: "table",
       label: "Table",
       defaultProps: { headers: ["Column 1", "Column 2"], rows: [["A", "B"]] },
       properties: [
         { key: "headers", label: "Headers", type: "list" },
+      ],
+    },
+    {
+      type: "checklist",
+      label: "Checklist",
+      defaultProps: { items: [{ text: "Task one", done: false }, { text: "Task two", done: false }] },
+      properties: [
+        { key: "items", label: "Items", type: "list" },
+      ],
+    },
+    {
+      type: "link",
+      label: "Link",
+      defaultProps: { text: "Visit website", url: "https://example.com" },
+      properties: [
+        { key: "text", label: "Link text", type: "text" },
+        { key: "url", label: "URL", type: "text", placeholder: "https://..." },
+      ],
+    },
+    {
+      type: "callout",
+      label: "Callout",
+      defaultProps: { text: "Important note for the reader.", tone: "info" },
+      properties: [
+        { key: "text", label: "Message", type: "textarea" },
+        { key: "tone", label: "Tone", type: "select", options: ["info", "success", "warning", "danger"] },
       ],
     },
   ],
@@ -144,6 +216,21 @@ export const SHEET_MODE: ModeDefinition = {
       },
       properties: [
         { key: "name", label: "Sheet name", type: "text" },
+        { key: "accentColor", label: "Accent color", type: "color" },
+      ],
+    },
+    {
+      type: "stats",
+      label: "Stats Card",
+      defaultProps: {
+        title: "Overview",
+        items: [
+          { label: "Total", value: "120" },
+          { label: "Change", value: "+8%" },
+        ],
+      },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
       ],
     },
   ],

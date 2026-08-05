@@ -5,6 +5,7 @@ import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import GlobalQueryProgress from "@/components/global-query-progress";
+import { CursorFlower } from "@/components/cursor-flower";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -47,6 +48,7 @@ export default function RootLayout({
         <GlobalQueryProgress />
         <Toaster />
         {children}
+        <CursorFlower />
       </body>
     </html>
     </TRPCReactProvider>

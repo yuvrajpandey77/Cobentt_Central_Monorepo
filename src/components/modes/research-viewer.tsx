@@ -14,19 +14,31 @@ import {
   ZoomOut,
   Sun,
   Moon,
+  PanelLeft,
+  List,
+  ChevronUp,
+  ChevronDown,
+  Trash2,
+  Copy,
+  X,
+  Plus,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ModeChatPanel, ModeChatMessage } from "@/components/modes/mode-chat-panel";
-import { ResearchMarkdown } from "@/components/modes/renderers";
+import { ResearchMarkdown, styleToAttr } from "@/components/modes/renderers";
 import { DocumentSkeleton } from "@/components/ui/skeleton";
 import { ResearchProgress } from "@/components/ui/research-progress";
+import { BlockStyleEditor } from "@/components/modes/block-style-editor";
+import { BlockStyle } from "@/lib/modes/types";
 
 interface ResearchArtifact {
   title: string;
   summary?: string;
-  sections: { heading: string; content: string }[];
+  sections: { heading: string; content: string; style?: BlockStyle }[];
   sources: { title: string; url: string }[];
+  titleStyle?: BlockStyle;
 }
 
 function parseArtifact(raw: unknown): ResearchArtifact | null {
@@ -47,6 +59,11 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
   const [running, setRunning] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [docLight, setDocLight] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [draft, setDraft] = useState<ResearchArtifact | null>(null);
+  const [selectedSection, setSelectedSection] = useState<number | null>(null);
+  const [styleOpen, setStyleOpen] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   const conversation = useQuery(trpc.conversations.getById.queryOptions({ id: conversationId }));
 
@@ -57,10 +74,53 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
 
   const artifact = parseArtifact((fragment?.files as Record<string, unknown>)?.artifact);
 
-  const hasReport = !!artifact?.sections?.length;
+  const current = draft ?? artifact;
 
-  const runResearch = useCallback(
-    async (message: string) => {
+  const selectedStyle =
+    selectedSection === null
+      ? (current?.titleStyle ?? undefined)
+      : selectedSection !== undefined
+        ? (current?.sections[selectedSection]?.style ?? undefined)
+        : undefined;
+
+  const persist = useCallback(
+    (next: ResearchArtifact) => {
+      setDraft(next);
+      if (!fragment) return;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(async () => {
+        try {
+          await fetch(`/api/modes/save`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fragmentId: (fragment as unknown as { id: string }).id,
+              mode: "deep-research",
+              artifact: JSON.stringify(next),
+            }),
+          });
+          queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
+        } catch {
+          toast.error("Failed to save");
+        }
+      }, 300);
+    },
+    [fragment, conversationId, queryClient, trpc]
+  );
+
+  const lastFragId = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const fid = (fragment as unknown as { id?: string } | undefined)?.id;
+    if (!fid) return;
+    if (lastFragId.current !== fid) {
+      lastFragId.current = fid;
+      setDraft(null);
+    }
+  }, [fragment]);
+
+  const hasReport = !!current?.sections?.length;
+
+  const runResearch = useCallback(async (message: string) => {
       setRunning(true);
       setCurrentPhase("Planning");
       setProgress(5);
@@ -141,6 +201,56 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
     }
   };
 
+  const updateTitle = (title: string) => {
+    if (!current) return;
+    persist({ ...current, title });
+  };
+
+  const updateSummary = (summary: string) => {
+    if (!current) return;
+    persist({ ...current, summary });
+  };
+
+  const updateSectionHeading = (idx: number, heading: string) => {
+    if (!current) return;
+    const sections = current.sections.map((s, i) => (i === idx ? { ...s, heading } : s));
+    persist({ ...current, sections });
+  };
+
+  const updateSectionContent = (idx: number, content: string) => {
+    if (!current) return;
+    const sections = current.sections.map((s, i) => (i === idx ? { ...s, content } : s));
+    persist({ ...current, sections });
+  };
+
+  const moveSection = (idx: number, dir: -1 | 1) => {
+    if (!current) return;
+    const sections = [...current.sections];
+    const target = idx + dir;
+    if (target < 0 || target >= sections.length) return;
+    [sections[idx], sections[target]] = [sections[target], sections[idx]];
+    persist({ ...current, sections });
+    setSelectedSection(target);
+  };
+
+  const addSection = () => {
+    if (!current) return;
+    persist({ ...current, sections: [...current.sections, { heading: "New section", content: "" }] });
+  };
+
+  const removeSection = (idx: number) => {
+    if (!current) return;
+    persist({ ...current, sections: current.sections.filter((_, i) => i !== idx) });
+    if (selectedSection === idx) setSelectedSection(null);
+  };
+
+  const duplicateSection = (idx: number) => {
+    if (!current) return;
+    const sections = [...current.sections];
+    sections.splice(idx + 1, 0, { ...sections[idx], heading: `${sections[idx].heading} (copy)` });
+    persist({ ...current, sections });
+  };
+
   const messages = useMemo(() => conversation.data?.messages ?? [], [conversation.data]);
 
   const autoRan = useRef(false);
@@ -168,14 +278,72 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
 
   return (
     <div className="flex h-full w-full">
+      {/* Editor sidebar (left) */}
+      <div className={cn("hidden md:flex flex-col w-64 flex-shrink-0 min-h-0 border-r border-white/10 bg-white/[0.02]", !sidebarOpen && "hidden")}>
+        <div className="flex items-center gap-1 px-3 h-12 border-b border-white/10 flex-shrink-0">
+          <List className="h-3.5 w-3.5 text-white/40" />
+          <span className="text-xs font-medium text-white/70">Outline</span>
+          {current?.sections?.length ? <span className="text-white/25 text-xs ml-auto tabular-nums">{current.sections.length} sections</span> : null}
+        </div>
+        <div className="flex-1 overflow-y-auto thin-scrollbar p-3 space-y-3">
+          <div className="space-y-1.5">
+            <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Report</p>
+            <button onClick={() => { setSelectedSection(null); setStyleOpen(false); }} className={cn("w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors", selectedSection === null ? "bg-primary/15 border-primary/30 text-white" : "border-white/5 text-white/60 hover:bg-white/[0.04]")}>
+              Title & summary
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center px-1 pt-3">
+              <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Sections</p>
+              <button onClick={addSection} title="Add section" className="ml-auto text-white/40 hover:text-white p-0.5">
+                <Plus className="h-3 w-3" />
+              </button>
+            </div>
+            {current?.sections.map((s, i) => (
+              <div
+                key={i}
+                onClick={() => { setSelectedSection(i); setStyleOpen(false); }}
+                className={cn(
+                  "group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer border text-xs transition-colors",
+                  selectedSection === i ? "bg-primary/15 border-primary/30 text-white" : "border-white/5 text-white/60 hover:bg-white/[0.04]"
+                )}
+              >
+                <span className="truncate min-w-0">
+                  <span className="text-white/25 mr-1">{i + 1}.</span>
+                  {s.heading}
+                </span>
+                <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(i, -1); }} disabled={i === 0} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(i, 1); }} disabled={i === current.sections.length - 1} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(i); }} className="p-0.5 text-white/40 hover:text-white"><Copy className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); removeSection(i); }} className="p-0.5 text-white/40 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
+                </span>
+              </div>
+            ))}
+            {!current?.sections?.length && <p className="text-xs text-white/30 px-1">No sections yet</p>}
+          </div>
+        </div>
+      </div>
+
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex items-center justify-between px-4 h-12 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <button onClick={() => router.push("/deep-research")} className="text-white/50 hover:text-white transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              title={sidebarOpen ? "Hide editor panel" : "Show editor panel"}
+              className={cn(
+                "hidden md:flex h-7 w-7 items-center justify-center rounded-lg border transition-colors",
+                sidebarOpen ? "text-white border-white/20 bg-primary/10" : "text-white/40 border-white/10 hover:text-white"
+              )}
+            >
+              <PanelLeft className="h-3.5 w-3.5" />
+            </button>
             <span className="text-sm font-medium text-white/80 truncate">
-              {artifact?.title || "Deep Research"}
+              {current?.title || "Deep Research"}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -254,7 +422,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
           </div>
 
           {/* Report */}
-          {hasReport && artifact && (
+          {hasReport && current && (
             <div className="max-w-3xl mx-auto py-8 px-6" style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}>
               <div className={cn(
                 "shadow-2xl px-10 py-12 space-y-8",
@@ -263,23 +431,33 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                   : "bg-neutral-900 text-white border border-white/10"
               )}>
                 <header className="border-b-2 pb-6">
-                  <h1 className={cn("text-3xl font-serif font-bold tracking-tight", docLight ? "text-neutral-900" : "text-white")}>
-                    {artifact.title}
+                  <h1
+                    className={cn("text-3xl font-serif font-bold tracking-tight", docLight ? "text-neutral-900" : "text-white")}
+                    style={styleToAttr(current.titleStyle)}
+                  >
+                    {current.title}
                   </h1>
-                  {artifact.summary && (
+                  {current.summary && (
                     <p className={cn("mt-4 text-sm leading-relaxed", docLight ? "text-neutral-600" : "text-white/60")}>
-                      {artifact.summary}
+                      {current.summary}
                     </p>
                   )}
                 </header>
 
                 <div className="space-y-6">
-                  {artifact.sections.map((section, i) => (
-                    <section key={i}>
-                      <h2 className={cn(
-                        "flex items-center gap-2 text-lg font-serif font-semibold pb-2 mb-3 border-b",
-                        docLight ? "text-neutral-800 border-neutral-200" : "text-white border-white/10"
-                      )}>
+                  {current.sections.map((section, i) => (
+                    <section
+                      key={i}
+                      onClick={() => { setSelectedSection(i); setStyleOpen(false); }}
+                      className={cn("rounded-lg -mx-2 px-2 cursor-pointer transition-colors", selectedSection === i && "ring-2 ring-primary/40 bg-primary/5")}
+                    >
+                      <h2
+                        className={cn(
+                          "flex items-center gap-2 text-lg font-serif font-semibold pb-2 mb-3 border-b",
+                          docLight ? "text-neutral-800 border-neutral-200" : "text-white border-white/10"
+                        )}
+                        style={styleToAttr(section.style)}
+                      >
                         <span className={cn("text-xs font-mono", docLight ? "text-neutral-400" : "text-violet-400")}>
                           {String(i + 1).padStart(2, "0")}
                         </span>
@@ -292,13 +470,13 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                   ))}
                 </div>
 
-                {artifact.sources?.length > 0 && (
+                {current.sources?.length > 0 && (
                   <div className="pt-6 border-t">
                     <h2 className={cn("text-lg font-serif font-semibold mb-3", docLight ? "text-neutral-800" : "text-white")}>
                       Sources
                     </h2>
                     <ul className="space-y-2">
-                      {artifact.sources.map((src, i) => (
+                      {current.sources.map((src, i) => (
                         <li key={i} className={cn("flex items-start gap-2 text-xs", docLight ? "text-neutral-500" : "text-white/50")}>
                           <ExternalLink className={cn("h-3 w-3 mt-0.5 flex-shrink-0", docLight ? "text-neutral-400" : "text-violet-400")} />
                           <span className="min-w-0">
@@ -330,6 +508,91 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
           runningText="Researching..."
           emptyText="Ask about a topic to begin multi-phase research with iterative refinement."
         />
+      )}
+
+      {/* Floating editor card */}
+      {sidebarOpen && selectedSection !== undefined && current && hasReport && (
+        <div className="fixed right-4 top-16 bottom-16 z-50 hidden md:flex flex-col w-80 rounded-xl border border-white/10 bg-neutral-900/95 backdrop-blur shadow-2xl">
+          <div className="flex items-center gap-2 px-3 h-10 border-b border-white/10 flex-shrink-0">
+            <span className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Editor</span>
+            <button
+              onClick={() => setStyleOpen((o) => !o)}
+              className={cn(
+                "ml-auto flex items-center gap-1 px-2 h-6 rounded-md text-[10px] border transition-colors",
+                styleOpen ? "bg-primary/20 border-primary/30 text-white" : "border-white/10 text-white/40 hover:text-white"
+              )}
+            >
+              <SlidersHorizontal className="h-3 w-3" /> Style
+            </button>
+            <button onClick={() => setSelectedSection(null)} className="p-1 text-white/40 hover:text-white rounded-md">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar p-4 space-y-4">
+            {selectedSection === null ? (
+              <>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Title</label>
+                  <textarea
+                    value={current.title}
+                    onChange={(e) => updateTitle(e.target.value)}
+                    rows={2}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary/50 resize-none thin-scrollbar"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Summary</label>
+                  <textarea
+                    value={current.summary ?? ""}
+                    onChange={(e) => updateSummary(e.target.value)}
+                    rows={5}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary/50 resize-none thin-scrollbar"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Heading</label>
+                  <textarea
+                    value={current.sections[selectedSection]?.heading ?? ""}
+                    onChange={(e) => updateSectionHeading(selectedSection, e.target.value)}
+                    rows={2}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary/50 resize-none thin-scrollbar"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Content</label>
+                  <textarea
+                    value={current.sections[selectedSection]?.content ?? ""}
+                    onChange={(e) => updateSectionContent(selectedSection, e.target.value)}
+                    rows={14}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-primary/50 resize-none thin-scrollbar font-mono"
+                  />
+                </div>
+              </>
+            )}
+            {styleOpen && (
+              <div className="border-t border-white/10 pt-4">
+                <BlockStyleEditor
+                  style={selectedStyle ?? undefined}
+                  onChange={(style) => {
+                    if (!current) return;
+                    const next = { ...style } as BlockStyle;
+                    if (selectedSection === null) {
+                      persist({ ...current, titleStyle: next });
+                    } else if (selectedSection !== undefined) {
+                      const sections = current.sections.map((s, i) =>
+                        i === selectedSection ? { ...s, style: next } : s
+                      );
+                      persist({ ...current, sections });
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
