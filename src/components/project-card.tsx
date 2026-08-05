@@ -276,27 +276,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, showCopyButto
 
 export const ProjectCardSkeleton: React.FC = () => {
   return (
-    <div className="group hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 ease-out hover:scale-[1.02] bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur-sm border border-slate-700/50 hover:border-blue-500/50 h-[16rem] w-full flex flex-col overflow-hidden p-0 rounded-2xl">
-      {/* Top Section - Enhanced Code Preview */}
-      <div className="relative w-full h-28 bg-gradient-to-br from-blue-900/30 via-slate-800/40 to-purple-900/30 border-b border-slate-600/30">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <Skeleton className="w-12 h-12 rounded-xl" />
-            <Skeleton className="w-20 h-4 rounded-md" />
-          </div>
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 space-y-4">
+      <div className="flex items-start gap-3">
+        <Skeleton className="w-10 h-10 rounded-lg shrink-0" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
         </div>
       </div>
-
-      {/* Bottom Section - Enhanced Content */}
-      <div className="flex-1 flex flex-col p-5 bg-gradient-to-b from-slate-800/50 to-slate-900/50">
-        {/* Title */}
-        <Skeleton className="h-5 w-full mb-4 flex-1" />
-        
-        {/* Enhanced Action Button */}
-        <div className="mt-auto">
-          <Skeleton className="h-9 w-full rounded-lg" />
-        </div>
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-5/6" />
       </div>
+      <Skeleton className="h-8 w-full rounded-lg" />
     </div>
   );
 };

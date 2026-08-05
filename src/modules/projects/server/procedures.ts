@@ -35,25 +35,29 @@ export const projectsRouter = createTRPCRouter({
     }),
     getMany: protectedProcedure
         .query(async ({ ctx }) => {
-            const projects = await prisma.project.findMany({
-                where: {
-                    userId: ctx.auth.userId,
-                },
-                take: 100,
-                orderBy: [
-                    { isPinned: "desc" },
-                    { updatedAt: "desc" },
-                ],
-                include: {
-                    messages: {
-                        take: 1,
-                        orderBy: {
-                            createdAt: "desc",
+            try {
+                const projects = await prisma.project.findMany({
+                    where: {
+                        userId: ctx.auth.userId,
+                    },
+                    take: 100,
+                    orderBy: [
+                        { isPinned: "desc" },
+                        { updatedAt: "desc" },
+                    ],
+                    include: {
+                        messages: {
+                            take: 1,
+                            orderBy: {
+                                createdAt: "desc",
+                            },
                         },
                     },
-                },
-            });
-            return projects;
+                });
+                return projects;
+            } catch {
+                return [];
+            }
         }),
     getAll: baseProcedure
         .input(z.object({
@@ -62,41 +66,45 @@ export const projectsRouter = createTRPCRouter({
             projectType: z.enum(['webapp', 'contract']).optional(),
         }))
         .query(async ({ input }) => {
-            const { limit, cursor, projectType } = input;
-            
-            // Map frontend values to database values
-            const dbProjectType = projectType === 'webapp' ? 'WEBSITE' : 'DAPP';
-            
-            const projects = await prisma.project.findMany({
-                take: limit + 1, // Take one extra to check if there are more
-                cursor: cursor ? { id: cursor } : undefined,
-                where: {
-                    isPublic: true,
-                    ...(projectType ? { projectType: dbProjectType } : {}),
-                },
-                orderBy: {
-                    updatedAt: "desc",
-                },
-                include: {
-                    messages: {
-                        take: 1,
-                        orderBy: {
-                            createdAt: "desc",
+            try {
+                const { limit, cursor, projectType } = input;
+                
+                // Map frontend values to database values
+                const dbProjectType = projectType === 'webapp' ? 'WEBSITE' : 'DAPP';
+                
+                const projects = await prisma.project.findMany({
+                    take: limit + 1, // Take one extra to check if there are more
+                    cursor: cursor ? { id: cursor } : undefined,
+                    where: {
+                        isPublic: true,
+                        ...(projectType ? { projectType: dbProjectType } : {}),
+                    },
+                    orderBy: {
+                        updatedAt: "desc",
+                    },
+                    include: {
+                        messages: {
+                            take: 1,
+                            orderBy: {
+                                createdAt: "desc",
+                            },
                         },
                     },
-                },
-            });
+                });
 
-            let nextCursor: typeof cursor | undefined = undefined;
-            if (projects.length > limit) {
-                const nextItem = projects.pop();
-                nextCursor = nextItem?.id;
+                let nextCursor: typeof cursor | undefined = undefined;
+                if (projects.length > limit) {
+                    const nextItem = projects.pop();
+                    nextCursor = nextItem?.id;
+                }
+
+                return {
+                    projects,
+                    nextCursor,
+                };
+            } catch {
+                return { projects: [], nextCursor: undefined };
             }
-
-            return {
-                projects,
-                nextCursor,
-            };
         }),
     create: protectedProcedure
         .input(z.object({

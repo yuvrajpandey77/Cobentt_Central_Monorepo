@@ -3,8 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import { inngest } from '@/inngest/client';
 import prisma from '@/lib/db';
 import { z } from 'zod';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
-// Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
 
 const deployContractSchema = z.object({
@@ -32,6 +32,11 @@ export async function POST(
     });
     if (!project || project.userId !== userId) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const rl = await checkRateLimit(`project:${userId}`, RATE_LIMITS.project);
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     const body = await request.json();

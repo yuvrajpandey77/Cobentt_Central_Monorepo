@@ -268,7 +268,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
           {/* Collapsed icons */}
           {isCollapsed && (
             <div className="flex flex-col items-center gap-2 flex-shrink-0">
-              <Link href="/" className="group">
+              <Link href="/chat" className="group">
                 <div className={iconClasses}>
                   <MessageCircle className="w-3.5 h-3.5 text-white/80 group-hover:text-primary" />
                 </div>

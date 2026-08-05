@@ -277,15 +277,15 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  --color-bg-primary: #050505;
-  --color-bg-secondary: #0D0D0D;
-  --color-bg-card: #141414;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A1A1AA;
-  --color-accent-secondary: #D4D4D8;
-  --color-accent-hover: #E4E4E7;
-  --color-success: #22c55e;
-  --color-danger: #ef4444;
+  --color-bg-primary: #101314;
+  --color-bg-secondary: #1a1d20;
+  --color-bg-card: #24292D;
+  --color-text-primary: #E8F1F6;
+  --color-text-secondary: #96A0AB;
+  --color-accent-secondary: #96A0AB;
+  --color-accent-hover: #E8F1F6;
+  --color-success: #b3c79a;
+  --color-danger: #c6a6a2;
 }
 
 /* Landing page accent override — scope to /overview routes */
@@ -489,18 +489,17 @@ body {
     p, span, a, button, label, small, strong, em,
     li, blockquote, code, kbd, mark, time,
     th, td, dt, dd) {
-    background-image: linear-gradient(to bottom, #ffffff, #e5e7eb, #ffffff);
+    background-image: linear-gradient(to bottom, #ffffff, #e5e7eb 50%, #ffffff 100%);
+    background-size: 100% calc(100% + 0.8em);
+    background-position: top;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   ::placeholder {
-    background-image: linear-gradient(to bottom, #ffffff, #e5e7eb, #ffffff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    opacity: 1; /* ensure visibility across browsers */
+    color: rgba(255, 255, 255, 0.4);
+    opacity: 1;
   }
 
   /* Exclusions: keep solid colors for interactive controls */

@@ -4,6 +4,7 @@ import Razorpay from "razorpay";
 import { z } from "zod";
 import prisma from "@/lib/db";
 import { logPaymentEvent } from "@/lib/payment-audit";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,11 @@ export async function POST(req: NextRequest) {
     });
     if (!admin) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+
+    const rl = await checkRateLimit(`admin:${session.userId}`, RATE_LIMITS.admin);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     const body = await req.json();

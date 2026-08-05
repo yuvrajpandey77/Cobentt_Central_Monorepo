@@ -7,22 +7,26 @@ import { DEFAULT_MODEL } from "@/lib/models";
 export const conversationsRouter = createTRPCRouter({
   getAll: protectedProcedure
     .query(async ({ ctx }) => {
-      const conversations = await prisma.conversation.findMany({
-        where: { userId: ctx.auth.userId },
-        take: 100,
-        orderBy: [
-          { isPinned: "desc" },
-          { updatedAt: "desc" },
-        ],
-        include: {
-          messages: {
-            take: 1,
-            orderBy: { createdAt: "desc" },
-            select: { content: true, role: true, createdAt: true },
+      try {
+        const conversations = await prisma.conversation.findMany({
+          where: { userId: ctx.auth.userId },
+          take: 100,
+          orderBy: [
+            { isPinned: "desc" },
+            { updatedAt: "desc" },
+          ],
+          include: {
+            messages: {
+              take: 1,
+              orderBy: { createdAt: "desc" },
+              select: { content: true, role: true, createdAt: true },
+            },
           },
-        },
-      });
-      return conversations;
+        });
+        return conversations;
+      } catch {
+        return [];
+      }
     }),
 
   getById: protectedProcedure
@@ -122,21 +126,25 @@ export const conversationsRouter = createTRPCRouter({
   getByMode: protectedProcedure
     .input(z.object({ mode: z.string().min(1) }))
     .query(async ({ input, ctx }) => {
-      const conversations = await prisma.conversation.findMany({
-        where: { userId: ctx.auth.userId, mode: input.mode },
-        orderBy: [
-          { isPinned: "desc" },
-          { updatedAt: "desc" },
-        ],
-        include: {
-          messages: {
-            take: 1,
-            orderBy: { createdAt: "desc" },
-            select: { content: true, role: true, createdAt: true },
+      try {
+        const conversations = await prisma.conversation.findMany({
+          where: { userId: ctx.auth.userId, mode: input.mode },
+          orderBy: [
+            { isPinned: "desc" },
+            { updatedAt: "desc" },
+          ],
+          include: {
+            messages: {
+              take: 1,
+              orderBy: { createdAt: "desc" },
+              select: { content: true, role: true, createdAt: true },
+            },
           },
-        },
-      });
-      return conversations;
+        });
+        return conversations;
+      } catch {
+        return [];
+      }
     }),
 
   search: protectedProcedure

@@ -607,7 +607,7 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative min-h-screen flex items-center pt-20 lg:pt-24 pb-16 lg:pb-20 overflow-hidden"
+      className="relative min-h-screen flex items-center pt-20 lg:pt-24 pb-16 lg:pb-20"
     >
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10 w-full relative z-10">
         <div className="relative">
