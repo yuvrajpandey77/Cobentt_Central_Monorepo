@@ -44,7 +44,7 @@ export const ProjectLoading = ({ onComplete }: ProjectLoadingProps) => {
         if (prev >= 100) {
           console.log("Progress completed, calling onComplete");
           clearInterval(progressInterval);
-          onComplete();
+          setTimeout(() => onComplete(), 0);
           return 100;
         }
         return prev + (100 / 87.5); // 3.5 seconds = 87.5 intervals of 40ms

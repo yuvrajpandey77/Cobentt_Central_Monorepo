@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Search, Copy, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,25 +26,27 @@ import {
   ZoomOut,
   Sun,
   Moon,
+  PanelLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { MODE_DEFINITIONS } from "@/lib/modes/definitions";
+import { MODE_DEFINITIONS, SLIDE_THEMES } from "@/lib/modes/definitions";
 import {
   Artifact,
   ArtifactBlock,
   ModeKey,
   ModeDefinition,
+  BlockTypeDef,
   makeId,
 } from "@/lib/modes/types";
 import { PropertyEditor } from "./property-editor";
-import { SlidesRenderer, DocumentBlockRenderer } from "./renderers";
+import { SlidesRenderer, DocumentBlockRenderer, styleToAttr } from "./renderers";
 import { ModeChatPanel, ModeChatMessage } from "./mode-chat-panel";
-import { DataEditor, GridCellKind } from "@glideapps/glide-data-grid";
+import { SheetEditor } from "./sheet-editor";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown as cmMarkdown } from "@codemirror/lang-markdown";
 import { blocksToMarkdown, markdownToBlocks } from "@/lib/modes/markdown";
-import { HyperFormula } from "hyperformula";
 
 export type Viewport = "desktop" | "tablet" | "phone";
 
@@ -80,6 +84,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   const def = MODE_DEFINITIONS[mode] as ModeDefinition | undefined;
 
   const [activeTab, setActiveTab] = useState<"blocks" | "properties">("blocks");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [chatOpen, setChatOpen] = useState(true);
@@ -89,18 +94,45 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   const [exporting, setExporting] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [docLight, setDocLight] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [blockSearch, setBlockSearch] = useState("");
+  const [themeId, setThemeId] = useState<string>("midnight");
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
+  const [draft, setDraft] = useState<Artifact | null>(null);
+  const blockRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const [floatingPos, setFloatingPos] = useState<{ top: number; left: number } | null>(null);
 
   const conversation = useQuery(trpc.conversations.getById.queryOptions({ id: conversationId }));
 
   const fragment = conversation.data?.messages
     ?.flatMap((m) => m.fragments ?? [])
+    .reverse()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .find((f: any) => f.mode === mode || !f.mode);
 
-  const artifact = useMemo<Artifact>(() => {
+  const serverArtifact = useMemo<Artifact>(() => {
     if (!fragment) return { title: "", blocks: [] };
     return parseArtifact((fragment.files as Record<string, unknown>)?.artifact);
+  }, [fragment]);
+
+  // Local draft wins while the user is editing (instant, no refetch flicker).
+  // When the server fragment changes identity (fresh AI generation / initial load)
+  // we adopt the new server artifact; otherwise the draft persists across refetches.
+  const artifact: Artifact = draft ?? serverArtifact;
+
+  const activeTheme = SLIDE_THEMES.find((t) => t.id === (artifact.theme || themeId)) ?? SLIDE_THEMES[0];
+
+  const artifactRef = useRef<Artifact>(artifact);
+  artifactRef.current = artifact;
+
+  const lastFragmentId = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const fragId = (fragment as unknown as { id?: string } | undefined)?.id;
+    if (!fragId) return;
+    if (lastFragmentId.current !== fragId) {
+      lastFragmentId.current = fragId;
+      setDraft(null);
+    }
   }, [fragment]);
 
   const selectedBlock = useMemo(() => {
@@ -108,8 +140,45 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     return artifact.blocks.find((b) => b.id === selectedId) ?? null;
   }, [artifact, selectedId]);
 
+  // Position the floating property card just to the right of the selected block.
+  const computeFloatingPos = useCallback(() => {
+    const el = selectedId ? blockRefs.current.get(selectedId) : null;
+    if (!el) {
+      setFloatingPos(null);
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    const gap = 14;
+    const cardW = 280;
+    const margin = 12;
+    let left = rect.right + gap;
+    if (left + cardW > window.innerWidth - margin) {
+      left = rect.left - gap - cardW;
+    }
+    left = Math.max(margin, left);
+    const top = Math.min(Math.max(margin, rect.top), window.innerHeight - 60);
+    setFloatingPos({ top, left });
+  }, [selectedId]);
+
+  useEffect(() => {
+    computeFloatingPos();
+  }, [computeFloatingPos, artifact, selectedId, viewport, zoom, docLight, sidebarOpen, chatOpen]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const onScroll = () => computeFloatingPos();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [selectedId, computeFloatingPos]);
+
   const persist = useCallback(
     (next: Artifact, cb?: () => void) => {
+      // Apply instantly to the local draft so the UI has zero latency.
+      setDraft(next);
       if (!fragment) return;
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(async () => {
@@ -141,6 +210,11 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     persist(next);
   };
 
+  const setTheme = (id: string) => {
+    setThemeId(id);
+    persist({ ...artifact, theme: id });
+  };
+
   const addBlock = (type: string) => {
     const blockDef = def?.blockTypes.find((b) => b.type === type);
     if (!blockDef) return;
@@ -159,6 +233,18 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     const next: Artifact = { ...artifact, blocks: artifact.blocks.filter((b) => b.id !== id) };
     persist(next);
     if (selectedId === id) setSelectedId(null);
+  };
+
+  const duplicateBlock = (id: string) => {
+    const idx = artifact.blocks.findIndex((b) => b.id === id);
+    if (idx === -1) return;
+    const src = artifact.blocks[idx];
+    const copy: ArtifactBlock = { ...src, id: makeId(), props: JSON.parse(JSON.stringify(src.props)) };
+    const blocks = [...artifact.blocks];
+    blocks.splice(idx + 1, 0, copy);
+    persist({ ...artifact, blocks });
+    setSelectedId(copy.id);
+    setActiveTab("properties");
   };
 
   const moveBlock = (index: number, dir: -1 | 1) => {
@@ -213,16 +299,33 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
 
   const triggerAI = useCallback(
     async (message: string) => {
+      setGenerating(true);
       try {
         const res = await fetch(`/api/modes/${mode}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId, message }),
+          body: JSON.stringify({
+            conversationId,
+            message,
+            currentArtifact: serializeArtifact(artifactRef.current),
+          }),
         });
-        if (!res.ok) throw new Error("Generation failed");
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          const msg =
+            (data as { error?: string } | null)?.error ||
+            (data as { message?: string } | null)?.message ||
+            "Generation failed";
+          toast.error(msg);
+          throw new Error(msg);
+        }
         queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
-      } catch {
-        toast.error("Failed to generate with AI");
+      } catch (err) {
+        if (!(err instanceof Error && err.message === "Generation failed")) {
+          toast.error(err instanceof Error ? err.message : "Failed to generate with AI");
+        }
+      } finally {
+        setGenerating(false);
       }
     },
     [conversationId, mode, queryClient, trpc]
@@ -255,7 +358,14 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   const isLoading = conversation.isLoading;
 
   if (isLoading) {
-    return <div className="flex-1 flex items-center justify-center text-white/40 text-sm">Loading...</div>;
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-white/40 text-sm">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading workspace...
+        </div>
+      </div>
+    );
   }
 
   if (!def) {
@@ -267,7 +377,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   return (
     <div className="flex h-full w-full">
       {/* Editor sidebar (left) */}
-      <div className="hidden md:flex flex-col w-64 flex-shrink-0 min-h-0 border-r border-white/10 bg-white/[0.02]">
+      <div className={cn("hidden md:flex flex-col w-64 flex-shrink-0 min-h-0 border-r border-white/10 bg-white/[0.02] transition-all", !sidebarOpen && "hidden")}>
         <div className="flex items-center gap-1 px-3 h-12 border-b border-white/10 flex-shrink-0">
           {(["blocks", "properties"] as const).map((tab) => (
             <button
@@ -287,21 +397,70 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
         <div className="flex-1 overflow-y-auto thin-scrollbar p-3 space-y-3">
           {activeTab === "blocks" && (
             <>
+              {mode === "slides" && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Theme</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {SLIDE_THEMES.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setTheme(t.id)}
+                        title={t.label}
+                        className={cn(
+                          "h-8 rounded-lg border transition-all flex items-center justify-center",
+                          activeTheme.id === t.id ? "border-primary ring-1 ring-primary" : "border-white/10 hover:border-white/30"
+                        )}
+                        style={{ background: `linear-gradient(135deg, ${t.bg}, ${t.accent})` }}
+                      >
+                        <span className="text-[9px] font-medium px-1 truncate" style={{ color: t.muted }}>{t.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Add Block</p>
-                {def.blockTypes.map((b) => (
-                  <button
-                    key={b.type}
-                    onClick={() => addBlock(b.type)}
-                    className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5 hover:border-primary/30 hover:bg-white/[0.06] transition-colors"
-                  >
-                    <span className="text-xs text-white/80 font-medium">+ {b.label}</span>
-                  </button>
-                ))}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30" />
+                  <input
+                    value={blockSearch}
+                    onChange={(e) => setBlockSearch(e.target.value)}
+                    placeholder="Search blocks..."
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg pl-8 pr-2 py-1.5 text-xs text-white/80 outline-none focus:border-primary/40"
+                  />
+                </div>
+                {def.blockTypes
+                  .filter((b) => b.label.toLowerCase().includes(blockSearch.trim().toLowerCase()))
+                  .map((b) => {
+                    const used = artifact.blocks.filter((x) => x.type === b.type).length;
+                    return (
+                      <button
+                        key={b.type}
+                        onClick={() => addBlock(b.type)}
+                        className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5 hover:border-primary/30 hover:bg-white/[0.06] transition-colors group"
+                      >
+                        <span className="flex items-center justify-between w-full">
+                          <span className="text-xs text-white/80 font-medium group-hover:text-white">+ {b.label}</span>
+                          {used > 0 && (
+                            <span className="text-[10px] text-white/30 tabular-nums">{used} used</span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                {def.blockTypes.filter((b) => b.label.toLowerCase().includes(blockSearch.trim().toLowerCase())).length === 0 && (
+                  <p className="text-xs text-white/30 px-1">No blocks match “{blockSearch}”</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1 pt-3">Layers</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1 pt-3">
+                  Layers
+                  {artifact.blocks.length > 0 && (
+                    <span className="text-white/20 ml-1 tabular-nums">{artifact.blocks.length}</span>
+                  )}
+                </p>
                 {artifact.blocks.length === 0 && (
                   <p className="text-xs text-white/30 px-1">No blocks yet</p>
                 )}
@@ -326,11 +485,14 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                         </span>
                       </span>
                       <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, -1); }} disabled={i === 0} className="p-0.5 text-white/40 hover:text-white">
+                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, -1); }} disabled={i === 0} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30">
                           <ChevronUp className="h-3 w-3" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, 1); }} disabled={i === artifact.blocks.length - 1} className="p-0.5 text-white/40 hover:text-white">
+                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, 1); }} disabled={i === artifact.blocks.length - 1} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30">
                           <ChevronDown className="h-3 w-3" />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); duplicateBlock(b.id); }} className="p-0.5 text-white/40 hover:text-white" title="Duplicate">
+                          <Copy className="h-3 w-3" />
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); deleteBlock(b.id); }} className="p-0.5 text-white/40 hover:text-red-400">
                           <Trash2 className="h-3 w-3" />
@@ -368,6 +530,16 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           <div className="flex items-center gap-2">
             <button onClick={() => router.push(`/${mode}`)} className="text-white/50 hover:text-white transition-colors">
               <ArrowLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              title={sidebarOpen ? "Hide editor panel" : "Show editor panel"}
+              className={cn(
+                "hidden md:flex h-7 w-7 items-center justify-center rounded-lg border transition-colors",
+                sidebarOpen ? "text-white border-white/20 bg-primary/10" : "text-white/40 border-white/10 hover:text-white"
+              )}
+            >
+              <PanelLeft className="h-3.5 w-3.5" />
             </button>
             <span className="text-sm font-medium text-white/80 truncate max-w-[180px]">
               {artifact.title || "Untitled"}
@@ -488,13 +660,15 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                 {artifact.blocks.map((b, i) => (
                   <div
                     key={b.id}
+                    ref={(el) => { if (el) blockRefs.current.set(b.id, el); }}
+                    style={styleToAttr(b.style)}
                     className={cn(
                       "w-full transition-all",
                       selectedId === b.id && "ring-2 ring-primary/60 rounded-xl"
                     )}
                     onClick={() => setSelectedId(b.id)}
                   >
-                    <SlidesRenderer block={b} viewport={viewport} />
+                    <SlidesRenderer block={b} viewport={viewport} theme={activeTheme} />
                     <p className="text-center text-[10px] text-white/30 mt-1">{i + 1}</p>
                   </div>
                 ))}
@@ -521,7 +695,9 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                   {artifact.blocks.map((b) => (
                     <div
                       key={b.id}
+                      ref={(el) => { if (el) blockRefs.current.set(b.id, el); }}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(b.id); }}
+                      style={styleToAttr(b.style)}
                       className={cn("rounded-lg px-1 transition-all", selectedId === b.id && "ring-2 ring-primary/50 bg-primary/5")}
                     >
                       <DocumentBlockRenderer block={b} light={docLight} />
@@ -568,12 +744,22 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               >
                 <div className="bg-neutral-900 border border-white/10 overflow-x-auto">
                   {artifact.blocks.map((b) => (
-                    <SheetBlock
+                    <div
                       key={b.id}
-                      block={b}
-                      selected={selectedId === b.id}
-                      onSelect={() => setSelectedId(b.id)}
-                    />
+                      ref={(el) => { if (el) blockRefs.current.set(b.id, el); }}
+                      style={styleToAttr(b.style)}
+                    >
+                      {b.type === "stats" ? (
+                        <SheetStatsBlock block={b} selected={selectedId === b.id} onSelect={() => setSelectedId(b.id)} />
+                      ) : (
+                        <SheetEditor
+                          block={b}
+                          selected={selectedId === b.id}
+                          onSelect={() => setSelectedId(b.id)}
+                          onChange={updateBlock}
+                        />
+                      )}
+                    </div>
                   ))}
                   {artifact.blocks.length === 0 && (
                     <p className="text-white/30 text-sm text-center py-16">Add a sheet block to start</p>
@@ -589,7 +775,9 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
       {chatOpen && (
         <ModeChatPanel
           messages={(conversation.data?.messages ?? []) as ModeChatMessage[]}
-          isPending={createMessage.isPending}
+          isPending={createMessage.isPending || generating}
+          running={generating}
+          runningText={generating ? `Generating ${def.label}...` : "Working..."}
           onSend={sendChat}
           emptyText="Describe changes to make, or ask the AI to generate content."
         />
@@ -621,15 +809,26 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           <div className="flex-1 overflow-y-auto thin-scrollbar p-3 space-y-3">
             {activeTab === "blocks" ? (
               <div className="space-y-1.5">
-                {def.blockTypes.map((b) => (
-                  <button
-                    key={b.type}
-                    onClick={() => { addBlock(b.type); }}
-                    className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5 text-xs text-white/80"
-                  >
-                    + {b.label}
-                  </button>
-                ))}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30" />
+                  <input
+                    value={blockSearch}
+                    onChange={(e) => setBlockSearch(e.target.value)}
+                    placeholder="Search blocks..."
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg pl-8 pr-2 py-1.5 text-xs text-white/80 outline-none focus:border-primary/40"
+                  />
+                </div>
+                {def.blockTypes
+                  .filter((b) => b.label.toLowerCase().includes(blockSearch.trim().toLowerCase()))
+                  .map((b) => (
+                    <button
+                      key={b.type}
+                      onClick={() => { addBlock(b.type); }}
+                      className="w-full text-left px-3 py-2 rounded-lg bg-white/[0.03] border border-white/5 text-xs text-white/80"
+                    >
+                      + {b.label}
+                    </button>
+                  ))}
               </div>
             ) : (
               selectedBlock && (
@@ -643,84 +842,115 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           </div>
         </div>
       )}
+
+      {/* Floating property card (beside selected block) */}
+      {floatingPos && selectedBlock && (
+        <FloatingPropertyCard
+          top={floatingPos.top}
+          left={floatingPos.left}
+          block={selectedBlock}
+          def={def.blockTypes.find((t) => t.type === selectedBlock.type)!}
+          label={def.blockTypes.find((t) => t.type === selectedBlock.type)?.label ?? selectedBlock.type}
+          onChange={updateBlock}
+          onDelete={() => deleteBlock(selectedBlock.id)}
+          onDuplicate={() => duplicateBlock(selectedBlock.id)}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function SheetBlock({
-  block,
-  selected,
-  onSelect,
-}: {
-  block: ArtifactBlock;
-  selected: boolean;
-  onSelect: () => void;
-}) {
+function SheetStatsBlock({ block, selected, onSelect }: { block: ArtifactBlock; selected: boolean; onSelect: () => void }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = block.props as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns = Array.isArray(p.columns) ? (p.columns as any[]) : [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows = Array.isArray(p.rows) ? (p.rows as any[][]) : [];
-
-  const evaluateCell = (raw: unknown, col: number, row: number): string => {
-    const str = String(raw ?? "");
-    if (!str.startsWith("=")) return str;
-    try {
-      const sheetData: (string | number)[][] = [];
-      for (let r = 0; r < Math.max(rows.length, 1); r++) {
-        const rowArr: (string | number)[] = [];
-        for (let c = 0; c < Math.max(columns.length, 1); c++) {
-          const cellRaw = rows[r]?.[c];
-          rowArr.push(typeof cellRaw === "string" && cellRaw.startsWith("=") ? null : (cellRaw ?? ""));
-        }
-        sheetData.push(rowArr);
-      }
-      if (sheetData.length === 0) sheetData.push([]);
-      const hf = HyperFormula.buildFromArray(sheetData, { licenseKey: "gpl-v3" });
-      hf.setCellContents({ col, row, sheet: 0 }, str);
-      const value = hf.getCellValue({ col, row, sheet: 0 });
-      return typeof value === "number" ? String(value) : String(value ?? "");
-    } catch {
-      return str;
-    }
-  };
-
-  const getCell = ([col, row]: readonly [number, number]) => {
-    if (row < rows.length && col < columns.length) {
-      const value = evaluateCell(rows[row][col], col, row);
-      return {
-        kind: GridCellKind.Text as const,
-        allowOverlay: true,
-        data: value,
-        displayData: value,
-      };
-    }
-    return { kind: GridCellKind.Text as const, allowOverlay: true, data: "", displayData: "" };
-  };
-
+  const items: { label?: string; value?: string }[] = Array.isArray(p.items) ? p.items : [];
   return (
-    <div onClick={onSelect} className={cn("min-w-[600px]", selected && "ring-2 ring-primary/50")}>
-      <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2">
-        <span className="text-xs font-medium text-white/70">{p.name || "Sheet"}</span>
-        <span className="text-[10px] text-white/30">{columns.length} cols × {rows.length} rows</span>
+    <div onClick={onSelect} className={cn("p-4", selected && "ring-2 ring-primary/50")}>
+      <p className="text-[10px] uppercase tracking-wider text-white/40 font-medium mb-3">{p.title || "Overview"}</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {items.map((item, i) => (
+          <div key={i} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <p className="text-xl font-bold text-white">{item.value ?? "—"}</p>
+            <p className="text-[10px] text-white/40 mt-0.5">{item.label}</p>
+          </div>
+        ))}
       </div>
-      <DataEditor
-        getCellContent={getCell}
-        getCellsForSelection={true}
-        columns={columns.map((c: { header?: string; key?: string }, i: number) => ({
-          title: c.header ?? c.key ?? String.fromCharCode(65 + i),
-          id: c.key ?? String(i),
-          width: 140,
-        }))}
-        rows={Math.max(rows.length, 20)}
-        rowMarkers="checkbox"
-        className="w-full"
-        smoothScrollX
-        smoothScrollY
-        onCellEdited={() => {}}
-        width="100%"
-      />
     </div>
+  );
+}
+
+interface FloatingPropertyCardProps {
+  top: number;
+  left: number;
+  block: ArtifactBlock;
+  def: BlockTypeDef;
+  label: string;
+  onChange: (block: ArtifactBlock) => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onClose: () => void;
+}
+
+function FloatingPropertyCard({
+  top,
+  left,
+  block,
+  def,
+  label,
+  onChange,
+  onDelete,
+  onDuplicate,
+  onClose,
+}: FloatingPropertyCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardTop, setCardTop] = useState(top);
+
+  useEffect(() => {
+    const clamp = () => {
+      const el = cardRef.current;
+      if (!el) return;
+      const h = el.offsetHeight;
+      const margin = 12;
+      const t = Math.max(margin, Math.min(top, window.innerHeight - h - margin));
+      setCardTop(t);
+    };
+    clamp();
+    window.addEventListener("resize", clamp);
+    return () => window.removeEventListener("resize", clamp);
+  }, [top, expanded]);
+
+  return createPortal(
+    <div
+      ref={cardRef}
+      className={cn(
+        "fixed z-40 flex-col rounded-xl border border-white/10 bg-neutral-900/95 backdrop-blur-xl shadow-2xl overflow-hidden",
+        expanded ? "w-[340px]" : "w-72"
+      )}
+      style={{ top: cardTop, left }}
+    >
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/[0.03]">
+        <span className="text-[11px] font-medium text-white/80 truncate">{label}</span>
+        <div className="flex items-center gap-0.5">
+          <button onClick={() => setExpanded(!expanded)} title={expanded ? "Compact" : "Expand"} className="p-1 text-white/40 hover:text-white rounded-md">
+            {expanded ? <ChevronRight className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+          </button>
+          <button onClick={onDuplicate} title="Duplicate" className="p-1 text-white/40 hover:text-white rounded-md">
+            <Copy className="h-3 w-3" />
+          </button>
+          <button onClick={onDelete} title="Delete" className="p-1 text-white/40 hover:text-red-400 rounded-md">
+            <Trash2 className="h-3 w-3" />
+          </button>
+          <button onClick={onClose} title="Close" className="p-1 text-white/40 hover:text-white rounded-md">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+      <div className={cn("overflow-y-auto thin-scrollbar p-3", expanded ? "max-h-[75vh]" : "max-h-[60vh]")}>
+        <PropertyEditor block={block} def={def} onChange={onChange} />
+      </div>
+    </div>,
+    document.body
   );
 }

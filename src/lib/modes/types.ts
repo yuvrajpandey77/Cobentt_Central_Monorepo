@@ -5,6 +5,22 @@ export interface ArtifactBlock {
   type: string;
   props: Record<string, unknown>;
   children?: ArtifactBlock[];
+  style?: BlockStyle;
+}
+
+export interface BlockStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  color?: string;
+  backgroundColor?: string;
+  textAlign?: "left" | "center" | "right";
+  lineHeight?: number;
+  letterSpacing?: number;
+  padding?: number;
+  borderRadius?: number;
+  border?: boolean;
+  shadow?: boolean;
 }
 
 export interface Artifact {
@@ -16,7 +32,7 @@ export interface Artifact {
 export interface BlockProperty {
   key: string;
   label: string;
-  type: "text" | "textarea" | "number" | "select" | "list";
+  type: "text" | "textarea" | "number" | "select" | "list" | "color";
   options?: string[];
   placeholder?: string;
 }

@@ -24,7 +24,8 @@ ${fields}
 export function buildModePrompt(
   mode: ModeKey,
   userMessage: string,
-  templateId?: string
+  templateId?: string,
+  currentArtifact?: Artifact
 ): string {
   const def = MODE_DEFINITIONS[mode];
   if (!def) {
@@ -32,10 +33,26 @@ export function buildModePrompt(
   }
   const template = def.templates.find((t) => t.id === templateId);
 
+  const editSection = currentArtifact
+    ? `
+The user is EDITING an existing document. Apply the requested change to the current document. Here is its current JSON:
+
+${JSON.stringify(currentArtifact, null, 2)}
+
+Changes to make:
+- If the user changes the title, update "title" accordingly.
+- Update, add, or remove blocks to reflect the request.
+- Keep all unrelated blocks and content intact unless the user asks to change them.
+- Preserve every block's structure and only adjust what is requested.
+
+Respond ONLY with the FULL updated JSON object (same shape as the current document).`
+    : `
+The user wants you to create a ${def.label.toLowerCase()} with this request:
+"""${userMessage}"""`;
+
   return `You are an expert content designer for the "${def.label}" mode of the Cobentt app.
 
-The user wants you to create a ${def.label.toLowerCase()} with this request:
-"""${userMessage}"""
+${editSection}
 
 ${template ? `Use this template style: ${template.label}. ${template.description}` : ""}
 
@@ -56,7 +73,7 @@ Rules:
 - Each block MUST have "type" and "props".
 - "props" must only contain the fields listed for that block type.
 - Every block that has a "text"/"title"/"quote" field must have meaningful, complete content based on the user request.
-- Cover the user's topic thoroughly with 5-12 blocks.
+- ${currentArtifact ? "Apply the user's edit to the existing document and return the FULL updated document." : "Cover the user's topic thoroughly with 5-12 blocks."}
 - Make content specific and concrete, never generic placeholders.`;
 }
 

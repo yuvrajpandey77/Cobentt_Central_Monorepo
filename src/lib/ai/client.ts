@@ -14,6 +14,11 @@ interface CompletionOptions {
   stream?: boolean;
 }
 
+// Free/limited tier models cap max_tokens per request (e.g. OpenRouter free → 3999).
+// On a 402 "insufficient credits / max_tokens too high" we retry with progressively
+// smaller budgets instead of failing hard.
+const MAX_TOKEN_LADDER = [3500, 2500, 1600, 1000];
+
 interface RetryOptions {
   maxRetries?: number;
   baseDelayMs?: number;
@@ -58,16 +63,18 @@ export async function chatCompletion(
     headers["X-Title"] = "Cobentt";
   }
 
-  const body = {
-    model: options.model,
-    messages: options.messages,
-    max_tokens: options.maxTokens || 4096,
-    temperature: options.temperature,
-    top_p: options.topP,
-    stream: options.stream ?? false,
-  };
+  const body = () =>
+    ({
+      model: options.model,
+      messages: options.messages,
+      max_tokens: activeMaxTokens,
+      temperature: options.temperature,
+      top_p: options.topP,
+      stream: options.stream ?? false,
+    }) as Record<string, unknown>;
 
   let lastError: Error | null = null;
+  let activeMaxTokens = options.maxTokens || 4096;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
@@ -77,7 +84,7 @@ export async function chatCompletion(
       const response = await fetch(`${config.baseUrl}/chat/completions`, {
         method: "POST",
         headers,
-        body: JSON.stringify(body),
+        body: JSON.stringify(body()),
         signal: controller.signal,
       });
 
@@ -85,6 +92,21 @@ export async function chatCompletion(
 
       if (response.ok) {
         return response;
+      }
+
+      // 402: credit/token-limit exceeded on limited tiers — retry with a smaller budget.
+      if (response.status === 402) {
+        const nextIndex = MAX_TOKEN_LADDER.findIndex((m) => m < activeMaxTokens);
+        if (nextIndex !== -1) {
+          activeMaxTokens = MAX_TOKEN_LADDER[nextIndex];
+          console.warn(
+            `[ai-client] 402 credit limit, reducing max_tokens to ${activeMaxTokens}, attempt ${attempt + 1}/${maxRetries}`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          continue;
+        }
+        const errorBody = await response.text().catch(() => "Credit limit exceeded");
+        throw new Error(`AI API error ${response.status}: ${errorBody}`);
       }
 
       if (isRetryableError(response.status) && attempt < maxRetries) {
