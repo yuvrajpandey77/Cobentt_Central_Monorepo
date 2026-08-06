@@ -37,7 +37,6 @@ interface ChatCtx {
   deleteThread: (id: string) => void;
   selectThread: (id: string) => void;
   addMessage: (msg: Message, threadId?: string) => void;
-  updateLastAssistant: (content: string, thinking?: string, threadId?: string, thinkingTime?: number) => void;
   isStreaming: boolean;
   setIsStreaming: (s: boolean) => void;
 
@@ -353,10 +352,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     addMsgMutation.mutate({ conversationId: targetId, content: msg.content });
   }, [activeThreadId, addMsgMutation]);
 
-  const updateLastAssistant = useCallback((_content: string, _thinking?: string, _threadId?: string, _thinkingTime?: number) => {
-    // Streaming state is managed locally in Composer/MessageList
-  }, []);
-
   const deleteAllData = useCallback(() => {
     if (window.confirm("Delete all conversations? This cannot be undone.")) {
       setActiveThreadId(null);
@@ -384,7 +379,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         activeThread,
         createThread, deleteThread, selectThread,
         renameThread, togglePinThread, toggleArchiveThread,
-        addMessage, updateLastAssistant,
+        addMessage,
         isStreaming, setIsStreaming,
 
         provider, setProvider,

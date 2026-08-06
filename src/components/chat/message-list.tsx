@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import type { Message } from "@/lib/chat-store";
 import { useChat } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
+import { FlowerLoader } from "@/components/flower-loader";
 import {
   Copy,
   Share2,
@@ -15,35 +16,10 @@ import {
   Clock,
 } from "lucide-react";
 
-const ADS = [
-  "Cobentt helps you get more done every day.",
-  "Your AI companion for work, study, and life.",
-  "Supercharge your productivity with Cobentt.",
-  "Think faster, work smarter with Cobentt.",
-];
-
 export function ThinkingLoader({ isStreaming }: { isStreaming: boolean }) {
-  const [adIndex, setAdIndex] = useState(0);
-
-  useEffect(() => {
-    if (!isStreaming) return;
-    const interval = setInterval(() => setAdIndex((prev) => (prev + 1) % ADS.length), 2500);
-    return () => clearInterval(interval);
-  }, [isStreaming]);
-
   if (!isStreaming) return null;
 
-  return (
-    <div className="animate-fade-in-up mb-4">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-[13px] font-medium text-[var(--color-cb-text-muted)]">Thinking</span>
-      </div>
-      <div className="relative overflow-hidden rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] px-4 py-3">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer" />
-        <p key={adIndex} className="relative text-[12px] text-[var(--color-cb-text-muted)] animate-fade-in-up">{ADS[adIndex]}</p>
-      </div>
-    </div>
-  );
+  return <FlowerLoader />;
 }
 
 function ThinkingBlock({ text, time }: { text: string; time?: number }) {
@@ -140,7 +116,7 @@ function renderMarkdown(content: string) {
 
 function renderInline(text: string) {
   const parts: React.ReactNode[] = [];
-  let remaining = text;
+  const remaining = text;
   const regex = /(`[^`]+`)|(\*\*[^*]+\*\*)|(\*[^*]+\*)|(\[([^\]]+)\]\(([^)]+)\))/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -274,18 +250,17 @@ export function MessageList({
                 )}
 
                 {msg.content && (
-                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-[var(--color-cb-border)]">
+                  <div className="flex items-center justify-between mt-3">
+                    <AssistantActions
+                      msg={msg}
+                      onRegenerate={prevUser && onRegenerate ? () => onRegenerate(prevUser.id) : undefined}
+                    />
                     {msg.thinkingTime != null && msg.thinkingTime > 0 && (
                       <div className="flex items-center gap-1 text-[10px] text-[var(--color-cb-text-dim)]">
                         <Clock className="w-3 h-3" />
                         <span>Thought for {msg.thinkingTime.toFixed(1)}s</span>
                       </div>
                     )}
-                    <div className="flex-1" />
-                    <AssistantActions
-                      msg={msg}
-                      onRegenerate={prevUser && onRegenerate ? () => onRegenerate(prevUser.id) : undefined}
-                    />
                   </div>
                 )}
               </div>

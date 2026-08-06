@@ -47,6 +47,13 @@ export async function POST(
     select: { role: true, content: true },
   });
 
+  // The current user message is persisted before streaming, so the last
+  // history entry is this same message. Drop it to avoid feeding the model
+  // a duplicate; the current message is appended below.
+  if (history.length > 0 && history[history.length - 1].role === "USER") {
+    history.pop();
+  }
+
   const assistantMessage = await prisma.message.create({
     data: {
       conversationId,

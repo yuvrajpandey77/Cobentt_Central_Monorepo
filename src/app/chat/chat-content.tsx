@@ -47,6 +47,7 @@ export function ChatContent() {
   const [streamingMsg, setStreamingMsg] = useState<Message | null>(null);
   const [pendingUserMsg, setPendingUserMsg] = useState<Message | null>(null);
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>(undefined);
+  const [regenerateRequest, setRegenerateRequest] = useState<{ userMessageId: string; content: string } | null>(null);
 
   // Read ?q= from URL for prompts coming from the root page
   useEffect(() => {
@@ -64,7 +65,13 @@ export function ChatContent() {
 
   const displayMessages = useMemo(() => {
     const messages = activeThread?.messages || [];
-    const allMessages = pendingUserMsg ? [...messages, pendingUserMsg] : messages;
+    const last = messages[messages.length - 1];
+    const alreadyHasPending =
+      pendingUserMsg &&
+      last?.role === "user" &&
+      last.content === pendingUserMsg.content;
+    const allMessages =
+      pendingUserMsg && !alreadyHasPending ? [...messages, pendingUserMsg] : messages;
     return streamingMsg ? [...allMessages, streamingMsg] : allMessages;
   }, [activeThread?.messages, pendingUserMsg, streamingMsg]);
 
@@ -75,6 +82,14 @@ export function ChatContent() {
   const handleStreamMessage = (msg: Message | null) => {
     if (msg === null) setPendingUserMsg(null);
     setStreamingMsg(msg);
+  };
+
+  const handleRegenerate = (userMessageId: string) => {
+    const userMsg = (activeThread?.messages || []).find(
+      (m) => m.id === userMessageId && m.role === "user"
+    );
+    if (!userMsg || !activeThread) return;
+    setRegenerateRequest({ userMessageId, content: userMsg.content });
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -145,14 +160,24 @@ export function ChatContent() {
             {displayMessages.length === 0 && !streamingMsg ? (
               <EmptyState />
             ) : (
-              <MessageList messages={displayMessages} isStreaming={!!streamingMsg} />
+              <MessageList
+                messages={displayMessages}
+                isStreaming={!!streamingMsg}
+                onRegenerate={handleRegenerate}
+              />
             )}
           </div>
         </div>
 
         {/* Composer */}
-        <div className="px-4 pb-3 pt-2 bg-[var(--color-cb-bg)] -translate-y-[10%]">
-          <Composer onStreamMessage={handleStreamMessage} onUserMessage={handleUserMessage} initialPrompt={initialPrompt} />
+        <div className="px-4 pb-5 pt-2 bg-[var(--color-cb-bg)]">
+          <Composer
+            onStreamMessage={handleStreamMessage}
+            onUserMessage={handleUserMessage}
+            initialPrompt={initialPrompt}
+            regenerateRequest={regenerateRequest}
+            onRegenerateHandled={() => setRegenerateRequest(null)}
+          />
         </div>
       </div>
 

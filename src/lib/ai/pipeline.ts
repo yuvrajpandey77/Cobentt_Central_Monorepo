@@ -198,16 +198,35 @@ export interface RecordTokensOptions {
  * Record token usage after an AI call completes.
  * Derives provider from model string. Non-blocking on failure.
  */
+export function deriveProviderFromModel(model: string): AIProvider {
+  const prefix = model.split("/")[0].toUpperCase();
+  switch (prefix) {
+    case "OPENAI":
+    case "GPT":
+      return "OPENAI";
+    case "ANTHROPIC":
+    case "CLAUDE":
+      return "ANTHROPIC";
+    case "OPENROUTER":
+      return "OPENROUTER";
+    case "GOOGLE":
+    case "GEMINI":
+      return "GOOGLE";
+    case "DEEPSEEK":
+      return "DEEPSEEK";
+    case "QWEN":
+      return "QWEN";
+    default:
+      return model.includes("/") ? "OPENROUTER" : "CUSTOM";
+  }
+}
+
 export async function recordAITokens(opts: RecordTokensOptions) {
   if (!opts.userId || (!opts.promptTokens && !opts.completionTokens)) return;
 
-  const provider = opts.model.includes("/")
-    ? (opts.model.split("/")[0].toUpperCase() as AIProvider)
-    : ("OPENAI" as AIProvider);
-
   await recordTokenUsage({
     userId: opts.userId,
-    provider,
+    provider: deriveProviderFromModel(opts.model),
     model: opts.model,
     promptTokens: opts.promptTokens,
     completionTokens: opts.completionTokens,
