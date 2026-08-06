@@ -235,6 +235,11 @@ enum UserPlan {
 enum AIProvider {
   OPENAI
   ANTHROPIC
+  OPENROUTER
+  GOOGLE
+  DEEPSEEK
+  QWEN
+  CUSTOM
 }
 
 enum WebhookEventType {

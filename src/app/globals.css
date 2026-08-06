@@ -37,7 +37,7 @@
   --color-cb-accent-muted: rgba(163,201,135,0.15);
   --color-cb-accent-glow: rgba(163,201,135,0.3);
   --color-cb-user-bubble: #24292D;
-  --color-cb-assistant-text: #96A0AB;
+  --color-cb-assistant-text: rgba(255, 255, 255, 0.6);
   --color-cb-input-bg: #1a1d20;
   --color-cb-input-focus: #101314;
   --color-cb-tab-bar: #101314;

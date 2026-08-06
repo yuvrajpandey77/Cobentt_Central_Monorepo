@@ -20,6 +20,21 @@ export const MODEL_PRICING = {
     "claude-3-haiku": { input: 0.25, output: 1.25 },
     "claude-3.7": { input: 7.5, output: 22.5 }, // Estimated
   },
+  OPENROUTER: {
+    free: { input: 0, output: 0 },
+  },
+  GOOGLE: {
+    "gemini-2.0-flash-001": { input: 0.35, output: 1.05 },
+    "gemini-2.0-pro-001": { input: 2.5, output: 15.0 },
+  },
+  DEEPSEEK: {
+    "deepseek-chat": { input: 0.27, output: 1.1 },
+    "deepseek-r1": { input: 0.55, output: 2.19 },
+  },
+  QWEN: {
+    "qwen-2.5-coder-32b-instruct": { input: 0.17, output: 0.85 },
+  },
+  CUSTOM: {},
 } as const;
 
 export type AIProvider = keyof typeof MODEL_PRICING;

@@ -181,7 +181,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
   if (!user) {
     return (
       <div className={cn(
-        "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 shadow-2xl transition-all duration-500 ease-in-out relative overflow-hidden",
+        "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 transition-all duration-500 ease-in-out relative overflow-hidden",
         isCollapsed ? "w-[60px]" : "w-[280px]",
         className
       )}>
@@ -248,7 +248,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
   return (
     <>
       <div className={cn(
-        "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 shadow-2xl transition-all duration-500 ease-in-out relative overflow-hidden",
+        "bg-gradient-to-b from-card/60 via-card/40 to-card/60 backdrop-blur-xl border-r border-border/30 transition-all duration-500 ease-in-out relative overflow-hidden",
         isCollapsed ? "w-[52px]" : "w-[240px]",
         className
       )}>

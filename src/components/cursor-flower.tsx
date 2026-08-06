@@ -11,6 +11,7 @@ export function CursorFlower() {
   const [isLight, setIsLight] = useState(false);
   const raf = useRef<number | null>(null);
   const target = useRef({ x: -999, y: -999 });
+  const lastSample = useRef(0);
 
   useEffect(() => {
     setCoarse(window.matchMedia("(pointer: coarse)").matches);
@@ -46,7 +47,10 @@ export function CursorFlower() {
     const onMove = (e: MouseEvent) => {
       target.current = { x: e.clientX, y: e.clientY };
       if (!visible) setVisible(true);
-      sampleBackground(e.clientX, e.clientY);
+      if (Date.now() - lastSample.current > 60) {
+        lastSample.current = Date.now();
+        sampleBackground(e.clientX, e.clientY);
+      }
       const t = e.target as HTMLElement | null;
       setHovering(!!t?.closest?.("a, button, [role='button'], textarea, input, select, [contenteditable='true']"));
     };
@@ -57,8 +61,8 @@ export function CursorFlower() {
     const loop = () => {
       const t = target.current;
       setPos((p) => {
-        const nx = p.x + (t.x - p.x) * 0.2;
-        const ny = p.y + (t.y - p.y) * 0.2;
+        const nx = p.x + (t.x - p.x) * 0.85;
+        const ny = p.y + (t.y - p.y) * 0.85;
         return { x: Math.abs(nx - t.x) < 0.1 ? t.x : nx, y: Math.abs(ny - t.y) < 0.1 ? t.y : ny };
       });
       raf.current = requestAnimationFrame(loop);

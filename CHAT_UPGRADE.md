@@ -381,3 +381,50 @@ The `customDesigns/*` pages are still referenced by some bookmarks and internal 
 ### Build Verification
 
 13. `npm run build` passes with zero errors
+
+---
+
+## Phase 11 — Chat Bug Fixes & Polish
+
+### What Changed
+
+Fixed reported `/chat` issues plus a batch of latent bugs found during a deep pass over the workspace.
+
+| Fix | Root Cause | Files |
+|-----|-----------|-------|
+| **First chat showed the user input twice** | `displayMessages` appended the optimistic `pendingUserMsg` on top of `activeThread.messages`, which already contained the persisted user message after `createConversation` + `selectThread` refetched `getById`. During streaming both rendered. | `src/app/chat/chat-content.tsx` |
+| **Fast refresh broke the UI (input invisible / stuck Stop button)** | Streaming state was split: `isStreaming` lived in the store (survives refresh) while `streamingMsg`/`pendingUserMsg` were local to `ChatContent` (reset on refresh). After refresh mid-stream the stale `isStreaming=true` blocked `handleSend` and forced the Stop button. | `src/components/chat/composer.tsx` |
+| **Line under every assistant response** | A `border-t` row divider under each response was unwanted. Removed. | `src/components/chat/message-list.tsx` |
+| **Copy/share buttons on the wrong side** | Actions row now puts Copy/Regenerate/Share on the left; "Thought for Xs" clock stays on the right. | `src/components/chat/message-list.tsx` |
+| **Regenerate button never rendered** | `MessageList` accepted `onRegenerate` but `ChatContent` never passed it — dead code. Now wired: `ChatContent` forwards a regenerate request to `Composer`, which calls `chatMessages.regenerate` (deletes prior branch replies) then re-streams the user message. | `src/app/chat/chat-content.tsx`, `src/components/chat/composer.tsx` |
+| **Composer overlap / `-translate-y-[10%]` hack** | Removed the translate hack on the composer wrapper that could overlap/cut off the input. | `src/app/chat/chat-content.tsx` |
+| **Dead `updateLastAssistant` stub** | Removed the no-op stub and its interface member from the chat store. | `src/lib/chat-store.tsx` |
+
+### Verification
+
+- `npx tsc --noEmit` — clean
+- `npx eslint src/app/chat src/components/chat src/lib/chat-store.tsx` — clean
+- `next build` — passes
+
+### Notes
+
+- The chat store is backed by tRPC + PostgreSQL (not localStorage); the dedupe in `displayMessages` handles both first-message and `?q=` deep-link flows.
+- Known leftovers (not addressed in this phase): unused `src/modules/chat/ui/components/*` duplicates, duplicate `createConvMutation` in store vs composer, edit-message re-sends instead of replacing, `createThread` "pending"/"New chat" junk-row behavior.
+
+## Phase 12 — Flower Loader, Token Provider Fix & Message Persistence
+
+### What Changed
+
+| Fix | Root Cause | Files |
+|-----|-----------|-------|
+| **Circular loader → flower animation** | Replaced the plain spinner with a self-contained looping flower loader (stem draw, leaves, bloom sway/breath/sparkle, unique gradient ids via `useId`). Removed the rotating "ads" placeholder array from the thinking loader. | `src/components/flower-loader.tsx` (new), `src/components/chat/message-list.tsx` |
+| **`prisma:error` — invalid `AIProvider` value `"OPENROUTER"`** | `TokenUsage.provider` is an `AIProvider` enum that only accepted `OPENAI`/`ANTHROPIC`, but chat routes pass full model ids like `openrouter/free`. Added `deriveProviderFromModel()` (prefix mapping: openai/gpt, anthropic/claude, openrouter, google/gemini, deepseek, qwen, default: slash→OPENROUTER else CUSTOM), expanded the enum, and added pricing entries for the new providers. DB synced via `prisma db push` (migration workflow is broken — `20260805000000_phase5_indexes` references `"TokenUsage"` while the table is `@@map`'d to `token_usage`). | `prisma/schema.prisma`, `src/lib/ai/pipeline.ts`, `src/lib/token-pricing.ts` |
+| **Second user message wiped from the thread** | `handleSend` only persisted the user message on the *first* message (via `conversations.create({ initialMessage })`). For existing threads it called `handleStream` directly, so the user message was never written to the DB — the `getById` refetch after streaming discarded it. `handleSend` now persists each user message via `chatMessages.create` before streaming. | `src/components/chat/composer.tsx` |
+| **Current user message fed to the LLM twice** | The stream route reads the last 6 messages from the DB *and* appends the current user message. Once the user message is persisted before streaming, the last history entry is the same message — now dropped before building context. | `src/app/api/chat/[conversationId]/stream/route.ts` |
+
+### Verification
+
+- `npx tsc --noEmit` — clean
+- `npx eslint` on changed files — 0 errors (only pre-existing unused-var/deps warnings)
+- `next build` — passes; `/api/chat/[conversationId]/stream` and `/chat` routes compile
+- Provider derivation spot-checked with `tsx` against a sample of model ids

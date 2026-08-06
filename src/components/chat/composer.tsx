@@ -20,10 +20,14 @@ export function Composer({
   onStreamMessage,
   onUserMessage,
   initialPrompt,
+  regenerateRequest,
+  onRegenerateHandled,
 }: {
   onStreamMessage?: (msg: Message | null) => void;
   onUserMessage?: (msg: Message) => void;
   initialPrompt?: string;
+  regenerateRequest?: { userMessageId: string; content: string } | null;
+  onRegenerateHandled?: () => void;
 }) {
   const {
     activeThread, createThread, isStreaming, setIsStreaming,
@@ -41,12 +45,34 @@ export function Composer({
   const abortRef = useRef<AbortController | null>(null);
 
   const createConvMutation = useMutation(trpc.conversations.create.mutationOptions());
+  const createMessageMutation = useMutation(trpc.chatMessages.create.mutationOptions());
+  const regenerateMutation = useMutation(trpc.chatMessages.regenerate.mutationOptions({
+    onError: (err) => toast.error(err.message || "Failed to regenerate"),
+  }));
 
   useEffect(() => {
+    if (!regenerateRequest || !activeThread) return;
+    const { userMessageId, content } = regenerateRequest;
+    onRegenerateHandled?.();
+    const run = async () => {
+      try {
+        await regenerateMutation.mutateAsync({ conversationId: activeThread.id, userMessageId });
+        queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: activeThread.id }));
+        await handleStream(activeThread.id, content);
+      } catch {
+        // error toast handled by mutation
+      }
+    };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [regenerateRequest, activeThread]);
+
+  useEffect(() => {
+    setIsStreaming(false);
     return () => {
       if (abortRef.current) abortRef.current.abort();
     };
-  }, []);
+  }, [setIsStreaming]);
 
   useEffect(() => {
     if (pendingEditContent !== null) {
@@ -239,6 +265,14 @@ export function Composer({
         toast.error("Failed to create conversation");
       }
     } else {
+      try {
+        await createMessageMutation.mutateAsync({
+          conversationId: threadId,
+          content: trimmed,
+        });
+      } catch {
+        // Persist failed; still stream so the user gets a reply
+      }
       await handleStream(threadId, trimmed);
     }
   };
