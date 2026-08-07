@@ -5,6 +5,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { Plus, Globe, Send, Loader2, Check, Copy, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ResearchProgress } from "@/components/ui/research-progress";
+import { AttachInput, type AttachmentMeta } from "@/components/chat/attach-input";
 
 export interface ModeChatMessage {
   id: string;
@@ -16,13 +17,14 @@ export interface ModeChatMessage {
 interface ModeChatPanelProps {
   messages: ModeChatMessage[];
   isPending: boolean;
-  onSend: (content: string) => void;
+  onSend: (content: string, attachmentIds?: string[]) => void;
   onRegenerate?: (userMessageId: string) => void;
   emptyText?: string;
   running?: boolean;
   runningText?: string;
   currentPhase?: string;
   progress?: number;
+  conversationId?: string;
 }
 
 const ADS = [
@@ -112,18 +114,33 @@ function ChatMarkdown({ content }: { content: string }) {
   return <>{parts}</>;
 }
 
-function ModeChatComposer({ onSend, isPending }: { onSend: (c: string) => void; isPending: boolean }) {
+function ModeChatComposer({
+  onSend,
+  isPending,
+  conversationId,
+}: {
+  onSend: (c: string, attachmentIds?: string[]) => void;
+  isPending: boolean;
+  conversationId?: string;
+}) {
   const [value, setValue] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    if (!trimmed || isPending) return;
-    onSend(trimmed);
+    if ((!trimmed && attachments.length === 0) || isPending) return;
+    onSend(trimmed, attachments.map((a) => a.id));
     setValue("");
     setShowMenu(false);
+    setAttachments([]);
   };
+
+  const addAttachment = (a: AttachmentMeta) =>
+    setAttachments((prev) => [...prev, a]);
+  const removeAttachment = (id: string) =>
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
 
   return (
     <div className="flex-shrink-0 px-3 pb-3 pt-1 bg-[var(--color-cb-bg)]">
@@ -169,6 +186,14 @@ function ModeChatComposer({ onSend, isPending }: { onSend: (c: string) => void; 
           />
 
           <div className="flex items-center gap-1.5">
+            <AttachInput
+              conversationId={conversationId}
+              onAttach={addAttachment}
+              onRemove={removeAttachment}
+              attachments={attachments}
+              disabled={isPending}
+              className="flex flex-wrap gap-1.5 mt-2 px-1"
+            />
             <button
               type="button"
               className="w-9 h-9 flex items-center justify-center rounded-full text-white/40 hover:text-white/60 hover:bg-white/10"
@@ -179,7 +204,7 @@ function ModeChatComposer({ onSend, isPending }: { onSend: (c: string) => void; 
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!value.trim() || isPending}
+              disabled={(!value.trim() && attachments.length === 0) || isPending}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-black hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -201,6 +226,7 @@ export function ModeChatPanel({
   runningText = "Working...",
   currentPhase,
   progress,
+  conversationId,
 }: ModeChatPanelProps) {
   const [width, setWidth] = useState(340);
   const draggingRef = useRef(false);
@@ -329,7 +355,7 @@ export function ModeChatPanel({
         )}
       </div>
 
-      <ModeChatComposer onSend={onSend} isPending={isPending} />
+      <ModeChatComposer onSend={onSend} isPending={isPending} conversationId={conversationId} />
     </div>
   );
 }

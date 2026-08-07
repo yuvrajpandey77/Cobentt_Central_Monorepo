@@ -25,13 +25,21 @@ export function buildModePrompt(
   mode: ModeKey,
   userMessage: string,
   templateId?: string,
-  currentArtifact?: Artifact
+  currentArtifact?: Artifact,
+  attachmentContext?: string
 ): string {
   const def = MODE_DEFINITIONS[mode];
   if (!def) {
     throw new Error(`No definition for mode: ${mode}`);
   }
   const template = def.templates.find((t) => t.id === templateId);
+
+  const attachmentSection = attachmentContext
+    ? `
+The user attached a file. Use its content as the source material for this task. Here is the extracted text from the attachment:
+${attachmentContext}
+`
+    : "";
 
   const editSection = currentArtifact
     ? `
@@ -52,6 +60,7 @@ The user wants you to create a ${def.label.toLowerCase()} with this request:
 
   return `You are an expert content designer for the "${def.label}" mode of the Cobentt app.
 
+${attachmentSection}
 ${editSection}
 
 ${template ? `Use this template style: ${template.label}. ${template.description}` : ""}

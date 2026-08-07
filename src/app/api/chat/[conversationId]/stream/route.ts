@@ -15,7 +15,7 @@ export async function POST(
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   const { conversationId } = await params;
-  const { message, model: reqModel, sources: reqSources } = await req.json();
+  const { message, model: reqModel, sources: reqSources, attachmentIds } = await req.json();
 
   // Shared pipeline: auth, rate limit, sanitize, injection check, quota, ownership
   const pipeline = await runAIPipeline(message, {
@@ -79,6 +79,25 @@ export async function POST(
         const systemPrompt =
           "You are Cobentt, an AI assistant built by Cogerphere AI Labs. You help users with coding, development, and general questions. Be concise, helpful, and accurate. When sharing code, use markdown code blocks with proper language tags.";
 
+        let attachmentContext = "";
+        if (Array.isArray(attachmentIds) && attachmentIds.length > 0) {
+          try {
+            const attachments = await prisma.attachment.findMany({
+              where: { id: { in: attachmentIds }, conversationId, extractedText: { not: null } },
+              select: { fileName: true, extractedText: true },
+            });
+            attachmentContext = attachments
+              .map((a) => `[${a.fileName}]\n${a.extractedText ?? ""}`)
+              .join("\n\n");
+          } catch (err) {
+            console.warn("[chat/stream] attachment context load failed:", err);
+          }
+        }
+
+        const userContent = attachmentContext
+          ? `The user attached one or more files. Use their content as source material for the question below.\n\nAttached files:\n${attachmentContext}\n\nUser question:\n${sanitizedMessage}`
+          : sanitizedMessage;
+
         const messages: ChatMessage[] = [
           { role: "system", content: systemPrompt },
           ...history.map((m) => ({
@@ -87,7 +106,7 @@ export async function POST(
               : "user") as ChatMessage["role"],
             content: m.content,
           })),
-          { role: "user", content: sanitizedMessage },
+          { role: "user", content: userContent },
         ];
 
         const start = Date.now();

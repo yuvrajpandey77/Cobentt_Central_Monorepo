@@ -71,9 +71,27 @@ model Conversation {
   isPinned   Boolean   @default(false)
   isArchived Boolean   @default(false)
   messages   Message[]
+  attachments Attachment[]
 
   @@index([userId, updatedAt])
   @@map("conversations")
+}
+
+model Attachment {
+  id             String      @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  fileName       String
+  mimeType       String
+  size           Int
+  blob           Bytes
+  extractedText  String?     @db.Text
+  createdAt      DateTime    @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([userId, createdAt])
+  @@map("attachments")
 }
 
 enum MessageRole {

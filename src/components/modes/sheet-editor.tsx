@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ArtifactBlock } from "@/lib/modes/types";
 import { cn } from "@/lib/utils";
-import { Plus, Trash2, Type } from "lucide-react";
+import { Plus, Trash2, Type, Sigma } from "lucide-react";
 import { HyperFormula } from "hyperformula";
+import {
+  DataEditor,
+  GridCellKind,
+  GridColumn,
+  Item,
+} from "@glideapps/glide-data-grid";
+import "@glideapps/glide-data-grid/dist/index.css";
 
 interface SheetEditorProps {
   block: ArtifactBlock;
@@ -35,31 +42,42 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
     : [{ key: "A", header: "Column A", type: "text" }];
   const rows: (string | number | null)[][] = Array.isArray(p.rows) ? p.rows : [];
 
+  const [activeCell, setActiveCell] = useState<Item | null>(null);
+  const [formulaDraft, setFormulaDraft] = useState("");
+  const [showColMenu, setShowColMenu] = useState(false);
+
   const update = (nextProps: AnyProps) => {
     onChange({ ...block, props: { ...block.props, ...nextProps } });
   };
 
-  const [activeCell, setActiveCell] = useState<[number, number] | null>(null);
-
   const numCols = columns.length;
-  const numRows = Math.max(rows.length, 1);
+  const numRows = Math.max(rows.length, 8);
+
+  // Build a HyperFormula instance for evaluating formula cells across the sheet.
+  const evaluator = useMemo(() => {
+    const sheetData: (string | number | null)[][] = [];
+    for (let r = 0; r < numRows; r++) {
+      const arr: (string | number | null)[] = [];
+      for (let c = 0; c < numCols; c++) {
+        const cell = rows[r]?.[c];
+        arr.push(typeof cell === "string" && cell.startsWith("=") ? null : (cell ?? ""));
+      }
+      sheetData.push(arr);
+    }
+    try {
+      return HyperFormula.buildFromArray(sheetData, { licenseKey: "gpl-v3" });
+    } catch {
+      return null;
+    }
+  }, [rows, numRows, numCols]);
 
   const evaluate = (raw: unknown, c: number, r: number): string => {
     const str = String(raw ?? "");
     if (!str.startsWith("=")) return str;
     try {
-      const sheetData: (string | number | null)[][] = [];
-      for (let rr = 0; rr < numRows; rr++) {
-        const arr: (string | number | null)[] = [];
-        for (let cc = 0; cc < numCols; cc++) {
-          const cell = rows[rr]?.[cc];
-          arr.push(typeof cell === "string" && cell.startsWith("=") ? null : (cell ?? ""));
-        }
-        sheetData.push(arr);
-      }
-      const hf = HyperFormula.buildFromArray(sheetData, { licenseKey: "gpl-v3" });
-      hf.setCellContents({ col: c, row: r, sheet: 0 }, str);
-      const v = hf.getCellValue({ col: c, row: r, sheet: 0 });
+      if (!evaluator) return str;
+      evaluator.setCellContents({ col: c, row: r, sheet: 0 }, str);
+      const v = evaluator.getCellValue({ col: c, row: r, sheet: 0 });
       if (typeof v === "number") return (Math.round(v * 10000) / 10000).toString();
       return String(v ?? "");
     } catch {
@@ -113,12 +131,59 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
     update({ columns: nextCols });
   };
 
-  const sum: string = (() => {
-    if (!activeCell || columns[activeCell[0]]?.type !== "number") return "";
-    const v = rows[activeCell[1]]?.[activeCell[0]];
-    if (typeof v === "number") return String(v);
-    return "";
-  })();
+  const gridColumns: GridColumn[] = useMemo(
+    () =>
+      columns.map((col, c) => ({
+        id: col.key,
+        title: col.header || colLetter(c),
+        width: 140,
+        icon: col.type === "number" ? "headerNumber" : "headerString",
+        themeOverride: { bgHeader: "#1a1a1a", textHeader: "#a1a1aa" },
+        hasMenu: false,
+      })),
+    [columns]
+  );
+
+  const getCellContent = (cell: Item): import("@glideapps/glide-data-grid").GridCell => {
+    const [c, r] = cell;
+    if (c >= numCols) return { kind: GridCellKind.Text, allowOverlay: false, displayData: "", data: "" };
+    const col = columns[c];
+    const raw = rows[r]?.[c];
+    const isNumber = col?.type === "number";
+    if (isNumber) {
+      const n = typeof raw === "number" ? raw : raw != null && raw !== "" ? Number(raw) : undefined;
+      return {
+        kind: GridCellKind.Number,
+        allowOverlay: true,
+        data: Number.isFinite(n) ? n : undefined,
+        displayData: evaluate(raw, c, r),
+        allowNegative: true,
+      };
+    }
+    return {
+      kind: GridCellKind.Text,
+      allowOverlay: true,
+      data: String(raw ?? ""),
+      displayData: evaluate(raw, c, r),
+    };
+  };
+
+  const onCellEdited = (cell: Item, newValue: import("@glideapps/glide-data-grid").EditableGridCell) => {
+    const [c, r] = cell;
+    let value: string | number | null = null;
+    if (newValue.kind === GridCellKind.Number) value = newValue.data ?? null;
+    else if (newValue.kind === GridCellKind.Text) value = newValue.data;
+    setCell(c, r, value);
+  };
+
+  const onColumnResize = (_column: GridColumn, newSize: number, colIndex: number) => {
+    // glide emits resize; persist column widths into props for durability
+    const widths = { ...(p.widths ?? {}), [colLetter(colIndex)]: Math.round(newSize) };
+    update({ widths });
+  };
+
+  const activeRaw = activeCell ? rows[activeCell[1]]?.[activeCell[0]] : null;
+  const activeDisplay = activeCell ? evaluate(activeRaw, activeCell[0], activeCell[1]) : "";
 
   return (
     <div
@@ -133,13 +198,20 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
           className="bg-transparent text-xs font-semibold text-white/80 outline-none focus:border-b focus:border-primary/40"
           onClick={(e) => e.stopPropagation()}
         />
-        <span className="text-[10px] text-white/30">{numCols} cols × {numRows} rows</span>
+        <span className="text-[10px] text-white/30">{numCols} cols × {rows.length} rows</span>
         <div className="flex-1" />
         <button onClick={(e) => { e.stopPropagation(); addRow(); }} className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white px-2 py-1 rounded-md hover:bg-white/5" title="Add row">
           <Plus className="h-3 w-3" /> Row
         </button>
         <button onClick={(e) => { e.stopPropagation(); addColumn(); }} className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white px-2 py-1 rounded-md hover:bg-white/5" title="Add column">
           <Plus className="h-3 w-3" /> Col
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowColMenu((v) => !v); }}
+          className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white px-2 py-1 rounded-md hover:bg-white/5"
+          title="Manage columns"
+        >
+          <Trash2 className="h-3 w-3" /> Cols
         </button>
         <div className="w-px h-4 bg-white/10" />
         <button
@@ -152,83 +224,119 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
         </button>
       </div>
 
-      {/* Grid */}
-      <div className="overflow-x-auto thin-scrollbar">
-        <div className="min-w-[640px]" style={{ width: numCols * 140 + 44 }}>
-          <table className="w-full border-collapse text-xs">
-            <thead>
-              <tr>
-                <th className="sticky left-0 bg-neutral-900 border-b border-r border-white/10 p-1 w-10" />
-                {columns.map((col, c) => (
-                  <th key={col.key + c} className="bg-neutral-900 border-b border-r border-white/10 p-0 group/th">
-                    <div className="flex items-center justify-between px-1.5 py-1">
-                      <input
-                        value={col.header}
-                        onChange={(e) => setColumnHeader(c, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="bg-transparent text-[11px] font-medium text-white/60 outline-none w-[60%]"
-                      />
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover/th:opacity-100">
-                        <select
-                          value={col.type || "text"}
-                          onChange={(e) => setColumnType(c, e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="bg-neutral-800 border border-white/10 rounded text-[9px] text-white/50 outline-none"
-                          title="Column type"
-                        >
-                          <option value="text">T</option>
-                          <option value="number">#</option>
-                        </select>
-                        <button onClick={(e) => { e.stopPropagation(); clearColumn(c); }} className="text-white/30 hover:text-white p-0.5" title="Clear column">
-                          <Type className="h-2.5 w-2.5" />
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); removeColumn(c); }} className="text-white/30 hover:text-red-400 p-0.5" title="Delete column">
-                          <Trash2 className="h-2.5 w-2.5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="px-1.5 pb-0.5 text-[9px] text-white/25">{colLetter(c)}</div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: numRows }).map((_, r) => (
-                <tr key={r}>
-                  <td className="sticky left-0 bg-neutral-900 border-r border-white/10 text-center text-[10px] text-white/30 py-1 px-1 w-10 select-none">{r + 1}</td>
-                  {columns.map((col, c) => {
-                    const raw = rows[r]?.[c];
-                    const display = evaluate(raw, c, r);
-                    const isFormula = typeof raw === "string" && raw.startsWith("=");
-                    const isNumber = col.type === "number";
-                    return (
-                      <td key={c} className="border-b border-r border-white/[0.06] p-0">
-                        <input
-                          value={display}
-                          onChange={(e) => setCell(c, r, e.target.value)}
-                          onClick={(e) => { e.stopPropagation(); setActiveCell([c, r]); }}
-                          type={isNumber ? "number" : "text"}
-                          className={cn(
-                            "w-full bg-transparent px-2 py-1 text-[11px] text-white/80 outline-none focus:bg-white/[0.04]",
-                            isFormula && "text-cyan-300",
-                            isNumber && "text-right font-medium tabular-nums",
-                            activeCell && activeCell[0] === c && activeCell[1] === r && "shadow-[inset_0_0_0_1.5px_#f97316]"
-                          )}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Column manager */}
+      {showColMenu && (
+        <div className="px-3 py-2 border-b border-white/10 bg-black/40 backdrop-blur-sm">
+          <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium mb-2">Columns</p>
+          <div className="flex flex-col gap-1.5">
+            {columns.map((col, c) => (
+              <div key={col.key + c} className="flex items-center gap-2">
+                <span className="font-mono text-[10px] text-white/30 w-5">{colLetter(c)}</span>
+                <input
+                  value={col.header}
+                  onChange={(e) => setColumnHeader(c, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1 text-[11px] text-white/80 outline-none focus:border-primary/40"
+                />
+                <select
+                  value={col.type || "text"}
+                  onChange={(e) => setColumnType(c, e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-neutral-800 border border-white/10 rounded text-[10px] text-white/60 outline-none px-1 py-1"
+                  title="Column type"
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                </select>
+                <button onClick={(e) => { e.stopPropagation(); clearColumn(c); }} className="text-white/30 hover:text-white p-1" title="Clear column">
+                  <Type className="h-3 w-3" />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); removeColumn(c); }} className="text-white/30 hover:text-red-400 p-1" title="Delete column">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* Formula bar */}
+      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/10 bg-white/[0.02]">
+        <Sigma className="h-3 w-3 text-cyan-400/70" />
+        <span className="font-mono text-[10px] text-white/40 w-8 text-right">{activeCell ? colLetter(activeCell[0]) + (activeCell[1] + 1) : ""}</span>
+        <input
+          value={formulaDraft !== "" ? formulaDraft : String(activeRaw ?? "")}
+          onChange={(e) => setFormulaDraft(e.target.value)}
+          onBlur={() => setFormulaDraft("")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && activeCell && formulaDraft !== "") {
+              setCell(activeCell[0], activeCell[1], formulaDraft);
+              setFormulaDraft("");
+            }
+          }}
+          placeholder={activeCell ? "Enter value or formula (e.g. =SUM(A1:A5))" : "Select a cell"}
+          className="flex-1 bg-transparent outline-none font-mono text-[11px] text-white/80 placeholder:text-white/25"
+          onClick={(e) => e.stopPropagation()}
+        />
+        {activeCell && <span className="text-[10px] text-white/40 whitespace-nowrap">= {activeDisplay}</span>}
+      </div>
+
+      {/* Grid */}
+      <div className="h-[360px] w-full overflow-hidden">
+        <DataEditor
+          getCellContent={getCellContent}
+          onCellEdited={onCellEdited}
+          onColumnResize={onColumnResize}
+          columns={gridColumns}
+          rows={numRows}
+          rowMarkers="number"
+          width="100%"
+          height="100%"
+          onCellClicked={(cell: Item) => { setActiveCell(cell); setFormulaDraft(""); }}
+          onGridSelectionChange={(sel) => {
+            if (sel.current && sel.current.cell) setActiveCell(sel.current.cell);
+          }}
+          freezeColumns={0}
+          theme={{
+            accentColor: "#f97316",
+            accentFg: "#ffffff",
+            accentLight: "rgba(249,115,22,0.25)",
+            textDark: "#e4e4e7",
+            textMedium: "#a1a1aa",
+            textLight: "#71717a",
+            textBubble: "#e4e4e7",
+            bgIconHeader: "#171717",
+            fgIconHeader: "#a1a1aa",
+            textHeader: "#a1a1aa",
+            textHeaderSelected: "#ffffff",
+            bgCell: "#0f0f0f",
+            bgCellMedium: "#121212",
+            bgHeader: "#171717",
+            bgHeaderHasFocus: "#1c1c1c",
+            bgHeaderHovered: "#1f1f1f",
+            bgBubble: "#27272a",
+            bgBubbleSelected: "#3f3f46",
+            bgSearchResult: "rgba(249,115,22,0.2)",
+            borderColor: "rgba(255,255,255,0.08)",
+            drilldownBorder: "rgba(255,255,255,0.15)",
+            linkColor: "#38bdf8",
+            cellHorizontalPadding: 10,
+            cellVerticalPadding: 6,
+            headerFontStyle: "500 12px system-ui",
+            headerIconSize: 14,
+            baseFontStyle: "13px system-ui",
+            markerFontStyle: "12px system-ui",
+            fontFamily: "system-ui",
+            editorFontSize: "13px",
+            lineHeight: 1.4,
+          }}
+        />
       </div>
 
       <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10 text-[10px] text-white/40">
         <span className="font-mono">fx</span>
         <span>Formulas supported: =SUM(A1:B2), =A1*2, =AVG(...)</span>
-        {sum && <span className="ml-auto text-white/50">Active: <b>{sum}</b></span>}
+        {activeCell && <span className="ml-auto text-white/50">Active: <b className="text-cyan-300">{activeDisplay}</b></span>}
       </div>
     </div>
   );

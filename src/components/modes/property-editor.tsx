@@ -112,11 +112,11 @@ export function PropertyEditor({ block, def, onChange }: PropertyEditorProps) {
                 {(Array.isArray(value) ? value : []).map((item: string, i: number) => (
                   <div key={i} className="flex items-center gap-1.5">
                     <div className="flex flex-col">
-                      <button type="button" disabled={i === 0} onClick={() => moveItem(prop.key, i, -1)} className="text-white/30 hover:text-white disabled:opacity-20 leading-none">
-                        <ChevronUp className="h-3 w-3" />
+                      <button type="button" disabled={i === 0} onClick={() => moveItem(prop.key, i, -1)} className="text-white/60 hover:text-white disabled:opacity-20 leading-none p-0.5 rounded hover:bg-white/10" title="Move up">
+                        <ChevronUp className="h-4 w-4" />
                       </button>
-                      <button type="button" disabled={i === (Array.isArray(value) ? value : []).length - 1} onClick={() => moveItem(prop.key, i, 1)} className="text-white/30 hover:text-white disabled:opacity-20 leading-none">
-                        <ChevronDown className="h-3 w-3" />
+                      <button type="button" disabled={i === (Array.isArray(value) ? value : []).length - 1} onClick={() => moveItem(prop.key, i, 1)} className="text-white/60 hover:text-white disabled:opacity-20 leading-none p-0.5 rounded hover:bg-white/10" title="Move down">
+                        <ChevronDown className="h-4 w-4" />
                       </button>
                     </div>
                     <input

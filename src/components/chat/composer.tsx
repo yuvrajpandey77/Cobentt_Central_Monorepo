@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import TextareaAutosize from "react-textarea-autosize";
 import { Plus, Globe, Send, Square } from "lucide-react";
 import { toast } from "sonner";
+import { AttachInput, type AttachmentMeta, type AttachInputHandle } from "@/components/chat/attach-input";
 
 const starters = [
   "Write a Python script to parse CSV files",
@@ -20,12 +21,14 @@ export function Composer({
   onStreamMessage,
   onUserMessage,
   initialPrompt,
+  initialFiles,
   regenerateRequest,
   onRegenerateHandled,
 }: {
   onStreamMessage?: (msg: Message | null) => void;
   onUserMessage?: (msg: Message) => void;
   initialPrompt?: string;
+  initialFiles?: File[];
   regenerateRequest?: { userMessageId: string; content: string } | null;
   onRegenerateHandled?: () => void;
 }) {
@@ -41,8 +44,10 @@ export function Composer({
 
   const [value, setValue] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const attachRef = useRef<AttachInputHandle>(null);
 
   const createConvMutation = useMutation(trpc.conversations.create.mutationOptions());
   const createMessageMutation = useMutation(trpc.chatMessages.create.mutationOptions());
@@ -90,7 +95,16 @@ export function Composer({
     }
   }, [initialPrompt, isStreaming]);
 
-  const handleStream = async (conversationId: string, userContent: string) => {
+  // Queue files carried over from the root page so they attach to the first
+  // message when initialPrompt auto-sends.
+  useEffect(() => {
+    if (initialFiles && initialFiles.length > 0) {
+      attachRef.current?.queueFiles(initialFiles);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleStream = async (conversationId: string, userContent: string, attachmentIds?: string[]) => {
     setIsStreaming(true);
 
     const assistantId = `stream-${Date.now()}`;
@@ -112,6 +126,7 @@ export function Composer({
           message: userContent,
           model: modelId || undefined,
           sources: webSources,
+          attachmentIds,
         }),
         signal: abortRef.current?.signal,
       });
@@ -246,6 +261,26 @@ export function Composer({
       setShowMenu(false);
     }
 
+    const threadId = activeThread?.id;
+
+    // Files may have been queued before a conversation existed (fresh /chat).
+    // Upload them now that we have (or will have) a thread id.
+    let idsToUpload: string[] = [];
+    if (!overrideText && attachRef.current?.hasPending()) {
+      if (threadId) {
+        const metas = await attachRef.current.uploadPending(threadId);
+        idsToUpload = metas.map((m) => m.id);
+      }
+    }
+
+    const attachmentIds =
+      idsToUpload.length > 0
+        ? idsToUpload
+        : attachments.length > 0
+          ? attachments.map((a) => a.id)
+          : undefined;
+    if (!overrideText) setAttachments([]);
+
     const userMsg: Message = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -254,13 +289,13 @@ export function Composer({
     };
     onUserMessage?.(userMsg);
 
-    const threadId = activeThread?.id;
-
     if (!threadId) {
       try {
         const result = await createConvMutation.mutateAsync({ initialMessage: trimmed });
         selectThread(result.id);
-        await handleStream(result.id, trimmed);
+        const metas = await attachRef.current?.uploadPending(result.id);
+        const ids = metas && metas.length > 0 ? metas.map((m) => m.id) : attachmentIds;
+        await handleStream(result.id, trimmed, ids);
       } catch {
         toast.error("Failed to create conversation");
       }
@@ -273,7 +308,7 @@ export function Composer({
       } catch {
         // Persist failed; still stream so the user gets a reply
       }
-      await handleStream(threadId, trimmed);
+      await handleStream(threadId, trimmed, attachmentIds);
     }
   };
 
@@ -341,6 +376,15 @@ export function Composer({
 
           {/* Right actions */}
           <div className="flex items-center gap-1.5">
+            <AttachInput
+              ref={attachRef}
+              conversationId={activeThread?.id}
+              onAttach={(a) => setAttachments((prev) => [...prev, a])}
+              onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
+              attachments={attachments}
+              disabled={isStreaming}
+              className="flex flex-wrap gap-1.5 px-3 pb-2"
+            />
             <button
               onClick={() => setWebSearch(!webSearch)}
               className={webSearch

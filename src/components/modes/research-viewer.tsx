@@ -67,7 +67,8 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
 
   const conversation = useQuery(trpc.conversations.getById.queryOptions({ id: conversationId }));
 
-  const fragment = conversation.data?.messages
+  const fragment = [...(conversation.data?.messages ?? [])]
+    .reverse()
     ?.flatMap((m) => m.fragments ?? [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .find((f: any) => f.mode === "deep-research" || !f.mode);
@@ -128,7 +129,11 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
         const res = await fetch(`/api/modes/deep-research/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId, message }),
+          body: JSON.stringify({
+            conversationId,
+            message,
+            currentArtifact: fragment ? JSON.stringify({ title: (artifact as { title?: string } | null)?.title, summary: (artifact as { summary?: string } | null)?.summary } as { title?: string; summary?: string }) : undefined,
+          }),
         });
         if (!res.ok) throw new Error("Research failed");
         const reader = res.body?.getReader();
@@ -166,7 +171,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
         setRunning(false);
       }
     },
-    [conversationId, queryClient, trpc]
+    [conversationId, queryClient, trpc, fragment, artifact]
   );
 
   const createMessage = useMutation(
@@ -507,6 +512,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
           running={running}
           runningText="Researching..."
           emptyText="Ask about a topic to begin multi-phase research with iterative refinement."
+          conversationId={conversationId}
         />
       )}
 

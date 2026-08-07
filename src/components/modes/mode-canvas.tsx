@@ -28,6 +28,7 @@ import {
   Moon,
   PanelLeft,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -97,10 +98,13 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   const [generating, setGenerating] = useState(false);
   const [blockSearch, setBlockSearch] = useState("");
   const [themeId, setThemeId] = useState<string>("midnight");
+  const [revealTick, setRevealTick] = useState(0);
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const [draft, setDraft] = useState<Artifact | null>(null);
   const blockRefs = useRef(new Map<string, HTMLDivElement | null>());
   const [floatingPos, setFloatingPos] = useState<{ top: number; left: number } | null>(null);
+  const addPageSentinelRef = useRef<HTMLDivElement>(null);
+  const [atCanvasBottom, setAtCanvasBottom] = useState(false);
 
   const conversation = useQuery(trpc.conversations.getById.queryOptions({ id: conversationId }));
 
@@ -174,6 +178,18 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
       window.removeEventListener("resize", onScroll);
     };
   }, [selectedId, computeFloatingPos]);
+
+  // Reveal an inline "+ Add page" bar when the user scrolls to the bottom
+  // of the canvas, so they can keep appending content naturally.
+  useEffect(() => {
+    if (!addPageSentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setAtCanvasBottom(entry.isIntersecting),
+      { root: null, rootMargin: "0px 0px 120px 0px", threshold: 0 }
+    );
+    observer.observe(addPageSentinelRef.current);
+    return () => observer.disconnect();
+  }, [mode, artifact.blocks.length]);
 
   const persist = useCallback(
     (next: Artifact, cb?: () => void) => {
@@ -255,6 +271,18 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     persist({ ...artifact, blocks });
   };
 
+  // The most useful block type to append when adding a new "page" for this mode.
+  const defaultAddType = useMemo(() => {
+    if (mode === "slides") return "content-slide";
+    if (mode === "sheet") return "sheet";
+    return "heading";
+  }, [mode]);
+
+  const addDefaultBlock = () => {
+    if (!defaultAddType) return;
+    addBlock(defaultAddType);
+  };
+
   const exportFile = async (format: string) => {
     setExporting(true);
     try {
@@ -283,7 +311,10 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     }
   };
 
-  const sendChat = (content: string) => {
+  const pendingAttachmentIds = useRef<string[] | undefined>(undefined);
+
+  const sendChat = (content: string, attachmentIds?: string[]) => {
+    pendingAttachmentIds.current = attachmentIds;
     createMessage.mutate({ conversationId, content });
   };
 
@@ -291,14 +322,16 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     trpc.chatMessages.create.mutationOptions({
       onSuccess: (data) => {
         queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
-        triggerAI(data.content);
+        const atts = pendingAttachmentIds.current;
+        pendingAttachmentIds.current = undefined;
+        triggerAI(data.content, atts);
       },
       onError: (err) => toast.error(err.message || "Failed to send"),
     })
   );
 
   const triggerAI = useCallback(
-    async (message: string) => {
+    async (message: string, attachmentIds?: string[]) => {
       setGenerating(true);
       try {
         const res = await fetch(`/api/modes/${mode}/generate`, {
@@ -308,6 +341,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             conversationId,
             message,
             currentArtifact: serializeArtifact(artifactRef.current),
+            attachmentIds,
           }),
         });
         if (!res.ok) {
@@ -319,7 +353,37 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           toast.error(msg);
           throw new Error(msg);
         }
-        queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
+
+        // Stream tokens so the canvas can show a skeleton and reveal blocks
+        // progressively instead of swapping the whole document at once.
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("No stream");
+        const decoder = new TextDecoder();
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || "";
+          for (const evt of events) {
+            const line = evt.trim();
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.event === "error") {
+                toast.error(data.error || "Generation failed");
+                throw new Error(data.error || "Generation failed");
+              }
+              if (data.event === "done") {
+                setRevealTick((t) => t + 1);
+                queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
+              }
+            } catch (err) {
+              if (err instanceof Error && err.message !== "Generation failed") throw err;
+            }
+          }
+        }
       } catch (err) {
         if (!(err instanceof Error && err.message === "Generation failed")) {
           toast.error(err instanceof Error ? err.message : "Failed to generate with AI");
@@ -484,18 +548,19 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                           <span className="text-white/25"> · {i + 1}</span>
                         </span>
                       </span>
-                      <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, -1); }} disabled={i === 0} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30">
-                          <ChevronUp className="h-3 w-3" />
+                      <span className="flex items-center gap-1.5">
+                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, -1); }} disabled={i === 0} className="p-1.5 text-white/60 hover:text-white disabled:opacity-30 hover:bg-white/10 rounded-md" title="Move up">
+                          <ChevronUp className="h-4 w-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, 1); }} disabled={i === artifact.blocks.length - 1} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30">
-                          <ChevronDown className="h-3 w-3" />
+                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, 1); }} disabled={i === artifact.blocks.length - 1} className="p-1.5 text-white/60 hover:text-white disabled:opacity-30 hover:bg-white/10 rounded-md" title="Move down">
+                          <ChevronDown className="h-4 w-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); duplicateBlock(b.id); }} className="p-0.5 text-white/40 hover:text-white" title="Duplicate">
-                          <Copy className="h-3 w-3" />
+                        <div className="w-px h-4 bg-white/10" />
+                        <button onClick={(e) => { e.stopPropagation(); duplicateBlock(b.id); }} className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-md" title="Duplicate">
+                          <Copy className="h-3.5 w-3.5" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); deleteBlock(b.id); }} className="p-0.5 text-white/40 hover:text-red-400">
-                          <Trash2 className="h-3 w-3" />
+                        <button onClick={(e) => { e.stopPropagation(); deleteBlock(b.id); }} className="p-1.5 text-white/40 hover:text-red-400 hover:bg-white/10 rounded-md" title="Delete">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </span>
                     </div>
@@ -650,7 +715,12 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto thin-scrollbar">
+        <div className="relative flex-1 min-h-0 overflow-y-auto thin-scrollbar">
+          {generating && (
+            <div className="pointer-events-none absolute inset-0 z-10">
+              <CanvasSkeleton mode={mode} docLight={docLight} />
+            </div>
+          )}
           <div className={cn("mx-auto py-8 px-4 space-y-4", viewportWidth)}>
             {mode === "slides" && (
               <div
@@ -661,10 +731,11 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                   <div
                     key={b.id}
                     ref={(el) => { if (el) blockRefs.current.set(b.id, el); }}
-                    style={styleToAttr(b.style)}
+                    style={{ ...styleToAttr(b.style), animationDelay: `${Math.min(i, 8) * 60}ms` }}
                     className={cn(
                       "w-full transition-all",
-                      selectedId === b.id && "ring-2 ring-primary/60 rounded-xl"
+                      selectedId === b.id && "ring-2 ring-primary/60 rounded-xl",
+                      revealTick > 0 && "animate-fade-in-up"
                     )}
                     onClick={() => setSelectedId(b.id)}
                   >
@@ -692,13 +763,17 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                   )}
                   onClick={() => setSelectedId(null)}
                 >
-                  {artifact.blocks.map((b) => (
+                  {artifact.blocks.map((b, i) => (
                     <div
                       key={b.id}
                       ref={(el) => { if (el) blockRefs.current.set(b.id, el); }}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(b.id); }}
-                      style={styleToAttr(b.style)}
-                      className={cn("rounded-lg px-1 transition-all", selectedId === b.id && "ring-2 ring-primary/50 bg-primary/5")}
+                      style={{ ...styleToAttr(b.style), animationDelay: `${Math.min(i, 8) * 60}ms` }}
+                      className={cn(
+                        "rounded-lg px-1 transition-all",
+                        selectedId === b.id && "ring-2 ring-primary/50 bg-primary/5",
+                        revealTick > 0 && "animate-fade-in-up"
+                      )}
                     >
                       <DocumentBlockRenderer block={b} light={docLight} />
                     </div>
@@ -768,6 +843,23 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               </div>
             )}
           </div>
+
+          {/* Scroll-to-bottom Add Page bar */}
+          <div
+            ref={addPageSentinelRef}
+            className={cn(
+              "mt-2 pb-6 flex items-center justify-center transition-all duration-300",
+              atCanvasBottom ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3 pointer-events-none"
+            )}
+          >
+            <button
+              onClick={addDefaultBlock}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-white/25 bg-white/[0.03] px-4 py-2 text-xs font-medium text-white/60 hover:text-white hover:bg-white/[0.07] hover:border-white/40 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add page
+            </button>
+          </div>
         </div>
       </div>
 
@@ -780,6 +872,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           runningText={generating ? `Generating ${def.label}...` : "Working..."}
           onSend={sendChat}
           emptyText="Describe changes to make, or ask the AI to generate content."
+          conversationId={conversationId}
         />
       )}
 
@@ -857,6 +950,36 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           onClose={() => setSelectedId(null)}
         />
       )}
+    </div>
+  );
+}
+
+function CanvasSkeleton({ mode, docLight }: { mode: string; docLight: boolean }) {
+  const lines = Array.from({ length: mode === "slides" ? 3 : 6 });
+  return (
+    <div className="w-full h-full bg-black/40 backdrop-blur-[2px] flex items-start justify-center p-6">
+      <div className="w-full max-w-2xl space-y-4 animate-pulse">
+        {lines.map((_, i) =>
+          mode === "slides" ? (
+            <div
+              key={i}
+              className="w-full aspect-video rounded-xl border border-white/10 bg-white/[0.04] flex items-center justify-center"
+            >
+              <div className="w-3/5 space-y-3">
+                <div className="h-5 rounded bg-white/10 w-1/2 mx-auto" />
+                <div className="h-3 rounded bg-white/5 w-3/4 mx-auto" />
+                <div className="h-3 rounded bg-white/5 w-2/3 mx-auto" />
+              </div>
+            </div>
+          ) : (
+            <div key={i} className="w-full space-y-2">
+              <div className={cn("h-4 rounded w-3/4", docLight ? "bg-neutral-200" : "bg-white/10")} />
+              <div className={cn("h-3 rounded w-full", docLight ? "bg-neutral-100" : "bg-white/5")} />
+              <div className={cn("h-3 rounded w-5/6", docLight ? "bg-neutral-100" : "bg-white/5")} />
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 }

@@ -127,7 +127,7 @@ const PageContent = () => {
                 <Header />
                 
                 {/* Hero Section */}
-                <section className="relative overflow-hidden h-screen flex items-start justify-center pt-[12.65rem]">
+                <section className="relative overflow-hidden h-screen flex items-start justify-center pt-[10.75rem]">
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
                         <div className="text-center max-w-[47.52rem] mx-auto">
         

@@ -16,7 +16,7 @@ function sse(controller: ReadableStreamDefaultController, event: string, data: R
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { conversationId, message } = body;
+  const { conversationId, message, currentArtifact } = body;
 
   // Shared pipeline: auth, rate limit (3/min — expensive multi-call), sanitize, injection, quota, ownership
   const pipeline = await runAIPipeline(message, {
@@ -29,13 +29,28 @@ export async function POST(req: NextRequest) {
 
   const { userId, sanitizedMessage } = pipeline.ctx;
 
-  // Fetch conversation (pipeline already validated ownership)
   const conversation = await prisma.conversation.findFirst({
     where: { id: conversationId, userId },
     select: { id: true, model: true },
   });
   if (!conversation) {
     return new Response("Conversation not found", { status: 404 });
+  }
+
+  // Prior report context (when user gives a follow-up), so new research
+  // builds on the existing report rather than starting from scratch.
+  let priorContext = "";
+  if (typeof currentArtifact === "string") {
+    try {
+      const prior = JSON.parse(currentArtifact);
+      const priorTitle = (prior as { title?: string })?.title;
+      const priorSummary = (prior as { summary?: string })?.summary;
+      if (priorTitle || priorSummary) {
+        priorContext = `\nBuild on and refine the existing report:\nTitle: ${priorTitle ?? ""}\nCurrent summary: ${priorSummary ?? ""}`;
+      }
+    } catch {
+      priorContext = "";
+    }
   }
 
   const stream = new ReadableStream({
@@ -53,7 +68,7 @@ export async function POST(req: NextRequest) {
           maxTokens: 2000,
           messages: [
             { role: "system", content: "You are a research planner. Respond with a JSON array of 4-6 section headings for a research report on the topic." },
-            { role: "user", content: `Topic: ${sanitizedMessage}\n\nOutput ONLY a JSON array of strings, e.g. ["Introduction", "Key Findings"].` },
+            { role: "user", content: `Topic: ${sanitizedMessage}\n\nOutput ONLY a JSON array of strings, e.g. ["Introduction", "Key Findings"].${priorContext}` },
           ],
         });
         if (!planRes.ok) throw new Error("Planning failed");
@@ -93,7 +108,7 @@ export async function POST(req: NextRequest) {
                 role: "system",
                 content: `You are an expert research writer. Write a detailed, well-structured markdown section for a research report on the topic. Include concrete details, plausible statistics (labeled as estimates where uncertain), and citations as [Source N]. Respond ONLY with the markdown section content.`,
               },
-              { role: "user", content: `Topic: ${sanitizedMessage}\nSection heading: "${heading}"\nPrevious sections: ${sectionContents.map((c, j) => `\n--- ${sections[j]} ---\n${c}`).join("\n")}` },
+              { role: "user", content: `Topic: ${sanitizedMessage}\nSection heading: "${heading}"\nPrevious sections: ${sectionContents.map((c, j) => `\n--- ${sections[j]} ---\n${c}`).join("\n")}${priorContext}` },
             ],
           });
           if (!sectionRes.ok) throw new Error(`Section ${heading} failed`);
