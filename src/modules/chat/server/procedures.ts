@@ -222,10 +222,39 @@ export const conversationsRouter = createTRPCRouter({
           ...(input.isPublic && !conversation.shareToken
             ? { shareToken: randomUUID() }
             : {}),
+          ...(!input.isPublic && conversation.shareToken
+            ? { shareToken: null }
+            : {}),
         },
         select: { isPublic: true, shareToken: true },
       });
       return updated;
+    }),
+
+  // Attach uploaded attachments to a conversation's first (initial) message so
+  // mode canvases can carry files over from the home page and have their pills,
+  // context, and re-generation paths stay in sync with the rest of the app.
+  attachInitialAttachments: protectedProcedure
+    .input(z.object({
+      conversationId: z.string().min(1),
+      attachmentIds: z.array(z.string().min(1)).min(1).max(20),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const conversation = await prisma.conversation.findFirst({
+        where: { id: input.conversationId, userId: ctx.auth.userId },
+        select: { id: true },
+      });
+      if (!conversation) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+      }
+      const firstUser = await prisma.message.findFirst({
+        where: { conversationId: input.conversationId, role: "USER" },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      });
+      if (!firstUser) return { attached: 0 };
+      await attachRefsToMessage(firstUser.id, input.conversationId, input.attachmentIds);
+      return { attached: input.attachmentIds.length };
     }),
 
   getShareStatus: protectedProcedure

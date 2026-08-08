@@ -6,6 +6,7 @@ import { Search, Copy, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCarriedAttachments } from "@/lib/attachments/use-carried";
 import {
   ArrowLeft,
   Boxes,
@@ -84,6 +85,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const def = MODE_DEFINITIONS[mode] as ModeDefinition | undefined;
+  const { carriedIds } = useCarriedAttachments(conversationId);
 
   const [activeTab, setActiveTab] = useState<"blocks" | "properties">("blocks");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -411,6 +413,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   useEffect(() => {
     if (autoRan.current || autoRunning.current) return;
     if (!conversation.data || !def) return;
+    if (carriedIds === undefined) return;
 
     const hasArtifact = artifact.blocks.length > 0 || !!artifact.title;
     const lastUser = conversation.data.messages
@@ -421,13 +424,17 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
     if (lastUser && !hasArtifact) {
       autoRan.current = true;
       autoRunning.current = true;
-      triggerAI(lastUser.content).finally(() => {
+      const attIds =
+        carriedIds && carriedIds.length > 0
+          ? carriedIds
+          : ((lastUser.attachments as Array<{ id: string }> | null) ?? []).map((a) => a.id);
+      triggerAI(lastUser.content, attIds.length > 0 ? attIds : undefined).finally(() => {
         autoRunning.current = false;
       });
     } else {
       autoRan.current = true;
     }
-  }, [conversation.data, artifact, def, triggerAI]);
+  }, [conversation.data, artifact, def, triggerAI, carriedIds]);
 
   const isLoading = conversation.isLoading;
 

@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ModeChatPanel, ModeChatMessage } from "@/components/modes/mode-chat-panel";
 import { ResearchMarkdown, styleToAttr } from "@/components/modes/renderers";
 import { friendlyAIErrorMessage } from "@/lib/ai/client";
+import { useCarriedAttachments } from "@/lib/attachments/use-carried";
 import { DocumentSkeleton } from "@/components/ui/skeleton";
 import { ResearchProgress } from "@/components/ui/research-progress";
 import { BlockStyleEditor } from "@/components/modes/block-style-editor";
@@ -54,6 +55,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { carriedIds } = useCarriedAttachments(conversationId);
   const [chatOpen, setChatOpen] = useState(true);
   const [currentPhase, setCurrentPhase] = useState("");
   const [progress, setProgress] = useState(0);
@@ -283,6 +285,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
   useEffect(() => {
     if (autoRan.current || autoRunning.current) return;
     if (!conversation.data) return;
+    if (carriedIds === undefined) return;
 
     const lastUser = messages
       .filter((m) => m.role === "USER")
@@ -292,13 +295,17 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
     if (lastUser && !hasReport) {
       autoRan.current = true;
       autoRunning.current = true;
-      runResearch(lastUser.content).finally(() => {
+      const attIds =
+        carriedIds && carriedIds.length > 0
+          ? carriedIds
+          : ((lastUser.attachments as Array<{ id: string }> | null) ?? []).map((a) => a.id);
+      runResearch(lastUser.content, attIds.length > 0 ? attIds : undefined).finally(() => {
         autoRunning.current = false;
       });
     } else {
       autoRan.current = true;
     }
-  }, [conversation.data, messages, hasReport, runResearch]);
+  }, [conversation.data, messages, hasReport, runResearch, carriedIds]);
 
   return (
     <div className="flex h-full w-full">
