@@ -7,21 +7,64 @@ function truncate(text: string): string {
   return text.trim().slice(0, MAX_EXTRACT_CHARS);
 }
 
-async function extractPdf(buffer: ArrayBuffer): Promise<string | null> {
+async function extractPdfFromPdfParse(buffer: ArrayBuffer): Promise<string> {
   try {
     const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: Buffer.from(buffer) });
     try {
-      const result = await parser.getText();
-      const text = typeof result?.text === "string" ? result.text : "";
-      return truncate(text) || null;
+      // pageJoiner off: blank pages otherwise yield "- N of M -" junk text.
+      const result = await parser.getText({ pageJoiner: "" });
+      return typeof result?.text === "string" ? result.text : "";
     } finally {
-      await parser.destroy();
+      await parser.destroy().catch(() => undefined);
     }
   } catch (err) {
-    console.warn("[attachment-extract] PDF parse failed:", err);
-    return null;
+    console.warn("[attachment-extract] pdf-parse failed:", err);
+    return "";
   }
+}
+
+async function extractPdfFromPdfjs(buffer: ArrayBuffer): Promise<string> {
+  try {
+    const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+    const doc = await getDocument({ data: new Uint8Array(buffer) }).promise;
+    try {
+      let out = "";
+      for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+        const page = await doc.getPage(pageNum);
+        const content = await page.getTextContent();
+        out +=
+          content.items
+            .map((item) => {
+              const str = (item as { str?: unknown })?.str;
+              return typeof str === "string" ? str : "";
+            })
+            .join(" ") + "\n";
+        page.cleanup();
+      }
+      return out.trim();
+    } finally {
+      await doc.destroy().catch(() => undefined);
+    }
+  } catch (err) {
+    console.warn("[attachment-extract] pdfjs-direct failed:", err);
+    return "";
+  }
+}
+
+async function extractPdf(buffer: ArrayBuffer, fileName: string): Promise<string | null> {
+  let text = (await extractPdfFromPdfParse(buffer)).trim();
+  if (!text) {
+    // Try the same pdf.js engine directly (covers wrapper/bundling issues).
+    text = (await extractPdfFromPdfjs(buffer)).trim();
+  }
+  if (!text) {
+    console.warn(
+      `[attachment-extract] PDF "${fileName}" produced no extractable text (scanned/image-only?)`
+    );
+    return "[PDF contains no extractable text - likely a scanned or image-only document]";
+  }
+  return truncate(text);
 }
 
 async function extractDocx(buffer: ArrayBuffer): Promise<string | null> {
@@ -98,7 +141,7 @@ export async function extractAttachmentText(
 ): Promise<string | null> {
   const lower = fileName?.toLowerCase() ?? "";
   if (mimeType === "application/pdf" || lower.endsWith(".pdf")) {
-    return extractPdf(buffer);
+    return extractPdf(buffer, fileName ?? "attachment.pdf");
   }
   if (
     mimeType ===
