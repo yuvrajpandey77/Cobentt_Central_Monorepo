@@ -215,7 +215,10 @@ export function MessageList({
   conversationId?: string;
   readOnly?: boolean;
 }) {
-  const { editMessage } = useChat();
+  // useChat() returns null when this list renders outside ChatProvider
+  // (e.g. the read-only shared-chat page), so always access it safely.
+  const chatCtx = useChat();
+  const editMessage = chatCtx?.editMessage;
 
   if (messages.length === 0) return null;
 
@@ -242,7 +245,7 @@ export function MessageList({
                 </div>
                 {!readOnly && (
                   <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => editMessage(msg.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-colors" title="Edit message">
+                    <button onClick={() => editMessage?.(msg.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-colors" title="Edit message">
                       <Pencil className="w-3 h-3" /> Edit
                     </button>
                   </div>

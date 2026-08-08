@@ -90,6 +90,17 @@ export function Composer({
     }
   }, [pendingEditContent, clearPendingEdit]);
 
+  // Queue files carried over from the root page BEFORE the first send so they
+  // attach to the auto-sent initial message. Depends on [initialFiles] because
+  // chat-content fetches them in a mount effect, so they arrive after first render.
+  const queuedInitialRef = useRef(false);
+  useEffect(() => {
+    if (initialFiles && initialFiles.length > 0 && !queuedInitialRef.current) {
+      queuedInitialRef.current = true;
+      attachRef.current?.queueFiles(initialFiles);
+    }
+  }, [initialFiles]);
+
   const initialSentRef = useRef(false);
   useEffect(() => {
     if (initialPrompt && initialPrompt.trim() && !initialSentRef.current && !isStreaming) {
@@ -97,15 +108,6 @@ export function Composer({
       handleSend(initialPrompt.trim());
     }
   }, [initialPrompt, isStreaming]);
-
-  // Queue files carried over from the root page so they attach to the first
-  // message when initialPrompt auto-sends.
-  useEffect(() => {
-    if (initialFiles && initialFiles.length > 0) {
-      attachRef.current?.queueFiles(initialFiles);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleStream = async (conversationId: string, userContent: string, attachmentIds?: string[]) => {
     setIsStreaming(true);

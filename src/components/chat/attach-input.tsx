@@ -136,6 +136,15 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
       onPendingChange?.(toPills(next));
     };
 
+    // Keep the ref and state in lock-step so hasPending()/getPendingFiles() are
+    // accurate synchronously (callers such as the composer read the ref while
+    // sending, before React has re-rendered this component).
+    const commitPending = (next: PendingFile[]) => {
+      pendingRef.current = next;
+      setPending(next);
+      notifyPending(next);
+    };
+
     const uploadPending = async (targetId: string): Promise<AttachmentMeta[]> => {
       const files = pendingRef.current;
       if (files.length === 0) return [];
@@ -151,9 +160,7 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
             toast.error(err instanceof Error ? err.message : `Failed to upload ${p.name}`);
           }
         }
-        const next: PendingFile[] = [];
-        setPending(next);
-        notifyPending(next);
+        commitPending([]);
         return results;
       } finally {
         setUploading(false);
@@ -161,9 +168,7 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
     };
 
     const removePending = (id: string) => {
-      const next = pendingRef.current.filter((p) => p.id !== id);
-      setPending(next);
-      notifyPending(next);
+      commitPending(pendingRef.current.filter((p) => p.id !== id));
     };
 
     useImperativeHandle(ref, () => ({
@@ -185,8 +190,7 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
             file,
           })),
         ];
-        setPending(next);
-        notifyPending(next);
+        commitPending(next);
       },
       getPendingFiles: () => pendingRef.current.map((p) => p.file),
       removePending,
@@ -217,8 +221,7 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
           ...pendingRef.current,
           { id: `pending-${Date.now()}`, name: file.name, size: file.size, file },
         ];
-        setPending(next);
-        notifyPending(next);
+        commitPending(next);
       }
       if (inputRef.current) inputRef.current.value = "";
     };

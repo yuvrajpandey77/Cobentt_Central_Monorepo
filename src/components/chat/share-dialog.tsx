@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Globe, Lock, Link2, Check, Loader2 } from "lucide-react";
+import { Globe, Lock, Link2, Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -72,10 +72,21 @@ export function ShareDialog({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-sm bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] rounded-tr-[20px] rounded-bl-[20px] rounded-tl-[6px] rounded-br-[6px] p-5 shadow-2xl animate-fade-in-up">
-        <h3 className="text-sm font-semibold text-[var(--color-cb-text-bright)]">Share</h3>
-        <p className="text-[11px] text-[var(--color-cb-text-muted)] mt-1">
-          Control who can view this conversation
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--color-cb-text-bright)]">Share</h3>
+            <p className="text-[11px] text-[var(--color-cb-text-muted)] mt-1">
+              Control who can view this conversation
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-bright)] hover:bg-[var(--color-cb-border)] transition-colors flex-shrink-0"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
         <div className="mt-4 space-y-2">
           <button
@@ -83,7 +94,7 @@ export function ShareDialog({
             className={cn(
               "w-full flex items-start gap-3 p-3 rounded-tr-[14px] rounded-bl-[14px] rounded-tl-[4px] rounded-br-[4px] border text-left transition-colors",
               isShared
-                ? "border-[var(--color-cb-accent)] bg-[var(--color-cb-accent-muted)]"
+                ? "border-[var(--color-cb-text-muted)] bg-[var(--color-cb-card)]"
                 : "border-[var(--color-cb-border)] hover:border-[var(--color-cb-border-strong)]"
             )}
           >
@@ -94,7 +105,7 @@ export function ShareDialog({
                 Anyone who gets the link can view this chat read-only.
               </span>
             </span>
-            {isShared && <Check className="w-4 h-4 ml-auto text-[var(--color-cb-accent)]" />}
+            {isShared && <Check className="w-4 h-4 ml-auto text-[var(--color-cb-text-bright)]" />}
           </button>
 
           <button
@@ -102,7 +113,7 @@ export function ShareDialog({
             className={cn(
               "w-full flex items-start gap-3 p-3 rounded-tr-[14px] rounded-bl-[14px] rounded-tl-[4px] rounded-br-[4px] border text-left transition-colors",
               !isShared
-                ? "border-[var(--color-cb-accent)] bg-[var(--color-cb-accent-muted)]"
+                ? "border-[var(--color-cb-text-muted)] bg-[var(--color-cb-card)]"
                 : "border-[var(--color-cb-border)] hover:border-[var(--color-cb-border-strong)]"
             )}
           >
@@ -113,7 +124,7 @@ export function ShareDialog({
                 Private. Only the owner can view this conversation.
               </span>
             </span>
-            {!isShared && <Check className="w-4 h-4 ml-auto text-[var(--color-cb-accent)]" />}
+            {!isShared && <Check className="w-4 h-4 ml-auto text-[var(--color-cb-text-bright)]" />}
           </button>
         </div>
 
