@@ -4,6 +4,26 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { DEFAULT_MODEL } from "@/lib/models";
 
+/** Persist attachment refs ({ id, fileName, size }) onto a message row. */
+async function attachRefsToMessage(
+  messageId: string,
+  conversationId: string,
+  attachmentIds?: string[]
+): Promise<void> {
+  if (!attachmentIds || attachmentIds.length === 0) return;
+  const atts = await prisma.attachment.findMany({
+    where: { id: { in: attachmentIds }, conversationId },
+    select: { id: true, fileName: true, size: true },
+  });
+  if (atts.length === 0) return;
+  await prisma.message.update({
+    where: { id: messageId },
+    data: {
+      attachments: atts.map((a) => ({ id: a.id, fileName: a.fileName, size: a.size })),
+    },
+  });
+}
+
 export const conversationsRouter = createTRPCRouter({
   getAll: protectedProcedure
     .query(async ({ ctx }) => {
@@ -54,6 +74,7 @@ export const conversationsRouter = createTRPCRouter({
       model: z.string().optional(),
       mode: z.string().optional(),
       template: z.string().optional(),
+      attachmentIds: z.array(z.string()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const conversation = await prisma.conversation.create({
@@ -78,6 +99,14 @@ export const conversationsRouter = createTRPCRouter({
           },
         },
       });
+      const createdMessage = conversation.messages[0];
+      if (createdMessage) {
+        await attachRefsToMessage(
+          createdMessage.id,
+          conversation.id,
+          input.attachmentIds
+        );
+      }
       return conversation;
     }),
 
@@ -196,6 +225,7 @@ export const chatMessagesRouter = createTRPCRouter({
       conversationId: z.string().min(1),
       content: z.string().min(1).max(10000),
       parentMessageId: z.string().optional(),
+      attachmentIds: z.array(z.string()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const conversation = await prisma.conversation.findFirst({
@@ -216,6 +246,8 @@ export const chatMessagesRouter = createTRPCRouter({
           parentMessageId: input.parentMessageId || null,
         },
       });
+
+      await attachRefsToMessage(message.id, input.conversationId, input.attachmentIds);
 
       // Auto-title: set title from first user message if not yet set
       if (!conversation.title && conversation.messages.length === 0) {

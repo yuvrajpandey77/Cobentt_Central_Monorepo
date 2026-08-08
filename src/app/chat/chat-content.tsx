@@ -10,6 +10,7 @@ import { Composer } from "@/components/chat/composer";
 import { SettingsPanel } from "@/components/chat/settings";
 import type { Message } from "@/lib/chat-store";
 import { Menu, Settings } from "lucide-react";
+import { takePendingFiles } from "@/lib/attachments/shuttle";
 
 function ContextRing() {
   const { activeThread } = useChat();
@@ -47,7 +48,13 @@ export function ChatContent() {
   const [streamingMsg, setStreamingMsg] = useState<Message | null>(null);
   const [pendingUserMsg, setPendingUserMsg] = useState<Message | null>(null);
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>(undefined);
+  const [incomingFiles, setIncomingFiles] = useState<File[]>([]);
   const [regenerateRequest, setRegenerateRequest] = useState<{ userMessageId: string; content: string } | null>(null);
+
+  // Files queued on the root page and carried here via the module shuttle
+  useEffect(() => {
+    setIncomingFiles(takePendingFiles());
+  }, []);
 
   // Read ?q= from URL for prompts coming from the root page
   useEffect(() => {
@@ -175,6 +182,7 @@ export function ChatContent() {
             onStreamMessage={handleStreamMessage}
             onUserMessage={handleUserMessage}
             initialPrompt={initialPrompt}
+            initialFiles={incomingFiles}
             regenerateRequest={regenerateRequest}
             onRegenerateHandled={() => setRegenerateRequest(null)}
           />

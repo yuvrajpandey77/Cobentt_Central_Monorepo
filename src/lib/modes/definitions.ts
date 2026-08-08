@@ -7,6 +7,12 @@ export const SLIDE_THEMES = [
   { id: "sunset", label: "Sunset", bg: "#2a0a1a", accent: "#fb923c", text: "#fff7ed", muted: "#fdba74", chip: "#f97316" },
   { id: "ocean", label: "Ocean", bg: "#082f49", accent: "#22d3ee", text: "#ecfeff", muted: "#67e8f9", chip: "#06b6d4" },
   { id: "ink", label: "Light", bg: "#fafafa", accent: "#171717", text: "#171717", muted: "#52525b", chip: "#404040" },
+  { id: "crimson", label: "Crimson", bg: "#2a0d0d", accent: "#f9a8d4", text: "#fff1f2", muted: "#fda4af", chip: "#f43f5e" },
+  { id: "midnight-black", label: "Mono", bg: "#0a0a0a", accent: "#f5f5f5", text: "#ffffff", muted: "#a3a3a3", chip: "#d4d4d4" },
+  { id: "forest", label: "Forest", bg: "#04130b", accent: "#fde047", text: "#ecfdf5", muted: "#86efac", chip: "#65a30d" },
+  { id: "berry", label: "Berry", bg: "#15002b", accent: "#22d3ee", text: "#fdf4ff", muted: "#d8b4fe", chip: "#d946ef" },
+  { id: "slate-light", label: "Slate", bg: "#f8fafc", accent: "#1d4ed8", text: "#0f172a", muted: "#64748b", chip: "#3b82f6" },
+  { id: "sand", label: "Sand", bg: "#1c1305", accent: "#fbbf24", text: "#fef3c7", muted: "#fde68a", chip: "#d97706" },
 ];
 
 export const SLIDES_MODE: ModeDefinition = {
@@ -82,6 +88,34 @@ export const SLIDES_MODE: ModeDefinition = {
       properties: [
         { key: "title", label: "Title", type: "text" },
         { key: "items", label: "Agenda items", type: "list" },
+      ],
+    },
+    {
+      type: "image-slide",
+      label: "Image Slide",
+      defaultProps: { title: "Showcase", caption: "", url: "" },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "caption", label: "Caption", type: "textarea" },
+        { key: "url", label: "Image URL", type: "text", placeholder: "https://..." },
+      ],
+    },
+    {
+      type: "grid-slide",
+      label: "Card Grid",
+      defaultProps: { title: "Key Points", items: [{ label: "Point one", detail: "Short detail" }, { label: "Point two", detail: "Short detail" }, { label: "Point three", detail: "Short detail" }] },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "items", label: "Cards", type: "list" },
+      ],
+    },
+    {
+      type: "numbered-steps",
+      label: "Numbered Steps",
+      defaultProps: { title: "The Plan", steps: ["Step one", "Step two", "Step three"] },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "steps", label: "Steps", type: "list" },
       ],
     },
   ],

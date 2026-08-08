@@ -67,7 +67,8 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
 
   const conversation = useQuery(trpc.conversations.getById.queryOptions({ id: conversationId }));
 
-  const fragment = conversation.data?.messages
+  const fragment = [...(conversation.data?.messages ?? [])]
+    .reverse()
     ?.flatMap((m) => m.fragments ?? [])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .find((f: any) => f.mode === "deep-research" || !f.mode);
@@ -120,7 +121,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
 
   const hasReport = !!current?.sections?.length;
 
-  const runResearch = useCallback(async (message: string) => {
+  const runResearch = useCallback(async (message: string, attachmentIds?: string[]) => {
       setRunning(true);
       setCurrentPhase("Planning");
       setProgress(5);
@@ -128,7 +129,12 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
         const res = await fetch(`/api/modes/deep-research/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId, message }),
+          body: JSON.stringify({
+            conversationId,
+            message,
+            attachmentIds,
+            currentArtifact: fragment ? JSON.stringify({ title: (artifact as { title?: string } | null)?.title, summary: (artifact as { summary?: string } | null)?.summary } as { title?: string; summary?: string }) : undefined,
+          }),
         });
         if (!res.ok) throw new Error("Research failed");
         const reader = res.body?.getReader();
@@ -166,14 +172,18 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
         setRunning(false);
       }
     },
-    [conversationId, queryClient, trpc]
+    [conversationId, queryClient, trpc, fragment, artifact]
   );
+
+  const pendingAttachmentIds = useRef<string[] | undefined>(undefined);
 
   const createMessage = useMutation(
     trpc.chatMessages.create.mutationOptions({
       onSuccess: (data) => {
         queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
-        runResearch(data.content);
+        const atts = pendingAttachmentIds.current;
+        pendingAttachmentIds.current = undefined;
+        runResearch(data.content, atts);
       },
       onError: (err) => toast.error(err.message || "Failed to send"),
     })
@@ -501,12 +511,16 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
       {/* Chat panel */}
       {chatOpen && (
         <ModeChatPanel
-          messages={messages as ModeChatMessage[]}
+          messages={messages as unknown as ModeChatMessage[]}
           isPending={createMessage.isPending || running}
-          onSend={(c) => createMessage.mutate({ conversationId, content: c })}
+          onSend={(c, attachmentIds) => {
+            pendingAttachmentIds.current = attachmentIds;
+            createMessage.mutate({ conversationId, content: c, attachmentIds });
+          }}
           running={running}
           runningText="Researching..."
           emptyText="Ask about a topic to begin multi-phase research with iterative refinement."
+          conversationId={conversationId}
         />
       )}
 

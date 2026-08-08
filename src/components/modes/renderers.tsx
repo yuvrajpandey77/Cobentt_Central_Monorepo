@@ -159,6 +159,68 @@ function SingleSlideRenderer({
           </ol>
         </div>
       )}
+
+      {block.type === "image-slide" && (
+        <div className="w-full h-full flex flex-col justify-center px-6 md:px-10">
+          <h2 className={cn("font-bold mb-4", size)} style={{ color: theme.text }}>{p.title}</h2>
+          {p.url ? (
+            <img
+              src={p.url}
+              alt={p.caption || p.title}
+              className="w-full max-h-[55%] object-contain rounded-xl border border-white/10"
+              style={{ background: theme.bg === "#fafafa" ? "#ffffff" : hexToRgba(theme.bg, 0.5) }}
+              onError={(e) => { (e.currentTarget.style.display = "none"); }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-40 rounded-xl text-sm" style={{ background: cardBg, border: `1px dashed ${hexToRgba(theme.accent, 0.4)}`, color: theme.muted }}>
+              Add an image URL to display it
+            </div>
+          )}
+          {p.caption && <p className="mt-3 text-sm" style={{ color: theme.muted }}>{p.caption}</p>}
+        </div>
+      )}
+
+      {block.type === "grid-slide" && (
+        <div className="w-full h-full flex flex-col justify-center px-6 md:px-10">
+          <h2 className={cn("font-bold mb-5", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {(Array.isArray(p.items) ? p.items : []).map((card: { label?: string; detail?: string } | string, i: number) => {
+              const label = typeof card === "string" ? card : card?.label;
+              const detail = typeof card === "object" && card ? card.detail : "";
+              return (
+                <div key={i} className="rounded-xl p-4" style={{ background: cardBg, border: `1px solid ${hexToRgba(theme.accent, 0.25)}` }}>
+                  <div className="mb-2 h-1.5 w-8 rounded-full" style={{ background: theme.accent }} />
+                  <p className={cn("font-semibold", viewport === "tablet" ? "text-sm" : "text-base")} style={{ color: theme.text }}>{label}</p>
+                  {detail && <p className="mt-1 text-xs" style={{ color: theme.muted }}>{detail}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {block.type === "numbered-steps" && (
+        <div className="w-full h-full flex flex-col justify-center px-6 md:px-12">
+          <h2 className={cn("font-bold mb-6", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <div className="space-y-3">
+            {(Array.isArray(p.steps) ? p.steps : []).map((step: string, i: number) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 rounded-xl px-4 py-2.5"
+                style={{ background: cardBg, border: `1px solid ${hexToRgba(theme.accent, 0.18)}` }}
+              >
+                <span
+                  className="flex items-center justify-center h-9 w-9 rounded-full text-sm font-bold flex-shrink-0"
+                  style={{ background: hexToRgba(theme.accent, 0.85), color: theme.bg }}
+                >
+                  {i + 1}
+                </span>
+                <span className={bodySize} style={{ color: theme.text }}>{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

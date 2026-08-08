@@ -5,6 +5,7 @@ import type { Message } from "@/lib/chat-store";
 import { useChat } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
 import { FlowerLoader } from "@/components/flower-loader";
+import { AttachmentPills } from "@/components/chat/attach-input";
 import {
   Copy,
   Share2,
@@ -222,6 +223,7 @@ export function MessageList({
             {msg.role === "user" ? (
               <div className="max-w-[92%] group">
                 <div className="px-4 py-3 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-user-bubble)]">
+                  <AttachmentPills pills={msg.attachments ?? []} readOnly className="mb-2" />
                   <p className="text-[14px] text-[var(--color-cb-text-bright)] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
                 <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">

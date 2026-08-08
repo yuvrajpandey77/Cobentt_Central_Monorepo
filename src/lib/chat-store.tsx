@@ -14,6 +14,7 @@ export interface Message {
   thinking?: string;
   thinkingTime?: number;
   sources?: { index: number; title: string }[];
+  attachments?: { id: string; name: string; size: number }[];
 }
 
 export interface Thread {
@@ -127,7 +128,7 @@ function loadSettings(): StoredSettings {
 function mapPrismaMessage(m: {
   id: string; content: string; role: string;
   createdAt: Date | string; modelUsed?: string | null;
-  thinking?: any; sources?: any;
+  thinking?: any; sources?: any; attachments?: unknown;
 }): Message {
   return {
     id: m.id,
@@ -136,6 +137,10 @@ function mapPrismaMessage(m: {
     timestamp: new Date(m.createdAt).getTime(),
     thinking: m.thinking ? (typeof m.thinking === "string" ? m.thinking : undefined) : undefined,
     sources: m.sources ? (typeof m.sources === "string" ? JSON.parse(m.sources) : m.sources) : undefined,
+    attachments: m.attachments
+      ? ((typeof m.attachments === "string" ? JSON.parse(m.attachments) : m.attachments) as Array<{ id: string; fileName?: string; name?: string; size: number }>)
+          .map((a) => ({ id: a.id, name: a.fileName ?? a.name ?? "file", size: a.size }))
+      : undefined,
   };
 }
 
