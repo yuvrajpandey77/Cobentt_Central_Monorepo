@@ -8,13 +8,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import TextareaAutosize from "react-textarea-autosize";
 import { Plus, Globe, Send, Square } from "lucide-react";
 import { toast } from "sonner";
-import { AttachInput, type AttachmentMeta, type AttachInputHandle } from "@/components/chat/attach-input";
+import { AttachInput, AttachmentPills, type AttachmentMeta, type AttachmentPill, type AttachInputHandle } from "@/components/chat/attach-input";
 
 const starters = [
-  "Write a Python script to parse CSV files",
-  "Explain quantum computing simply",
-  "Draft a professional email",
-  "Compare React and Vue",
+  "Turn this into a slide deck",
+  "Draft a structured project brief",
+  "Write a report as a document",
+  "Design a sales-tracking sheet",
+  "Research a topic in depth",
 ];
 
 export function Composer({
@@ -45,6 +46,7 @@ export function Composer({
   const [value, setValue] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
+  const [pendingPills, setPendingPills] = useState<AttachmentPill[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const attachRef = useRef<AttachInputHandle>(null);
@@ -263,52 +265,79 @@ export function Composer({
 
     const threadId = activeThread?.id;
 
-    // Files may have been queued before a conversation existed (fresh /chat).
-    // Upload them now that we have (or will have) a thread id.
-    let idsToUpload: string[] = [];
-    if (!overrideText && attachRef.current?.hasPending()) {
-      if (threadId) {
-        const metas = await attachRef.current.uploadPending(threadId);
-        idsToUpload = metas.map((m) => m.id);
-      }
-    }
+    const attachmentIdsFromState =
+      attachments.length > 0 ? attachments.map((a) => a.id) : undefined;
 
-    const attachmentIds =
-      idsToUpload.length > 0
-        ? idsToUpload
-        : attachments.length > 0
-          ? attachments.map((a) => a.id)
-          : undefined;
-    if (!overrideText) setAttachments([]);
+    const pillsFromAttachments = (list: AttachmentMeta[]): AttachmentPill[] =>
+      list.map((a) => ({ id: a.id, name: a.fileName, size: a.size }));
 
-    const userMsg: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: trimmed,
-      timestamp: Date.now(),
-    };
-    onUserMessage?.(userMsg);
-
-    if (!threadId) {
-      try {
-        const result = await createConvMutation.mutateAsync({ initialMessage: trimmed });
+    try {
+      if (!threadId) {
+        // Fresh conversation: create it first so queued files can attach to it.
+        const result = await createConvMutation.mutateAsync({
+          initialMessage: trimmed,
+          attachmentIds: attachmentIdsFromState,
+        });
         selectThread(result.id);
         const metas = await attachRef.current?.uploadPending(result.id);
-        const ids = metas && metas.length > 0 ? metas.map((m) => m.id) : attachmentIds;
-        await handleStream(result.id, trimmed, ids);
-      } catch {
-        toast.error("Failed to create conversation");
-      }
-    } else {
-      try {
-        await createMessageMutation.mutateAsync({
-          conversationId: threadId,
+        const uploadedPills: AttachmentPill[] = (metas ?? []).map((m) => ({
+          id: m.id,
+          name: m.fileName,
+          size: m.size,
+        }));
+        const echo = [...pillsFromAttachments(attachments), ...uploadedPills];
+        const ids =
+          metas && metas.length > 0
+            ? metas.map((m) => m.id)
+            : attachmentIdsFromState;
+        const userMsg: Message = {
+          id: `user-${Date.now()}`,
+          role: "user",
           content: trimmed,
-        });
-      } catch {
-        // Persist failed; still stream so the user gets a reply
+          timestamp: Date.now(),
+          attachments: echo,
+        };
+        onUserMessage?.(userMsg);
+        await handleStream(result.id, trimmed, ids);
+      } else {
+        // Existing conversation: upload queued files first, then echo pills.
+        let uploadedMetas: AttachmentMeta[] = [];
+        if (!overrideText && attachRef.current?.hasPending()) {
+          uploadedMetas = await attachRef.current.uploadPending(threadId);
+        }
+        const uploadedPills: AttachmentPill[] = uploadedMetas.map((m) => ({
+          id: m.id,
+          name: m.fileName,
+          size: m.size,
+        }));
+        const echo = [...pillsFromAttachments(attachments), ...uploadedPills];
+        const attachmentIds =
+          echo.length > 0 ? echo.map((p) => p.id) : undefined;
+        if (!overrideText) setAttachments([]);
+
+        const userMsg: Message = {
+          id: `user-${Date.now()}`,
+          role: "user",
+          content: trimmed,
+          timestamp: Date.now(),
+          attachments: echo,
+        };
+        onUserMessage?.(userMsg);
+
+        try {
+          await createMessageMutation.mutateAsync({
+            conversationId: threadId,
+            content: trimmed,
+            attachmentIds,
+          });
+        } catch {
+          // Persist failed; still stream so the user gets a reply
+        }
+        await handleStream(threadId, trimmed, attachmentIds);
       }
-      await handleStream(threadId, trimmed, attachmentIds);
+    } catch (err) {
+      const _err = err as { message?: string } | undefined;
+      toast.error(_err?.message || "Failed to send message");
     }
   };
 
@@ -335,6 +364,23 @@ export function Composer({
           ))}
         </div>
       )}
+
+      {/* Attachment pills above the input */}
+      <AttachmentPills
+        pills={[
+          ...pendingPills,
+          ...attachments.map((a) => ({ id: a.id, name: a.fileName, size: a.size })),
+        ]}
+        onRemove={(id) => {
+          const pendingId = pendingPills.find((p) => p.id === id)?.id;
+          if (pendingId) {
+            attachRef.current?.removePending(id);
+          } else {
+            setAttachments((prev) => prev.filter((a) => a.id !== id));
+          }
+        }}
+        className="mb-2"
+      />
 
       {/* Composer bar */}
       <div className="relative border border-white/20 rounded-3xl bg-white/10 backdrop-blur-lg shadow-xl transition-all duration-200 ease-out cursor-text">
@@ -383,7 +429,7 @@ export function Composer({
               onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
               attachments={attachments}
               disabled={isStreaming}
-              className="flex flex-wrap gap-1.5 px-3 pb-2"
+              onPendingChange={setPendingPills}
             />
             <button
               onClick={() => setWebSearch(!webSearch)}

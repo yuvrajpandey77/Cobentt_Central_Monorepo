@@ -16,6 +16,65 @@ function sse(controller: ReadableStreamDefaultController, data: Record<string, u
   controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 }
 
+function modeLabel(mode: string): string {
+  return ((MODE_DEFINITIONS[mode] as unknown as { label?: string } | undefined)?.label) ?? mode;
+}
+
+/** Compact, deterministic summary of what changed between two artifacts. */
+function summarizeChanges(
+  mode: string,
+  prev: import("@/lib/modes/types").Artifact | undefined,
+  next: { title?: string; theme?: string; blocks?: Array<{ type?: string }>; sections?: unknown[] }
+): string {
+  const label = modeLabel(mode);
+
+  if (mode === "deep-research") {
+    const sections = Array.isArray(next.sections) ? next.sections.length : 0;
+    return `Generated a ${label} report titled “${next.title || "Untitled"}” with ${sections} section${sections === 1 ? "" : "s"}.`;
+  }
+
+  const prevBlocks = prev?.blocks ?? [];
+  const nextBlocks = Array.isArray(next.blocks) ? next.blocks : [];
+
+  if (!prev || prevBlocks.length === 0) {
+    const n = nextBlocks.length;
+    return `Generated a ${label} titled “${next.title || "Untitled"}” with ${n} block${n === 1 ? "" : "s"}.`;
+  }
+
+  const prevCounts = new Map<string, number>();
+  for (const b of prevBlocks) {
+    const t = b?.type || "block";
+    prevCounts.set(t, (prevCounts.get(t) ?? 0) + 1);
+  }
+  const nextCounts = new Map<string, number>();
+  for (const b of nextBlocks) {
+    const t = b?.type || "block";
+    nextCounts.set(t, (nextCounts.get(t) ?? 0) + 1);
+  }
+
+  const changes: string[] = [];
+  for (const [type, count] of nextCounts) {
+    const before = prevCounts.get(type) ?? 0;
+    const diff = count - before;
+    if (diff > 0) changes.push(`added ${diff} ${type} block${diff === 1 ? "" : "s"}`);
+    else if (diff < 0) changes.push(`removed ${-diff} ${type} block${diff === -1 ? "" : "s"}`);
+  }
+  for (const [type, count] of prevCounts) {
+    if (!nextCounts.has(type)) {
+      changes.push(`removed ${count} ${type} block${count === 1 ? "" : "s"}`);
+    }
+  }
+  if (prev.title !== next.title && next.title) changes.push(`renamed it to “${next.title}”`);
+  if (prev.theme !== next.theme && next.theme) changes.push(`switched theme to ${next.theme}`);
+
+  if (changes.length === 0) {
+    const n = nextBlocks.length;
+    changes.push(`refreshed ${n} block${n === 1 ? "" : "s"}`);
+  }
+
+  return `${label} updated — ${changes.join(", ")}.`;
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ mode: string }> }
@@ -167,6 +226,8 @@ export async function POST(
           .reverse()
           .find((f) => f.mode === mode);
 
+        const summary = summarizeChanges(mode, currentArtifactParsed, artifact);
+
         // Apply the new artifact to the previous fragment when present so the doc
         // actually updates in place (the canvas reads the latest fragment).
         if (previousFragment && mode !== "deep-research") {
@@ -177,11 +238,23 @@ export async function POST(
               title: artifact.title || `New ${mode}`,
             },
           });
+          // Echo what changed as a fresh assistant bubble so the chat panel
+          // reflects the edit instead of staying silent.
+          await prisma.message.create({
+            data: {
+              conversationId,
+              content: summary,
+              role: "ASSISTANT",
+              type: "RESULT",
+              status: "COMPLETE",
+              modelUsed: model,
+            },
+          });
         } else {
           const assistantMessage = await prisma.message.create({
             data: {
               conversationId,
-              content: `Generated ${((MODE_DEFINITIONS[mode] as unknown as { label?: string } | undefined)?.label) ?? mode} from your request.`,
+              content: summary,
               role: "ASSISTANT",
               type: "RESULT",
               status: "COMPLETE",
@@ -212,7 +285,7 @@ export async function POST(
           });
         }
 
-        sse(controller, { event: "done", artifact });
+        sse(controller, { event: "done", artifact, summary });
         controller.close();
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : "Generation failed";

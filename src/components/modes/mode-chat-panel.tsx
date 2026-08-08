@@ -4,14 +4,16 @@ import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { Plus, Globe, Send, Loader2, Check, Copy, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { ResearchProgress } from "@/components/ui/research-progress";
-import { AttachInput, type AttachmentMeta } from "@/components/chat/attach-input";
+import { AttachInput, AttachmentPills, type AttachInputHandle, type AttachmentMeta, type AttachmentPill } from "@/components/chat/attach-input";
 
 export interface ModeChatMessage {
   id: string;
   role: string;
   content: string;
   createdAt: Date | string;
+  attachments?: Array<{ id: string; fileName?: string; name?: string; size: number }>;
 }
 
 interface ModeChatPanelProps {
@@ -27,19 +29,21 @@ interface ModeChatPanelProps {
   conversationId?: string;
 }
 
-const ADS = [
-  "Cobentt helps you get more done every day.",
-  "Your AI companion for work, study, and life.",
-  "Supercharge your productivity with Cobentt.",
-  "Think faster, work smarter with Cobentt.",
+const THINKING_HINTS = [
+  "Gathering relevant context…",
+  "Planning the best approach…",
+  "Mapping the task to the right model…",
+  "Assembling your response…",
+  "Verifying the output…",
+  "Preparing your result…",
 ];
 
 function ThinkingLoader({ isStreaming }: { isStreaming: boolean }) {
-  const [adIndex, setAdIndex] = useState(0);
+  const [hintIndex, setHintIndex] = useState(0);
 
   useEffect(() => {
     if (!isStreaming) return;
-    const interval = setInterval(() => setAdIndex((prev) => (prev + 1) % ADS.length), 2500);
+    const interval = setInterval(() => setHintIndex((prev) => (prev + 1) % THINKING_HINTS.length), 2500);
     return () => clearInterval(interval);
   }, [isStreaming]);
 
@@ -52,7 +56,7 @@ function ThinkingLoader({ isStreaming }: { isStreaming: boolean }) {
       </div>
       <div className="relative overflow-hidden rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] px-4 py-3">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer" />
-        <p key={adIndex} className="relative text-[12px] text-[var(--color-cb-text-muted)] animate-fade-in-up">{ADS[adIndex]}</p>
+        <p key={hintIndex} className="relative text-[12px] text-[var(--color-cb-text-muted)] animate-fade-in-up">{THINKING_HINTS[hintIndex]}</p>
       </div>
     </div>
   );
@@ -126,15 +130,22 @@ function ModeChatComposer({
   const [value, setValue] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
+  const [pendingPills, setPendingPills] = useState<AttachmentPill[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const attachRef = useRef<AttachInputHandle>(null);
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    if ((!trimmed && attachments.length === 0) || isPending) return;
+    if ((!trimmed && attachments.length === 0 && pendingPills.length === 0) || isPending) return;
+    if (pendingPills.length > 0 && !conversationId) {
+      toast.error("Please wait for the conversation to be ready and attach again");
+      return;
+    }
     onSend(trimmed, attachments.map((a) => a.id));
     setValue("");
     setShowMenu(false);
     setAttachments([]);
+    setPendingPills([]);
   };
 
   const addAttachment = (a: AttachmentMeta) =>
@@ -142,8 +153,25 @@ function ModeChatComposer({
   const removeAttachment = (id: string) =>
     setAttachments((prev) => prev.filter((a) => a.id !== id));
 
+  const pillItems: AttachmentPill[] = [
+    ...pendingPills,
+    ...attachments.map((a) => ({ id: a.id, name: a.fileName, size: a.size })),
+  ];
+
   return (
     <div className="flex-shrink-0 px-3 pb-3 pt-1 bg-[var(--color-cb-bg)]">
+      <AttachmentPills
+        pills={pillItems}
+        onRemove={(id) => {
+          const pendingId = pendingPills.find((p) => p.id === id)?.id;
+          if (pendingId) {
+            attachRef.current?.removePending(id);
+          } else {
+            removeAttachment(id);
+          }
+        }}
+        className="mb-2 px-1"
+      />
       <div className="relative border border-white/20 rounded-3xl bg-white/10 backdrop-blur-lg shadow-xl transition-all duration-200 ease-out cursor-text">
         <div className="flex items-center gap-1.5 px-3 py-2">
           <div className="relative">
@@ -187,12 +215,13 @@ function ModeChatComposer({
 
           <div className="flex items-center gap-1.5">
             <AttachInput
+              ref={attachRef}
               conversationId={conversationId}
               onAttach={addAttachment}
               onRemove={removeAttachment}
               attachments={attachments}
               disabled={isPending}
-              className="flex flex-wrap gap-1.5 mt-2 px-1"
+              onPendingChange={setPendingPills}
             />
             <button
               type="button"
@@ -204,7 +233,7 @@ function ModeChatComposer({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={(!value.trim() && attachments.length === 0) || isPending}
+              disabled={(!value.trim() && attachments.length === 0 && pendingPills.length === 0) || isPending}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-white text-black hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
             >
               {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -334,6 +363,15 @@ export function ModeChatPanel({
                 </div>
               ) : (
                 <div className="max-w-[92%] px-4 py-3 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-user-bubble)]">
+                  <AttachmentPills
+                    pills={(msg.attachments ?? []).map((a) => ({
+                      id: a.id,
+                      name: a.fileName ?? a.name ?? "file",
+                      size: a.size,
+                    }))}
+                    readOnly
+                    className="mb-2"
+                  />
                   <p className="text-[14px] text-[var(--color-cb-text-bright)] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
               )}

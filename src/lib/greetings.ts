@@ -1,71 +1,64 @@
 const headings: Record<string, string[]> = {
+  morning: [
+    "Good morning. What are we building today?",
+    "Good morning - ready when you are.",
+    "Good morning, a fresh day to create something.",
+  ],
+  daytime: [
+    "Welcome back. What can we build today?",
+    "Let's get to work.",
+    "What are we creating today?",
+    "Every result starts with a single prompt.",
+  ],
+  evening: [
+    "Good evening. Anything you'd like to explore?",
+    "One more build before wrapping up?",
+    "Good evening. A quiet moment to create.",
+  ],
+  night: [
+    "Working late - let's make it count.",
+    "Quiet hours, focused work.",
+    "The best ideas often arrive at night.",
+  ],
   monday: [
-    "Monday mode: build everything.",
-    "Monday's for builders. Let's go.",
-    "Happy Monday! Let's start routing.",
-    "Fresh week. Fresh builds. Let's go.",
+    "Fresh start - let's build.",
+    "New week, new possibilities.",
+    "Start the week strong.",
   ],
   tuesday: [
-    "Tuesday building mode: activated.",
-    "Tuesday momentum. Don't lose it.",
-    "Tuesday! Chain those models.",
-    "Tuesday vibes. Intelligence flowing.",
+    "Momentum is building.",
+    "Steady progress, one block at a time.",
+    "Keep the momentum going.",
   ],
   wednesday: [
-    "Wednesday wisdom: orchestrate smarter.",
-    "Wednesday! The sweet spot of the week.",
-    "Wednesday: when genius emerges.",
-    "Wednesday! Smart routing starts here.",
+    "Midweek - keep the momentum.",
+    "Halfway there - keep going.",
+    "Solid work compounds.",
   ],
   thursday: [
-    "Thursday throughput. Let's scale.",
-    "Thursday momentum. Don't stop now.",
-    "Thursday! When dreams become shipping code.",
-    "Thursday orchestration: final details matter.",
+    "The finish line is in sight.",
+    "Building through Thursday.",
+    "Almost there - don't slow down.",
   ],
   friday: [
-    "Happy Friday, architect. Ship it!",
-    "Friday! Shipping season is here.",
-    "Happy Friday, dev. End strong.",
-    "Friday! When builders become shippers.",
+    "Ship it, then rest easy.",
+    "End the week on a high.",
+    "Finish strong, then enjoy the weekend.",
   ],
   saturday: [
-    "Saturday sprint? Models are ready.",
-    "Saturday coding. Pure bliss.",
-    "Saturday! No distractions. Just orchestration.",
-    "Saturday! The builder's favorite day.",
+    "Your weekend - your pace.",
+    "A great day to build.",
+    "No rush today. Just build.",
   ],
   sunday: [
-    "Sunday session, developer?",
-    "Sunday vibes. Calm coding.",
-    "Sunday orchestration. Peak focus.",
-    "Sunday! Intelligence refined and ready.",
-  ],
-  developer: [
-    "Route. Orchestrate. Build.",
-    "Let's orchestrate your brilliance.",
-    "Intelligence orchestrated. Genius unleashed.",
-    "Intelligent orchestration starts here.",
+    "Rest, reset, or create.",
+    "A calm day for intentional work.",
+    "The perfect day to plan and create.",
   ],
   inspirational: [
-    "Build something that changes everything.",
-    "Build the future. One chain at a time.",
-    "Orchestrate your way to impossible.",
-    "Let's make something extraordinary.",
-  ],
-  casual: [
-    "Orchestration mode: activated.",
-    "Plot twist: AI just got easier.",
-    "Yo, let's route some intelligence.",
-    "Plot twist: orchestration was the answer all along.",
-  ],
-  timeAgnostic: [
-    "Let's route your intelligence.",
-    "Ready to orchestrate?",
-    "Intelligence starts here.",
-    "Your models, elevated.",
-    "Route smarter. Build faster.",
-    "What are we building today?",
+    "From idea to outcome in a prompt.",
+    "Every great result starts with a single prompt.",
+    "Make something worth showing.",
   ],
 };
 
@@ -90,17 +83,16 @@ export function getDailyGreeting(): { heading: string } {
 
   let poolKey: string;
   if (hour >= 22 || hour < 6) {
-    poolKey = "casual";
+    poolKey = "night";
+  } else if (hour < 12) {
+    poolKey = "morning";
+  } else if (hour >= 17) {
+    poolKey = "evening";
   } else {
-    const dayKey = dayNames[dayOfWeek];
-    if (dayKey === "saturday" || dayKey === "sunday") {
-      poolKey = seed % 3 === 0 ? dayKey : "casual";
-    } else {
-      poolKey = dayKey;
-    }
+    poolKey = dayNames[dayOfWeek];
   }
 
-  const pool = headings[poolKey];
+  const pool = headings[poolKey] ?? headings.inspirational;
   const heading = pool[seed % pool.length];
 
   return { heading };

@@ -89,6 +89,29 @@ export async function POST(
             attachmentContext = attachments
               .map((a) => `[${a.fileName}]\n${a.extractedText ?? ""}`)
               .join("\n\n");
+
+            // Persist refs onto the latest user message so the sent bubble can
+            // echo the attachment pills (the fresh-conversation path creates
+            // the message before queued files are uploaded, so it has no refs).
+            const refs = await prisma.attachment.findMany({
+              where: { id: { in: attachmentIds }, conversationId },
+              select: { id: true, fileName: true, size: true },
+            });
+            if (refs.length > 0) {
+              const latestUser = await prisma.message.findFirst({
+                where: { conversationId, role: "USER" },
+                orderBy: { createdAt: "desc" },
+                select: { id: true },
+              });
+              if (latestUser) {
+                await prisma.message.update({
+                  where: { id: latestUser.id },
+                  data: {
+                    attachments: refs.map((a) => ({ id: a.id, fileName: a.fileName, size: a.size })),
+                  },
+                });
+              }
+            }
           } catch (err) {
             console.warn("[chat/stream] attachment context load failed:", err);
           }

@@ -17,7 +17,7 @@ import { PROJECT_TEMPLATES } from "./constants";
 import { ProjectLoading } from "@/components/ui/project-loading";
 import { useClerk } from "@clerk/nextjs";
 import { useMode } from "@/contexts/mode-context";
-import { AttachInput, type AttachInputHandle, type AttachmentMeta } from "@/components/chat/attach-input";
+import { AttachInput, AttachmentPills, type AttachInputHandle, type AttachmentMeta, type AttachmentPill } from "@/components/chat/attach-input";
 import { stashPendingFiles } from "@/lib/attachments/shuttle";
 
 
@@ -63,6 +63,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
     const ideasButtonRef = useRef<HTMLButtonElement | null>(null);
     const attachRef = useRef<AttachInputHandle>(null);
     const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
+    const [pendingPills, setPendingPills] = useState<AttachmentPill[]>([]);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -284,6 +285,21 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
 
                     {/* Build Button Section */}
                     <div className="px-5 py-3">
+                        <AttachmentPills
+                            pills={[
+                                ...pendingPills,
+                                ...attachments.map((a) => ({ id: a.id, name: a.fileName, size: a.size })),
+                            ]}
+                            onRemove={(id) => {
+                                const pendingId = pendingPills.find((p) => p.id === id)?.id;
+                                if (pendingId) {
+                                    attachRef.current?.removePending(id);
+                                } else {
+                                    setAttachments((prev) => prev.filter((a) => a.id !== id));
+                                }
+                            }}
+                            className="mb-2"
+                        />
                         <div className="flex items-center justify-between">
                             <div className="relative" ref={modelMenuRef}>
                                 <Button
@@ -323,7 +339,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
                                     onRemove={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
                                     attachments={attachments}
                                     disabled={isPending}
-                                    className="flex flex-wrap gap-1.5"
+                                    onPendingChange={setPendingPills}
                                 />
                                 {projectCategory && onCategoryClear && (() => {
                                     const iconMap: Record<string, any> = {

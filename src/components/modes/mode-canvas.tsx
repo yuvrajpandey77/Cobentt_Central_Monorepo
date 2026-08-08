@@ -315,7 +315,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
 
   const sendChat = (content: string, attachmentIds?: string[]) => {
     pendingAttachmentIds.current = attachmentIds;
-    createMessage.mutate({ conversationId, content });
+    createMessage.mutate({ conversationId, content, attachmentIds });
   };
 
   const createMessage = useMutation(
@@ -866,7 +866,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
       {/* Chat panel (right) */}
       {chatOpen && (
         <ModeChatPanel
-          messages={(conversation.data?.messages ?? []) as ModeChatMessage[]}
+          messages={(conversation.data?.messages ?? []) as unknown as ModeChatMessage[]}
           isPending={createMessage.isPending || generating}
           running={generating}
           runningText={generating ? `Generating ${def.label}...` : "Working..."}
