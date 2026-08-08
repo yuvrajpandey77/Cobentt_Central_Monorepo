@@ -4,15 +4,12 @@ import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Paperclip, X, Loader2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadAttachment } from "@/lib/attachments/upload";
 
-export interface AttachmentMeta {
-  id: string;
-  fileName: string;
-  mimeType: string;
-  size: number;
-  createdAt: string;
-  extractedText: string | null;
-}
+export type { AttachmentMeta } from "@/lib/attachments/upload";
+import type { AttachmentMeta } from "@/lib/attachments/upload";
+
+const uploadFile = uploadAttachment;
 
 export interface AttachmentPill {
   id: string;
@@ -59,24 +56,6 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-async function uploadFile(
-  file: File,
-  conversationId: string
-): Promise<AttachmentMeta> {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("conversationId", conversationId);
-  const res = await fetch("/api/attachments/upload", { method: "POST", body: form });
-  const data = (await res.json().catch(() => null)) as {
-    attachment?: AttachmentMeta;
-    error?: string;
-  } | null;
-  if (!res.ok || !data?.attachment) {
-    throw new Error(data?.error || "Upload failed");
-  }
-  return data.attachment;
 }
 
 /** Read-only tiny chip strip used to echo attachments on sent messages. */

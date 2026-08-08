@@ -6,7 +6,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient, skipToken } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { MessageList } from "@/components/chat/message-list";
-import { Lock, Sparkles, Loader2 } from "lucide-react";
+import { Lock, Sparkles, Loader2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -81,6 +81,23 @@ export default function SharedChatPage({ params }: { params: Promise<{ token: st
     if (token) fork.mutate({ token });
   };
 
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyTranscript = async () => {
+    try {
+      const text = (shared.data?.messages ?? [])
+        .filter((m) => m.role === "USER" || m.role === "ASSISTANT")
+        .map((m) => `${m.role === "USER" ? "You" : "Assistant"}:\n${m.content}`)
+        .join("\n\n");
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Conversation copied");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy conversation");
+    }
+  };
+
   if (shared.isLoading || !token) {
     return (
       <div className="h-dvh flex items-center justify-center bg-[var(--color-cb-bg)]">
@@ -118,17 +135,26 @@ export default function SharedChatPage({ params }: { params: Promise<{ token: st
               Shared chat · view only
             </span>
           </div>
-          <button
-            onClick={handleFork}
-            disabled={fork.isPending}
-            className={cn(
-              "flex items-center gap-1.5 px-3 h-8 rounded-lg text-[11px] font-medium transition-colors",
-              "bg-white text-black hover:opacity-90 disabled:opacity-50"
-            )}
-          >
-            {fork.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            Start your own from this chat
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyTranscript}
+              className="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[11px] font-medium transition-colors bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] hover:bg-[var(--color-cb-card-hover)] text-[var(--color-cb-text-muted)]"
+            >
+              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? "Copied" : "Copy conversation"}
+            </button>
+            <button
+              onClick={handleFork}
+              disabled={fork.isPending}
+              className={cn(
+                "flex items-center gap-1.5 px-3 h-8 rounded-lg text-[11px] font-medium transition-colors",
+                "bg-white text-black hover:opacity-90 disabled:opacity-50"
+              )}
+            >
+              {fork.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              Start your own from this chat
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto chat-scrollbar px-4">
