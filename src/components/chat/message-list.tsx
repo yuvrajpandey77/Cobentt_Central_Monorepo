@@ -6,6 +6,7 @@ import { useChat } from "@/lib/chat-store";
 import { cn } from "@/lib/utils";
 import { FlowerLoader } from "@/components/flower-loader";
 import { AttachmentPills } from "@/components/chat/attach-input";
+import { ShareDialog } from "@/components/chat/share-dialog";
 import {
   Copy,
   Share2,
@@ -147,8 +148,17 @@ function renderInline(text: string) {
   return parts;
 }
 
-function AssistantActions({ msg, onRegenerate }: { msg: Message; onRegenerate?: () => void }) {
+function AssistantActions({
+  msg,
+  onRegenerate,
+  conversationId,
+}: {
+  msg: Message;
+  onRegenerate?: () => void;
+  conversationId: string;
+}) {
   const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => { if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current); }, []);
@@ -170,25 +180,25 @@ function AssistantActions({ msg, onRegenerate }: { msg: Message; onRegenerate?: 
     }
   }, [msg.content]);
 
-  const handleShare = useCallback(async () => {
-    if (navigator.share) { try { await navigator.share({ text: msg.content }); } catch {} }
-    else { await handleCopy(); }
-  }, [msg.content, handleCopy]);
-
   return (
-    <div className="flex items-center gap-0.5">
-      <button onClick={handleCopy} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title={copied ? "Copied" : "Copy"}>
-        {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-      </button>
-      {onRegenerate && (
-        <button onClick={onRegenerate} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Regenerate">
-          <RefreshCw className="w-3.5 h-3.5" />
+    <>
+      <div className="flex items-center gap-0.5">
+        <button onClick={handleCopy} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title={copied ? "Copied" : "Copy"}>
+          {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
+        {onRegenerate && (
+          <button onClick={onRegenerate} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Regenerate">
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <button onClick={() => setShareOpen(true)} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Share">
+          <Share2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      {shareOpen && (
+        <ShareDialog conversationId={conversationId} focusMessageId={msg.id} onClose={() => setShareOpen(false)} />
       )}
-      <button onClick={handleShare} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Share">
-        <Share2 className="w-3.5 h-3.5" />
-      </button>
-    </div>
+    </>
   );
 }
 
@@ -196,10 +206,14 @@ export function MessageList({
   messages,
   isStreaming,
   onRegenerate,
+  conversationId,
+  readOnly = false,
 }: {
   messages: Message[];
   isStreaming: boolean;
   onRegenerate?: (userMessageId: string) => void;
+  conversationId?: string;
+  readOnly?: boolean;
 }) {
   const { editMessage } = useChat();
 
@@ -219,18 +233,20 @@ export function MessageList({
         const isLastStreaming = isStreaming && idx === messages.length - 1 && msg.role === "assistant";
 
         return (
-          <div key={msg.id} className={cn("animate-fade-in-up group", msg.role === "user" ? "flex justify-end" : "")}>
+          <div key={msg.id} id={`msg-${msg.id}`} className={cn("animate-fade-in-up group", msg.role === "user" ? "flex justify-end" : "")}>
             {msg.role === "user" ? (
               <div className="max-w-[92%] group">
                 <div className="px-4 py-3 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-user-bubble)]">
                   <AttachmentPills pills={msg.attachments ?? []} readOnly className="mb-2" />
                   <p className="text-[14px] text-[var(--color-cb-text-bright)] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 </div>
-                <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => editMessage(msg.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-colors" title="Edit message">
-                    <Pencil className="w-3 h-3" /> Edit
-                  </button>
-                </div>
+                {!readOnly && (
+                  <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => editMessage(msg.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-colors" title="Edit message">
+                      <Pencil className="w-3 h-3" /> Edit
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="max-w-full px-0.5">
@@ -251,10 +267,11 @@ export function MessageList({
                   </div>
                 )}
 
-                {msg.content && (
+                {msg.content && !readOnly && (
                   <div className="flex items-center justify-between mt-3">
                     <AssistantActions
                       msg={msg}
+                      conversationId={conversationId || ""}
                       onRegenerate={prevUser && onRegenerate ? () => onRegenerate(prevUser.id) : undefined}
                     />
                     {msg.thinkingTime != null && msg.thinkingTime > 0 && (

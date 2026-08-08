@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ModeChatPanel, ModeChatMessage } from "@/components/modes/mode-chat-panel";
 import { ResearchMarkdown, styleToAttr } from "@/components/modes/renderers";
+import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { DocumentSkeleton } from "@/components/ui/skeleton";
 import { ResearchProgress } from "@/components/ui/research-progress";
 import { BlockStyleEditor } from "@/components/modes/block-style-editor";
@@ -161,7 +162,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                 queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
                 toast.success("Research complete");
               } else if (data.event === "error") {
-                throw new Error(data.error);
+                throw new Error(friendlyAIErrorMessage(data.error, "Research failed"));
               }
             } catch {}
           }
@@ -197,17 +198,30 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId, format: "pdf", artifact: JSON.stringify(artifact) }),
       });
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) {
+        let message = "Export failed";
+        try {
+          const body = await res.json();
+          if (body?.error) message = body.error;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(message);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `${artifact.title || "research"}.pdf`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1000);
       toast.success("Exported PDF");
-    } catch {
-      toast.error("Export failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
     }
   };
 

@@ -14,6 +14,8 @@ const isPublicRoute = createRouteMatcher([
     "/overview(.*)",
     "/sign-in(.*)",
     "/sign-up(.*)",
+    // Shared chat links are public, but data is token-gated server-side
+    "/p(.*)",
     // Inngest is public but has its own signing key verification
     "/api/inngest(.*)",
     // Razorpay webhook is public but verified by HMAC signature

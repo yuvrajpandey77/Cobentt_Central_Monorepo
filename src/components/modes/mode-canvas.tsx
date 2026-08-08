@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { MODE_DEFINITIONS, SLIDE_THEMES } from "@/lib/modes/definitions";
 import {
   Artifact,
@@ -295,17 +296,30 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           artifact: serializeArtifact(artifact),
         }),
       });
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) {
+        let message = "Export failed";
+        try {
+          const body = await res.json();
+          if (body?.error) message = body.error;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(message);
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `${artifact.title || "untitled"}.${format === "pdf" ? "pdf" : format === "pptx" ? "pptx" : format === "docx" ? "docx" : "xlsx"}`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 1000);
       toast.success("Exported successfully");
-    } catch {
-      toast.error("Export failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
     } finally {
       setExporting(false);
     }
@@ -350,8 +364,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             (data as { error?: string } | null)?.error ||
             (data as { message?: string } | null)?.message ||
             "Generation failed";
-          toast.error(msg);
-          throw new Error(msg);
+          throw new Error(friendlyAIErrorMessage(msg, "Generation failed"));
         }
 
         // Stream tokens so the canvas can show a skeleton and reveal blocks
@@ -372,22 +385,19 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             try {
               const data = JSON.parse(line.slice(6));
               if (data.event === "error") {
-                toast.error(data.error || "Generation failed");
-                throw new Error(data.error || "Generation failed");
+                throw new Error(friendlyAIErrorMessage(data.error, "Generation failed"));
               }
               if (data.event === "done") {
                 setRevealTick((t) => t + 1);
                 queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
               }
             } catch (err) {
-              if (err instanceof Error && err.message !== "Generation failed") throw err;
+              throw err;
             }
           }
         }
       } catch (err) {
-        if (!(err instanceof Error && err.message === "Generation failed")) {
-          toast.error(err instanceof Error ? err.message : "Failed to generate with AI");
-        }
+        toast.error(err instanceof Error ? err.message : "Failed to generate with AI");
       } finally {
         setGenerating(false);
       }
@@ -739,7 +749,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                     )}
                     onClick={() => setSelectedId(b.id)}
                   >
-                    <SlidesRenderer block={b} viewport={viewport} theme={activeTheme} />
+                    <SlidesRenderer block={b} viewport={viewport} theme={activeTheme} editable={selectedId === b.id} onEdit={updateBlock} />
                     <p className="text-center text-[10px] text-white/30 mt-1">{i + 1}</p>
                   </div>
                 ))}
@@ -775,7 +785,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                         revealTick > 0 && "animate-fade-in-up"
                       )}
                     >
-                      <DocumentBlockRenderer block={b} light={docLight} />
+                      <DocumentBlockRenderer block={b} light={docLight} editable={selectedId === b.id} onEdit={updateBlock} />
                     </div>
                   ))}
                   {artifact.blocks.length === 0 && (
