@@ -1,8 +1,10 @@
 import prisma from "@/lib/db";
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { Prisma } from "@/generated/prisma";
+import { createTRPCRouter, protectedProcedure, baseProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { DEFAULT_MODEL } from "@/lib/models";
+import { randomUUID } from "crypto";
 
 /** Persist attachment refs ({ id, fileName, size }) onto a message row. */
 async function attachRefsToMessage(
@@ -198,6 +200,101 @@ export const conversationsRouter = createTRPCRouter({
         );
         return titleMatch || messageMatch;
       });
+    }),
+
+  setShare: protectedProcedure
+    .input(z.object({
+      conversationId: z.string().min(1),
+      isPublic: z.boolean(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const conversation = await prisma.conversation.findFirst({
+        where: { id: input.conversationId, userId: ctx.auth.userId },
+        select: { id: true, shareToken: true },
+      });
+      if (!conversation) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+      }
+      const updated = await prisma.conversation.update({
+        where: { id: input.conversationId },
+        data: {
+          isPublic: input.isPublic,
+          ...(input.isPublic && !conversation.shareToken
+            ? { shareToken: randomUUID() }
+            : {}),
+        },
+        select: { isPublic: true, shareToken: true },
+      });
+      return updated;
+    }),
+
+  getShareStatus: protectedProcedure
+    .input(z.object({ conversationId: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      const conversation = await prisma.conversation.findFirst({
+        where: { id: input.conversationId, userId: ctx.auth.userId },
+        select: { isPublic: true, shareToken: true },
+      });
+      if (!conversation) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+      }
+      return conversation;
+    }),
+
+  // Public, token-gated read for anyone who has the share link.
+  getSharedByToken: baseProcedure
+    .input(z.object({ token: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const conversation = await prisma.conversation.findFirst({
+        where: { shareToken: input.token, isPublic: true },
+        include: {
+          messages: {
+            orderBy: { createdAt: "asc" },
+            include: { fragments: true },
+          },
+        },
+      });
+      if (!conversation) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Shared conversation not found" });
+      }
+      return conversation;
+    }),
+
+  // Signed-in users can fork a shared conversation into their own workspace.
+  forkShared: protectedProcedure
+    .input(z.object({ token: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const source = await prisma.conversation.findFirst({
+        where: { shareToken: input.token, isPublic: true },
+        include: {
+          messages: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      });
+      if (!source) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Shared conversation not found" });
+      }
+      const forked = await prisma.conversation.create({
+        data: {
+          userId: ctx.auth.userId,
+          title: source.title ? `${source.title} (copy)` : "Shared chat copy",
+          mode: source.mode || "chat",
+          model: source.model || DEFAULT_MODEL,
+          messages: {
+            create: source.messages.map((m) => ({
+              content: m.content,
+              role: m.role,
+              type: "RESULT",
+              status: "COMPLETE",
+              attachments: (m.attachments ?? undefined) as Prisma.InputJsonValue | undefined,
+              thinking: (m.thinking ?? undefined) as Prisma.InputJsonValue | undefined,
+            })),
+          },
+        },
+        include: { messages: { orderBy: { createdAt: "asc" } } },
+      });
+      return forked;
     }),
 });
 

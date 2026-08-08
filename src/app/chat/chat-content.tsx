@@ -7,10 +7,10 @@ import { useChat } from "@/lib/chat-store";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MessageList } from "@/components/chat/message-list";
 import { Composer } from "@/components/chat/composer";
-import { SettingsPanel } from "@/components/chat/settings";
 import type { Message } from "@/lib/chat-store";
-import { Menu, Settings } from "lucide-react";
+import { Menu, Share2 } from "lucide-react";
 import { takePendingFiles } from "@/lib/attachments/shuttle";
+import { ShareDialog } from "@/components/chat/share-dialog";
 
 function ContextRing() {
   const { activeThread } = useChat();
@@ -19,14 +19,14 @@ function ContextRing() {
   const maxContext = 128000;
   const used = Math.min(Math.round((approxTokens / maxContext) * 100), 100);
   return (
-    <div className="relative w-7 h-7 flex items-center justify-center group">
-      <svg className="absolute inset-0 w-7 h-7 -rotate-90" viewBox="0 0 28 28">
+    <div className="relative w-12 h-12 flex items-center justify-center group">
+      <svg className="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 28 28">
         <circle cx="14" cy="14" r="11" fill="none" stroke="var(--color-cb-border)" strokeWidth="2.5" />
         <circle cx="14" cy="14" r="11" fill="none" stroke="var(--color-cb-accent)" strokeWidth="2.5"
           strokeDasharray={`${(used / 100) * 69.1} 69.1`} strokeLinecap="round" />
       </svg>
-      <span className="text-[8px] font-semibold text-[var(--color-cb-text-muted)]">{used}%</span>
-      <div className="absolute top-full mt-2 left-0 hidden group-hover:block px-2.5 py-1.5 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] text-[9px] text-[var(--color-cb-text-muted)] max-w-[200px] z-10">
+      <span className="text-[10px] font-semibold text-[var(--color-cb-text-muted)]">{used}%</span>
+      <div className="absolute top-full mt-2 right-0 hidden group-hover:block px-2.5 py-1.5 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] text-[11px] text-[var(--color-cb-text-muted)] max-w-[200px] z-10">
         Context: {approxTokens.toLocaleString()} / {maxContext.toLocaleString()} tokens
       </div>
     </div>
@@ -44,8 +44,8 @@ export function ChatContent() {
   const { isLoaded } = useUser();
   const { isSignedIn } = useAuth();
   const searchParams = useSearchParams();
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [streamingMsg, setStreamingMsg] = useState<Message | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [pendingUserMsg, setPendingUserMsg] = useState<Message | null>(null);
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>(undefined);
   const [incomingFiles, setIncomingFiles] = useState<File[]>([]);
@@ -152,12 +152,15 @@ export function ChatContent() {
 
           <div className="flex items-center gap-2">
             <ContextRing />
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-tr-[24px] rounded-bl-[24px] rounded-tl-[8px] rounded-br-[8px] bg-[var(--color-cb-card)] hover:bg-[var(--color-cb-border)] transition-colors text-[var(--color-cb-text-muted)]"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+            {activeThread && (
+              <button
+                onClick={() => setShareOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-tr-[24px] rounded-bl-[24px] rounded-tl-[8px] rounded-br-[8px] bg-[var(--color-cb-card)] hover:bg-[var(--color-cb-border)] transition-colors text-[var(--color-cb-text-muted)]"
+                title="Share chat"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </header>
 
@@ -171,6 +174,7 @@ export function ChatContent() {
                 messages={displayMessages}
                 isStreaming={!!streamingMsg}
                 onRegenerate={handleRegenerate}
+                conversationId={activeThread?.id}
               />
             )}
           </div>
@@ -189,7 +193,9 @@ export function ChatContent() {
         </div>
       </div>
 
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+      {shareOpen && activeThread && (
+        <ShareDialog conversationId={activeThread.id} onClose={() => setShareOpen(false)} />
+      )}
     </div>
   );
 }

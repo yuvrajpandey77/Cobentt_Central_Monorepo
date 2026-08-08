@@ -33,20 +33,106 @@ export interface SlideTheme {
 
 const STATIC_THEME: SlideTheme = { bg: "#0b1220", accent: "#38bdf8", text: "#f1f5f9", muted: "#94a3b8", chip: "#0ea5e9" };
 
+// Resolve a text color honoring the per-block style first, then the theme default.
+function textColor(style?: BlockStyle, theme?: SlideTheme, fallback?: string): string {
+  if (style?.color) return style.color;
+  return fallback || theme?.text || "#ffffff";
+}
+
+function fontSizeOf(style?: BlockStyle): number | undefined {
+  const n = style?.fontSize;
+  if (typeof n === "number") return n;
+  if (typeof n === "string" && /^\d+$/.test(n)) return parseInt(n, 10);
+  return undefined;
+}
+
+type EditHandler = (block: ArtifactBlock) => void;
+
+function editProp(onEdit: EditHandler | undefined, block: ArtifactBlock, key: string, value: string) {
+  onEdit?.({ ...block, props: { ...block.props, [key]: value } });
+}
+
+// Inline click-to-edit text element. When `editable` is true the text becomes
+// contentEditable and commits edits via onCommit on blur / Enter.
+function EditableText({
+  as: Tag = "span",
+  value,
+  className,
+  style,
+  editable,
+  onCommit,
+  title,
+}: {
+  as?: string;
+  value: string;
+  className?: string;
+  style?: React.CSSProperties;
+  editable?: boolean;
+  onCommit?: (v: string) => void;
+  title?: string;
+}) {
+  if (!editable || !onCommit) {
+    const El = Tag as React.ElementType;
+    return (
+      <El className={className} style={style} title={title}>
+        {value}
+      </El>
+    );
+  }
+  const El = Tag as React.ElementType;
+  return (
+    <El
+      className={cn(className, "cursor-text outline-none")}
+      style={style}
+      contentEditable
+      suppressContentEditableWarning
+      spellCheck={false}
+      title={title}
+      data-editable
+      onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        const text = (e.currentTarget.innerText || "").replace(/\u00A0/g, " ").replace(/\n+$/, "").trimEnd();
+        onCommit(text);
+      }}
+      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+        e.stopPropagation();
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+      }}
+    >
+      {value}
+    </El>
+  );
+}
+
 function SingleSlideRenderer({
   block,
   viewport,
   theme,
+  editable,
+  onEdit,
 }: {
   block: ArtifactBlock;
   viewport: "desktop" | "tablet" | "phone";
   theme: SlideTheme;
+  editable?: boolean;
+  onEdit?: EditHandler;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = block.props as any;
+  const style = block.style;
   const size = viewport === "desktop" ? "text-4xl" : viewport === "tablet" ? "text-2xl" : "text-xl";
   const bodySize = viewport === "desktop" ? "text-base" : viewport === "tablet" ? "text-sm" : "text-xs";
   const cardBg = hexToRgba(theme.bg === "#fafafa" ? "#ffffff" : theme.bg, theme.bg === "#fafafa" ? 0.6 : 0.45);
+  const overriddenFontSize = fontSizeOf(style);
+  const titleSize = overriddenFontSize ? { fontSize: overriddenFontSize } : undefined;
+  const titleColor = { color: textColor(style, theme, theme.text) };
+  const mutedColor = { color: textColor(style, theme, theme.muted) };
+  const accentColor = { color: textColor(style, theme, theme.accent) };
+  const edit = (key: string) => (v: string) => editProp(onEdit, block, key, v);
 
   return (
     <div
@@ -63,10 +149,26 @@ function SingleSlideRenderer({
       {block.type === "title-slide" && (
         <div className="w-full text-center space-y-4">
           <div className="mx-auto h-1.5 w-14 rounded-full" style={{ background: p.accentColor || theme.accent }} />
-          <h2 className={cn("font-bold", size)} style={{ color: theme.text }}>{p.title}</h2>
-          {p.subtitle && <p className="mx-auto max-w-2xl text-sm md:text-base" style={{ color: theme.muted }}>{p.subtitle}</p>}
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
+          {p.subtitle != null && (
+            <EditableText
+              as="p"
+              value={p.subtitle || ""}
+              className="mx-auto max-w-2xl text-sm md:text-base"
+              style={mutedColor}
+              editable={editable}
+              onCommit={edit("subtitle")}
+            />
+          )}
           {p.author && (
-            <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium" style={{ background: hexToRgba(theme.chip, 0.2), color: theme.text }}>
+            <span className="inline-block px-3 py-1 rounded-full text-[11px] font-medium" style={{ background: hexToRgba(theme.chip, 0.2), color: textColor(style, theme, theme.text) }}>
               {p.author}
             </span>
           )}
@@ -75,12 +177,23 @@ function SingleSlideRenderer({
 
       {block.type === "content-slide" && (
         <div className="w-full h-full flex flex-col justify-center px-6 md:px-10">
-          <h2 className={cn("font-bold mb-5", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold mb-5", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           <ul className="space-y-3">
             {(p.bullets || []).map((b: string, i: number) => (
-              <li key={i} className={cn("flex items-start gap-3", bodySize)} style={{ color: theme.muted }}>
+              <li key={i} className={cn("flex items-start gap-3", bodySize)} style={mutedColor}>
                 <span className="mt-1.5 h-2 w-2 rounded-full flex-shrink-0" style={{ background: theme.accent }} />
-                <span>{b}</span>
+                <EditableText value={b} editable={editable} onCommit={(v) => {
+                  const bullets = [...(p.bullets || [])];
+                  bullets[i] = v;
+                  onEdit?.({ ...block, props: { ...block.props, bullets } });
+                }} />
               </li>
             ))}
           </ul>
@@ -89,26 +202,64 @@ function SingleSlideRenderer({
 
       {block.type === "quote-slide" && (
         <div className="text-center px-6 space-y-4 w-full">
-          <p className={cn("leading-relaxed font-medium", viewport === "desktop" ? "text-2xl" : "text-lg")} style={{ color: theme.text }}>
-            {String(p.quote ?? "").length ? `\u201C${p.quote}\u201D` : ""}
-          </p>
-          {p.citation && <p className="text-sm" style={{ color: theme.accent }}>— {p.citation}</p>}
+          <EditableText
+            as="p"
+            value={p.quote ? `\u201C${p.quote}\u201D` : ""}
+            className={cn("leading-relaxed font-medium", viewport === "desktop" ? "text-2xl" : "text-lg")}
+            style={titleColor}
+            editable={editable}
+            onCommit={(v) => editProp(onEdit, block, "quote", v.replace(/^“|”$/g, "").trim())}
+          />
+          {p.citation && (
+            <EditableText
+              as="p"
+              value={`— ${p.citation}`}
+              className="text-sm"
+              style={accentColor}
+              editable={editable}
+              onCommit={(v) => editProp(onEdit, block, "citation", v.replace(/^—\s*/, "").trim())}
+            />
+          )}
         </div>
       )}
 
       {block.type === "two-column-slide" && (
         <div className="w-full h-full flex flex-col justify-center px-6 md:px-10">
-          <h2 className={cn("font-bold mb-5", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold mb-5", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           <div className="grid grid-cols-2 gap-6">
             {[
-              { key: "left", title: p.leftTitle, items: p.left },
-              { key: "right", title: p.rightTitle, items: p.right },
+              { key: "left", title: p.leftTitle, items: p.left, titleKey: "leftTitle", itemsKey: "left" },
+              { key: "right", title: p.rightTitle, items: p.right, titleKey: "rightTitle", itemsKey: "right" },
             ].map((col) => (
               <div key={col.key} className="rounded-xl p-4" style={{ background: cardBg, border: `1px solid ${hexToRgba(theme.accent, 0.2)}` }}>
-                <h3 className="text-[11px] uppercase tracking-wide font-semibold mb-3" style={{ color: theme.accent }}>{col.title}</h3>
+                <EditableText
+                  as="h3"
+                  value={col.title || ""}
+                  className="text-[11px] uppercase tracking-wide font-semibold mb-3"
+                  style={accentColor}
+                  editable={editable}
+                  onCommit={edit(col.titleKey)}
+                />
                 <ul className="space-y-1.5">
                   {(col.items || []).map((b: string, i: number) => (
-                    <li key={i} className={bodySize} style={{ color: theme.muted }}>• {b}</li>
+                    <li key={i} className={bodySize} style={mutedColor}>
+                      • <EditableText
+                        value={b}
+                        editable={editable}
+                        onCommit={(v) => {
+                          const items = [...(col.items || [])];
+                          items[i] = v;
+                          onEdit?.({ ...block, props: { ...block.props, [col.itemsKey]: items } });
+                        }}
+                      />
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -120,10 +271,19 @@ function SingleSlideRenderer({
       {block.type === "closing-slide" && (
         <div className="text-center space-y-4 w-full">
           <div className="mx-auto h-1.5 w-14 rounded-full" style={{ background: theme.accent }} />
-          <h2 className={cn("font-bold", size)} style={{ color: theme.text }}>{p.title}</h2>
-          {p.subtitle && <p className="text-base" style={{ color: theme.muted }}>{p.subtitle}</p>}
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
+          {p.subtitle != null && (
+            <EditableText as="p" value={p.subtitle || ""} className="text-base" style={mutedColor} editable={editable} onCommit={edit("subtitle")} />
+          )}
           {p.contact && (
-            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium" style={{ background: hexToRgba(theme.chip, 0.2), color: theme.text }}>
+            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium" style={{ background: hexToRgba(theme.chip, 0.2), color: textColor(style, theme, theme.text) }}>
               {p.contact}
             </span>
           )}
@@ -132,28 +292,67 @@ function SingleSlideRenderer({
 
       {block.type === "stat-slide" && (
         <div className="w-full text-center space-y-3">
-          <p className="text-[11px] uppercase tracking-widest font-semibold" style={{ color: theme.accent }}>{p.title}</p>
+          <EditableText
+            as="p"
+            value={p.title || ""}
+            className="text-[11px] uppercase tracking-widest font-semibold"
+            style={accentColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           <div className="flex items-baseline justify-center gap-3">
-            <span className={cn("font-black", viewport === "desktop" ? "text-7xl" : "text-5xl")} style={{ color: theme.text }}>{p.value}</span>
-            <span className={cn("font-semibold", viewport === "desktop" ? "text-3xl" : "text-2xl")} style={{ color: theme.accent }}>{p.suffix}</span>
+            <EditableText
+              as="span"
+              value={p.value || ""}
+              className={cn("font-black", viewport === "desktop" ? "text-7xl" : "text-5xl")}
+              style={titleColor}
+              editable={editable}
+              onCommit={edit("value")}
+            />
+            <EditableText
+              as="span"
+              value={p.suffix || ""}
+              className={cn("font-semibold", viewport === "desktop" ? "text-3xl" : "text-2xl")}
+              style={accentColor}
+              editable={editable}
+              onCommit={edit("suffix")}
+            />
           </div>
-          {p.note && <p className="mx-auto max-w-md text-sm" style={{ color: theme.muted }}>{p.note}</p>}
+          {p.note && (
+            <EditableText as="p" value={p.note || ""} className="mx-auto max-w-md text-sm" style={mutedColor} editable={editable} onCommit={edit("note")} />
+          )}
         </div>
       )}
 
       {block.type === "agenda-slide" && (
         <div className="w-full h-full flex flex-col justify-center px-6 md:px-12">
-          <h2 className={cn("font-bold mb-6", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold mb-6", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           <ol className="space-y-3">
             {(p.items || []).map((item: string, i: number) => (
-              <li key={i} className={cn("flex items-center gap-4", bodySize)} style={{ color: theme.text }}>
+              <li key={i} className={cn("flex items-center gap-4", bodySize)} style={titleColor}>
                 <span
                   className="flex items-center justify-center h-8 w-8 rounded-full text-xs font-bold flex-shrink-0"
                   style={{ background: hexToRgba(theme.accent, 0.85), color: theme.bg }}
                 >
                   {i + 1}
                 </span>
-                <span style={{ color: theme.muted }}>{item}</span>
+                <EditableText
+                  value={item}
+                  style={mutedColor}
+                  editable={editable}
+                  onCommit={(v) => {
+                    const items = [...(p.items || [])];
+                    items[i] = v;
+                    onEdit?.({ ...block, props: { ...block.props, items } });
+                  }}
+                />
               </li>
             ))}
           </ol>
@@ -162,7 +361,14 @@ function SingleSlideRenderer({
 
       {block.type === "image-slide" && (
         <div className="w-full h-full flex flex-col justify-center px-6 md:px-10">
-          <h2 className={cn("font-bold mb-4", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold mb-4", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           {p.url ? (
             <img
               src={p.url}
@@ -176,22 +382,54 @@ function SingleSlideRenderer({
               Add an image URL to display it
             </div>
           )}
-          {p.caption && <p className="mt-3 text-sm" style={{ color: theme.muted }}>{p.caption}</p>}
+          {p.caption != null && (
+            <EditableText as="p" value={p.caption || ""} className="mt-3 text-sm" style={mutedColor} editable={editable} onCommit={edit("caption")} />
+          )}
         </div>
       )}
 
       {block.type === "grid-slide" && (
         <div className="w-full h-full flex flex-col justify-center px-6 md:px-10">
-          <h2 className={cn("font-bold mb-5", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold mb-5", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {(Array.isArray(p.items) ? p.items : []).map((card: { label?: string; detail?: string } | string, i: number) => {
               const label = typeof card === "string" ? card : card?.label;
               const detail = typeof card === "object" && card ? card.detail : "";
+              const isObj = typeof card === "object" && card;
               return (
                 <div key={i} className="rounded-xl p-4" style={{ background: cardBg, border: `1px solid ${hexToRgba(theme.accent, 0.25)}` }}>
                   <div className="mb-2 h-1.5 w-8 rounded-full" style={{ background: theme.accent }} />
-                  <p className={cn("font-semibold", viewport === "tablet" ? "text-sm" : "text-base")} style={{ color: theme.text }}>{label}</p>
-                  {detail && <p className="mt-1 text-xs" style={{ color: theme.muted }}>{detail}</p>}
+                  <EditableText
+                    value={label || ""}
+                    className={cn("font-semibold", viewport === "tablet" ? "text-sm" : "text-base")}
+                    style={titleColor}
+                    editable={editable}
+                    onCommit={(v) => {
+                      const items = [...(p.items || [])];
+                      items[i] = isObj ? { ...card, label: v } : v;
+                      onEdit?.({ ...block, props: { ...block.props, items } });
+                    }}
+                  />
+                  {detail != null && isObj && (
+                    <EditableText
+                      value={detail}
+                      className="mt-1 text-xs"
+                      style={mutedColor}
+                      editable={editable}
+                      onCommit={(v) => {
+                        const items = [...(p.items || [])];
+                        items[i] = { ...card, detail: v };
+                        onEdit?.({ ...block, props: { ...block.props, items } });
+                      }}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -201,7 +439,14 @@ function SingleSlideRenderer({
 
       {block.type === "numbered-steps" && (
         <div className="w-full h-full flex flex-col justify-center px-6 md:px-12">
-          <h2 className={cn("font-bold mb-6", size)} style={{ color: theme.text }}>{p.title}</h2>
+          <EditableText
+            as="h2"
+            value={p.title || ""}
+            className={cn("font-bold mb-6", size)}
+            style={titleSize ? { ...titleColor, ...titleSize } : titleColor}
+            editable={editable}
+            onCommit={edit("title")}
+          />
           <div className="space-y-3">
             {(Array.isArray(p.steps) ? p.steps : []).map((step: string, i: number) => (
               <div
@@ -215,7 +460,17 @@ function SingleSlideRenderer({
                 >
                   {i + 1}
                 </span>
-                <span className={bodySize} style={{ color: theme.text }}>{step}</span>
+                <EditableText
+                  value={step}
+                  className={bodySize}
+                  style={titleColor}
+                  editable={editable}
+                  onCommit={(v) => {
+                    const steps = [...(p.steps || [])];
+                    steps[i] = v;
+                    onEdit?.({ ...block, props: { ...block.props, steps } });
+                  }}
+                />
               </div>
             ))}
           </div>
@@ -229,12 +484,24 @@ export function SlidesRenderer({
   block,
   viewport,
   theme,
+  editable,
+  onEdit,
 }: {
   block: ArtifactBlock;
   viewport: "desktop" | "tablet" | "phone";
   theme?: SlideTheme;
+  editable?: boolean;
+  onEdit?: EditHandler;
 }) {
-  return <SingleSlideRenderer block={block} viewport={viewport} theme={theme ?? STATIC_THEME} />;
+  return (
+    <SingleSlideRenderer
+      block={block}
+      viewport={viewport}
+      theme={theme ?? STATIC_THEME}
+      editable={editable}
+      onEdit={onEdit}
+    />
+  );
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -261,26 +528,76 @@ function clamp(n: number): number {
   return Math.max(0, Math.min(255, n));
 }
 
-export function DocumentBlockRenderer({ block, light = false }: { block: ArtifactBlock; light?: boolean }) {
+export function DocumentBlockRenderer({
+  block,
+  light = false,
+  editable,
+  onEdit,
+}: {
+  block: ArtifactBlock;
+  light?: boolean;
+  editable?: boolean;
+  onEdit?: EditHandler;
+}) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = block.props as any;
+  const style = block.style;
   const heading = light ? "text-neutral-900" : "text-white";
   const body = light ? "text-neutral-700" : "text-white/80";
   const sub = light ? "text-neutral-500" : "text-white/40";
   const border = light ? "border-neutral-200" : "border-white/10";
   const codeBg = light ? "bg-neutral-100" : "bg-neutral-900";
+  const edit = (key: string) => (v: string) => editProp(onEdit, block, key, v);
+  const colorStyle = (fallback?: string): React.CSSProperties =>
+    style?.color ? { color: style.color } : fallback ? { color: fallback } : {};
+  const fs = fontSizeOf(style);
+  const fsStyle = fs ? { fontSize: fs } : {};
+
   switch (block.type) {
-    case "heading":
-      if (p.level === "h1") return <h1 className={`text-3xl font-semibold ${heading} mt-6 mb-2`}>{p.text}</h1>;
-      if (p.level === "h3") return <h3 className={`text-lg font-medium ${heading} mt-4 mb-1.5`}>{p.text}</h3>;
-      return <h2 className={`text-2xl font-semibold ${heading} mt-5 mb-2`}>{p.text}</h2>;
+    case "heading": {
+      const cls = p.level === "h1"
+        ? `text-3xl font-semibold ${heading} mt-6 mb-2`
+        : p.level === "h3"
+        ? `text-lg font-medium ${heading} mt-4 mb-1.5`
+        : `text-2xl font-semibold ${heading} mt-5 mb-2`;
+      const Tag = p.level === "h1" ? "h1" : p.level === "h3" ? "h3" : "h2";
+      return (
+        <EditableText
+          as={Tag}
+          value={p.text || ""}
+          className={cls}
+          style={{ ...colorStyle(light ? "#171717" : "#ffffff"), ...fsStyle }}
+          editable={editable}
+          onCommit={edit("text")}
+        />
+      );
+    }
     case "paragraph":
-      return <p className={`${body} leading-relaxed my-2`}>{p.text}</p>;
+      return (
+        <EditableText
+          as="p"
+          value={p.text || ""}
+          className={`${body} leading-relaxed my-2`}
+          style={{ ...colorStyle(light ? "#3f3f46" : "rgba(255,255,255,0.8)"), ...fsStyle }}
+          editable={editable}
+          onCommit={edit("text")}
+        />
+      );
     case "bullets":
       return (
         <ul className={`list-disc list-inside space-y-1 ${body} my-2`}>
           {(p.items || []).map((item: string, i: number) => (
-            <li key={i}>{item}</li>
+            <li key={i} style={colorStyle()}>
+              <EditableText
+                value={item}
+                editable={editable}
+                onCommit={(v) => {
+                  const items = [...(p.items || [])];
+                  items[i] = v;
+                  onEdit?.({ ...block, props: { ...block.props, items } });
+                }}
+              />
+            </li>
           ))}
         </ul>
       );
@@ -293,8 +610,10 @@ export function DocumentBlockRenderer({ block, light = false }: { block: Artifac
     case "quote":
       return (
         <blockquote className={`border-l-2 border-primary pl-4 ${body} italic my-2`}>
-          {p.text}
-          {p.attribution && <footer className={`${sub} text-xs mt-1`}>— {p.attribution}</footer>}
+          <EditableText value={p.text || ""} editable={editable} onCommit={edit("text")} />
+          {p.attribution && (
+            <EditableText as="footer" value={`— ${p.attribution}`} className={`${sub} text-xs mt-1`} editable={editable} onCommit={(v) => editProp(onEdit, block, "attribution", v.replace(/^—\s*/, "").trim())} />
+          )}
         </blockquote>
       );
     case "image":
@@ -321,7 +640,16 @@ export function DocumentBlockRenderer({ block, light = false }: { block: Artifac
               <span className={`mt-1 inline-block h-3.5 w-3.5 rounded-sm border ${item.done ? "bg-primary border-primary" : ""}`}>
                 {item.done && <span className="block text-center text-[10px] leading-[13px] text-white">✓</span>}
               </span>
-              <span className={item.done ? "line-through opacity-60" : ""}>{item.text || ""}</span>
+              <EditableText
+                value={item.text || ""}
+                className={item.done ? "line-through opacity-60" : ""}
+                editable={editable}
+                onCommit={(v) => {
+                  const items = [...(p.items || [])];
+                  items[i] = { ...item, text: v };
+                  onEdit?.({ ...block, props: { ...block.props, items } });
+                }}
+              />
             </li>
           ))}
         </ul>
@@ -344,7 +672,7 @@ export function DocumentBlockRenderer({ block, light = false }: { block: Artifac
       const t = tones[p.tone || "info"];
       return (
         <div className={`rounded-lg border-l-4 ${t.box} ${t.border} px-4 py-3 my-2`}>
-          <p className={`${t.text} text-sm leading-relaxed`}>{p.text}</p>
+          <EditableText as="p" value={p.text || ""} className={`${t.text} text-sm leading-relaxed`} style={colorStyle()} editable={editable} onCommit={edit("text")} />
         </div>
       );
     }
@@ -372,7 +700,7 @@ export function DocumentBlockRenderer({ block, light = false }: { block: Artifac
         </div>
       );
     default:
-      return <p className={`${body} my-2`}>{p.text || ""}</p>;
+      return <p className={`${body} my-2`} style={colorStyle()}>{p.text || ""}</p>;
   }
 }
 

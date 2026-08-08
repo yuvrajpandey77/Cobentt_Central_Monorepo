@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import TextareaAutosize from "react-textarea-autosize";
 import { Plus, Globe, Send, Square } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { AttachInput, AttachmentPills, type AttachmentMeta, type AttachmentPill, type AttachInputHandle } from "@/components/chat/attach-input";
 
 const starters = [
@@ -226,7 +227,7 @@ export function Composer({
 
             // Error event
             if (parsed.error) {
-              throw new Error(parsed.error);
+              throw new Error(friendlyAIErrorMessage(parsed.error, "Request failed"));
             }
           } catch (e) {
             if (e instanceof SyntaxError) continue;
@@ -244,7 +245,7 @@ export function Composer({
       onStreamMessage?.({
         id: assistantId,
         role: "assistant",
-        content: `**Error:** ${msg}\n\nMake sure the server is running and try again.`,
+        content: `**Error:** ${msg}\n\nPlease try again.`,
         timestamp: Date.now(),
       });
       // Let user see error, clear after timeout

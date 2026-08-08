@@ -70,10 +70,13 @@ model Conversation {
   updatedAt  DateTime  @updatedAt
   isPinned   Boolean   @default(false)
   isArchived Boolean   @default(false)
+  isPublic   Boolean   @default(false)
+  shareToken String?   @unique
   messages   Message[]
   attachments Attachment[]
 
   @@index([userId, updatedAt])
+  @@index([isPublic])
   @@map("conversations")
 }
 
