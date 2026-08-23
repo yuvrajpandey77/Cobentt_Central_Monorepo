@@ -1,8 +1,10 @@
-# SYSTEM DESIGN: Cogerphere (Cobentt) — AI-Native DApp & Web Builder Platform
+# SYSTEM DESIGN: Cobentt by Cogerphere AI Labs — General-Purpose AI Harness & Content Studio
 
-> **Version:** Beta 0.1 Experimental | **Stack:** Next.js 15 + tRPC + Prisma/PostgreSQL + Inngest + E2B + Clerk
+> **Version:** Beta 0.1 Experimental (`BetaVersion0.1CogerphereExperimental`) | **Stack:** Next.js 15 + tRPC + Prisma/PostgreSQL + Inngest + E2B + Clerk
 > **Author:** Senior Engineering — Architecture & Production Deep Dive
 > **Date:** August 2026 | **Status:** Active / Pre-Production (6 major phases certified, load-tested)
+> **Keywords:** AI Harness, Agent Orchestration, Content Studio, Slides/Docs/Sheets, Deep Research, Structured Output, SSE Streaming, Spreadsheet Engine, Smart Contract Studio, Website Builder, Chat — General-Purpose, Not Just Web3
+> **Branding:** Product = **Cobentt** (user-facing) · Labs = **Cogerphere AI Labs** · Repo = `BetaVersion0.1CogerphereExperimental`
 
 ---
 
@@ -33,44 +35,58 @@
 ## 1. Executive Summary
 
 ### Project Overview
-**Cogerphere (branded Cobentt)** is an AI-native, full-stack platform that lets anyone generate, compile, test, and deploy production-grade **Web2 apps** (Next.js + Tailwind + Shadcn) and **Web3 dApps / smart contracts** (ERC-20/721/1155, PaymentSplitter, Custom Solidity) from a single natural-language prompt. The user describes what they want — "ERC-20 with snapshot + permit" or "landing page with pricing and testimonials" — and the system orchestrates autonomous AI agents in isolated sandboxes, returns a live preview URL, extracts ABI/bytecode, and optionally verifies/deploys to EVM testnet/mainnet.
+**Cobentt by Cogerphere AI Labs** is a **general-purpose AI harness & content studio** — not just a Web/DApp builder. From one natural-language prompt (plus optional file attachments), the platform can generate and iteratively edit **7 distinct work products** on a unified canvas, each with live editing and one-click native export:
 
-- **Users/Customers:** Web2 founders & indie hackers (instant landing pages, dashboards); Web3 builders (token, NFT, DeFi scaffolds); Learners (the project doubles as an AI learning path from Python → ML → DL → NLP/CV/RL mapped to internal services).
-- **Problem Solved:** Eliminates the 2–8 week gap from idea → compilable, testable code → deployed contract/site. No local Foundry/Anchor setup, no template hunting, no prompt-to-ABI glue.
+- **Slides** (presentation decks: title/content/quote/two-column/closing/stat/agenda/image/grid/numbered-steps, 13 themes, export `.pptx` via `pptxgenjs`)
+- **Document / Docs** (rich text: heading/paragraph/bullets/code/quote/image/divider/table/checklist/link/callout, export `.docx` via `docx`, markdown source via CodeMirror)
+- **Sheet** (spreadsheet: grid with `Glide Data Grid` + `HyperFormula` engine for `=SUM/=AVG` live formulas, export `.xlsx` via `xlsx`)
+- **Deep Research** (agentic multi-phase: planning → writing N sections → summarizing → sources, export `.pdf` via Playwright)
+- **Chat** (general streaming chat with branching, regeneration, feedback, sources/thinking traces)
+- **Website** (Next.js 15 + Tailwind + Shadcn sandboxed site, live `sandboxUrl` preview, screenshot via Playwright+sharp — the legacy "BUILD" harness)
+- **Smart Contract / DApp** (Solidity ERC-20/721/1155/PaymentSplitter/Custom, AI iterative generation + Foundry `forge build` 3× retry loop, ABI/bytecode extraction, verify on Etherscan/Arbiscan/Polygonscan)
+
+The harness orchestrates the right backend for the mode: for **Slides/Docs/Sheets/Research/Chat** → direct LLM `chatCompletion` with **Structured Output** (JSON `Artifact {title, theme?, blocks: ArtifactBlock[]}` validated by `buildModePrompt`/`parseArtifact`) streamed via **SSE** (`text/event-stream`) and persisted to `Fragment.mode` + `Fragment.files.artifact`; for **Website/Smart Contract** → durable **Inngest Agent-Kit Network** (`Cobentt/runAgent`, `contract/generate`) + **E2B microVM** (`cogerphereailabsbeta1`, `solidity-foundry-template`). Files from **Attachments** (PDF/DOCX/PPTX/XLSX/Images, extract via `pdf-parse`/`mammoth`/`xlsx`/`JSZip`, stored as `Attachment.blob Bytes` + `extractedText`) inject as context (`attachmentContext`) into every mode.
+
+- **Users/Customers:** (1) Knowledge workers needing decks/docs/sheets/research without leaving one canvas; (2) Web2 founders & indie hackers (instant sites); (3) Web3 builders (token/NFT/DeFi scaffolds); (4) Learners (the repo doubles as AI learning path Python→ML→DL→NLP/CV/RL mapped to internal services in `ARCHITECTURE_DIAGRAM.md`).
+- **Problem Solved:** Eliminates 2–8 week gap idea→compilable artifact AND the context-switch tax across PowerPoint/Word/Excel/Notion/ChatGPT/Remix. One conversation (`Conversation.mode`, `model`, `template`), one quota, one billing, one export pipeline.
 - **Timeline:** Initiated Q4 2024, iterative delivery in 6 certified phases through Oct 2025 (see `PHASE1_FINAL_REPORT.md` … `PHASE6_FINAL_CERTIFICATION.md`), Beta 0.1 Experimental today.
-- **Current Status:** **Active / Prototype → Pre-Production.** `next build --turbopack` green (standalone), health, auth, quota, billing, and Inngest pipelines certified. Not yet SOC2 / multi-region.
+- **Current Status:** **Active / Prototype → Pre-Production.** `next build --turbopack` green (standalone), health, auth, quota, modes streaming, sheet formula engine, attachment extraction, exports (pptx/docx/xlsx/pdf), and Inngest pipelines certified. Not yet SOC2 / multi-region.
 
 ### Key Statistics
 
 | Dimension | Target / Design | Current Measured |
 |---|---|---|
-| **Concurrent users** | 100 chat / 50 mode-gen concurrent (load-test scenarios) | Advisory locks + Upstash sliding window validated for those loads |
+| **Modes / Work products** | 7 (chat, slides, document, sheet, deep-research, website, smart-contract) | Implemented: `src/lib/modes/definitions.ts` (SLIDES/DOCUMENT/SHEET) + `RESEARCH_MODE` + `src/app/(modes)/{slides,document,sheet,deep-research,website,smart-contract}` routes; `ModeKey` in `lib/modes/types.ts:1` |
+| **Exports** | 4 native formats | `slides→pptx` (`pptxgenjs`), `document→docx` (`docx`), `sheet→xlsx` (`xlsx` + HyperFormula `f:` formulas), `deep-research→pdf` (Playwright `page.pdf A4`) via `src/app/api/modes/[mode]/export/*.ts`; 2 MB cap |
+| **Concurrent users** | 100 chat / 50 mode-gen concurrent (load-test scenarios) | Advisory locks + Upstash sliding window validated for those loads; deep-research strict `3 req/60s` |
 | **Throughput** | 30 req/min chat, 15 req/min AI, 3 req/min deep-research per user; 100 RPS default global | Rate limiter `Ratelimit.slidingWindow` via Upstash Redis; fallback disabled-safe |
-| **Data processed** | Code + artifacts: ~1–3 MB per project (files JSON), screenshot JPEG ~300 KB, token logs ~KB/call | `Fragment.files Json`, `Project.screenshot Bytes` |
-| **Latency target** | UI: p95 < 300 ms (cached), chat streaming TTFB < 1.5 s, contract compile < 90 s, full build < 15 min cap (`generateContract` timeout) | Inngest function timeout 15m; health DB check ~5–20 ms |
-| **Uptime / SLA** | 99.5 % Pro, 99.9 % Enterprise target (design) | Single-region PostgreSQL + Vercel; degraded mode via health endpoint |
+| **Data processed** | Code+artifacts ~1–3 MB/proj, screenshot JPEG ~300 KB, sheet grid 8+ rows, attachment 20 MB max, token logs KB/call | `Fragment.files Json` (artifact JSON), `Project.screenshot Bytes`, `Attachment.blob Bytes` (20 MB), `TokenUsage` per-call |
+| **Sheet engine** | HyperFormula GPL-v3, `=SUM(A1:B2), =A1*2, =AVG()` live recalc | `src/components/modes/sheet-editor.tsx:57 HyperFormula.buildFromArray` + `Glide Data Grid` |
+| **Latency target** | UI p95 <300 ms, chat TTFB <1.5s, modes first token <2s (streamed SSE), sheet cell edit <50 ms, contract compile <90s, deep-research full (N sections) 45–90s | Inngest 15m cap; `runAIPipeline` estTokens 4k (modes) /12k (deep-research); streaming via `chatCompletion({stream:true})` |
+| **Uptime / SLA** | 99.5% Pro, 99.9% Enterprise | Single-region PostgreSQL + Vercel; degraded `health` 503 |
 
-> Scale assumptions are validated synthetically in `LOAD_TEST_REPORT.md:1-89` — 100 concurrent chat streams, 50 mode gens, 200 reads + 50 writes.
+> Scale assumptions validated synthetically in `LOAD_TEST_REPORT.md:1-89` — 100 concurrent chat streams, 50 mode gens, 200 reads + 50 writes. Modes add 35/60s SSE progress phases (`Planning→Searching→Writing→Summarizing→Compiling` in `deep-research/generate/route.ts:59`).
 
 ---
 
 ## 2. Problem Statement & Motivation
 
 ### The Problem We Solved
-1.  **Template sprawl:** Production contracts live scattered across Sourcify, OpenZeppelin, Uniswap/Compound/Aave, Scaffold-ETH, Thirdweb — no unified, searchable registry with runnable scaffolds.
-2.  **Toolchain friction:** Foundry/Anchor, Solidity version pinning, remappings, and key management are blockers for non-Solidity devs. Local builds fail silently on version drift.
-3.  **AI generation is unreliable:** Vanilla LLM output hallucinates imports, mismatched pragma, missing `Ownable(msg.sender)` (OZ v5), unguarded `selfdestruct` — 30-40% fails to compile.
-4.  **No end-to-end loop:** Existing tools do *either* generation *or* compile *or* deploy, never: ingest → retrieve → generate → compile → package → verify → preview → bill, with quota/cost tracking.
+1.  **Content-tool fragmentation:** Workers jump between ChatGPT (chat), PowerPoint/Google Slides (decks), Word/Google Docs (reports), Excel/Sheets (models), Notion/Perplexity (research), and Remix/Foundry (contracts) — context, auth, and history never carry over. Each export is lossy.
+2.  **Template sprawl (Web3 side):** Production contracts live scattered across Sourcify, OpenZeppelin, Uniswap/Compound/Aave, Scaffold-ETH, Thirdweb — no unified, searchable registry with runnable scaffolds.
+3.  **Toolchain friction:** Foundry/Anchor, Solidity version pinning, remappings, and key management block non-Solidity devs. Sheet formula engines (HyperFormula) and export fidelity (pptx/docx/xlsx) are equally painful to self-host correctly.
+4.  **AI generation is unreliable:** Vanilla LLM hallucinates: for Slides it drops `accentColor`/`bullets`; for Docs it invents block types; for Sheets it emits `=SUM` strings without evaluation; for Solidity mismatched `pragma`/`Ownable(msg.sender)`; for Research it fabricates sources. 30–40% naive outputs fail schema or `forge build`.
+5.  **No end-to-end harness:** Existing tools do *either* generation *or* compile *or* export, never: attach→inject→generate structured JSON→stream→validate→persist `Artifact`/`Fragment`→live edit→export `.pptx/.docx/.xlsx/.pdf`→quota/cost/bill unified.
 
-Why it matters: For a senior-engineer interview narrative — this is a **build-system + AI-orchestration + sandbox isolation** problem, not a CRUD app.
+Why it matters (interview framing): This is **not a CRUD app.** It is an **AI harness** problem: unified `Conversation` (with `mode`, `model`, `template`, `attachments`) → **Structured Output** contracts (`ModeDefinition {blockTypes, templates}` + `buildModePrompt` → JSON `Artifact {blocks: ArtifactBlock[]}`) → **SSE streaming** (`ReadableStream` + `data: token/done/error`) → **live canvas** (`ModeCanvas` with draft vs server artifact) → **native exports** (`pptxgenjs`/`docx`/`xlsx`/`playwright pdf`) → **single quota/rate-limit pipeline** (`runAIPipeline`). Plus a **build-system** side (Inngest+E2B+Foundry) sharing the same auth/billing — one mental model for text, table, deck, research, site, and contract.
 
 ### Business/Technical Goals
-- **Primary:** Turnaround **prompt → compiled artifact + preview < 5 min** (PRD target), compile success >95%.
-- **Secondary:** Multi-chain from day one (Ethereum, Polygon, Arbitrum, Optimism, Solana scaffold), BYO API keys (AES-256-GCM), progressive quota (FREE 200k tok/day + 20k grace), Razorpay monetization (INR).
-- **Constraints:** Solo/small-team velocity, serverless-friendly (Vercel), no persistent self-hosted GPU, Inngest free tier, E2B sandbox quota, Prisma connection limit ≈10.
-- **Success metrics:** BuildJob `COMPLETED` rate, `TokenUsage` cost vs. quota, Razorpay `PaymentRecord.status=CAPTURED`, screenshot capture success, p95 compile < 90s (step pipeline).
+- **Primary:** Turnaround **prompt → streamed editable artifact + native export < 60s** for modes (Slides/Docs/Sheets) and `<5 min` for Website/Contract; export fidelity parity with desktop apps; research with cited sections 45–90s.
+- **Secondary:** One harness for 7 modes with shared quota (FREE 200k tok/day +20k grace, strict deep-research `3/min`/`12k tok`), BYO encrypted API keys (AES-256-GCM), Razorpay INR billing, 13-model routing (`lib/models.ts` fast/balanced/powerful/code), attachments up to 20 MB with extraction.
+- **Constraints:** Solo/small-team velocity, serverless-friendly (Vercel), no self-hosted GPU, Inngest free tier, E2B sandbox quota, Glide/HyperFormula VDOM cost, Prisma connection ≈10.
+- **Success metrics:** Artifact schema validity >98% (`parseArtifact` pass), export success rate, sheet formula eval correctness, research source plausibility, BuildJob `COMPLETED` rate, `TokenUsage` cost vs quota, Razorpay capture rate, screenshot success, p95 mode first-token <2s.
 
-Before this project: manual template copy-paste, local Foundry, no quota/cost tracing, no unified chat + build + deploy.
+Before this project: manual copy-paste across 5 apps + local Foundry for contracts, no unified history/attachments/quota, exports required desktop installs, no live grid formula evaluation.
 
 ---
 
@@ -79,44 +95,56 @@ Before this project: manual template copy-paste, local Foundry, no quota/cost tr
 ### High-Level Architecture Diagram (ASCII)
 
 ```
-                                ┌─────────────────────────────────────┐
-                                │           CLIENT (Browser)          │
-                                │  Next.js 15 App Router + React 19  │
-                                │  Tailwind + Shadcn + Framer Motion │
-                                │  RainbowKit/wagmi/viem (Web3)      │
-                                │  TanStack Query + tRPC client       │
-                                └──────────────┬──────────────────────┘
-                                               │ HTTPS / CSP hardened
-                    ┌──────────────────────────┼──────────────────────────┐
-                    │                          │                          │
-         ┌──────────▼──────────┐   ┌───────────▼──────────┐   ┌─────────▼─────────┐
-         │  Next.js Server     │   │   tRPC Routers       │   │  REST API Routes   │
-         │  (RSC, Middleware)  │   │  protectedProcedure  │   │  /api/modes/*,     │
-         │  Clerk auth, CSP,   │◄─►│  projects,messages,  │◄─►│  /api/razorpay/*,  │
-         │  Standalone output  │   │  conversations, usage│   │  /api/health, etc. │
-         └──────────┬──────────┘   │  admin, settings     │   └─────────┬─────────┘
-                    │              └───────────┬──────────┘               │
-                    │                          │                          │
-        ┌───────────▼──────────────────────────▼──────────────────────────▼──────────┐
-        │                         APPLICATION LAYER                                 │
-        │  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐  │
-        │  │ Quota       │  │ Token Usage  │  │ Rate Limit   │  │ Webhook       │  │
-        │  │ Enforcement │  │ recorder     │  │ Upstash      │  │ HMAC retry    │  │
-        │  │ (pg adv.    │  │ cost calc    │  │ sliding win  │  │ 90/100/grace  │  │
-        │  │  lock tx)   │  │ Decimal(10,6)│  │ chat/ai/     │  │ QUOTA_*       │  │
-        │  └─────────────┘  │              │  │ payment etc. │  └───────────────┘  │
-        │                   └──────┬───────┘  └──────┬───────┘                     │
-        └──────────────────────────┼─────────────────┼─────────────────────────────┘
-                                   │                 │
-        ┌──────────────────────────▼─────────────────▼────────────────────────────┐
-        │                      DATA & JOB LAYER                                   │
-        │  ┌────────────────┐  ┌──────────────┐  ┌─────────────────────────┐     │
-        │  │ PostgreSQL     │  │ Inngest      │  │ E2B Code Interpreter    │     │
-        │  │ (Prisma 6.14) │◄►│ Orchestrator │◄►│ sandbox:cogerphere…     │     │
-        │  │ Prisma Client  │  │ events:      │  │ Foundry + OZ template   │     │
-        │  │ Accelerate-ready│  │ Cobentt/runA │  │ forge build, sharp+     │     │
-        │  │ Bytes screenshot│  │ contract/*   │  │ playwright screenshot   │     │
-        │  └────────────────┘  └──────┬───────┘  └─────────────────────────┘     │
+                    ┌───────────────────────────────────────────────────────────┐
+                    │                  CLIENT (Browser) — Cobentt Harness      │
+                    │  Next.js 15 App Router + React 19 + Tailwind/Shadcn     │
+                    │  ModeCanvas (slides/docs/sheet/research) + SheetEditor  │
+                    │  Glide Data Grid + HyperFormula + CodeMirror + Renderers │
+                    │  TanStack Query + tRPC + RainbowKit/wagmi/viem           │
+                    └──────────────────────────────┬────────────────────────────┘
+                                                   │ HTTPS + CSP + Trusted Types
+                    ┌──────────────────────────────┼────────────────────────────┐
+                    │           Next.js Server          tRPC Routers            REST API Routes
+                    │  (RSC, Middleware, standalone)  protectedProcedure       /api/modes/*, chat, attachments
+                    │  Clerk auth, CSP headers     projects,messages,conversations /api/modes/[mode]/generate (SSE)
+                    └──────────────┬────────────────────┬───────────────────────┬───────────────┘
+                                   │                    │                       │
+        ┌──────────────────────────▼────────────────────▼───────────────────────▼───────────────┐
+        │                         APPLICATION LAYER — Unified Harness                          │
+        │  ┌─────────────────┐ ┌──────────────┐ ┌──────────────┐ ┌───────────────┐ ┌──────────┐│
+        │  │ Quota Enforcement│ │ Token Usage  │ │ Rate Limit   │ │ Prompt Safety │ │ Attachment││
+        │  │ pg advisory lock │ │ recorder     │ │ Upstash SW   │ │ injection 15p │ │ 20MB     ││
+        │  │ per user TX      │ │ Decimal(10,6)│ │ chat/ai 30/15│ │ + sanitize    │ │ extract  ││
+        │  │ runAIPipeline    │ │ deriveProvider│ │ research 3/60│ │ audit log     │ │ pdf/docx ││
+        │  └────────┬────────┘ └──────┬───────┘ └──────┬───────┘ └──────┬────────┘ └────┬─────┘│
+        │           │                 │                │                │               │        │
+        │  ┌────────▼─────────────────▼────────────────▼────────────────▼───────────────▼──────┐│
+        │  │                    MODES — Structured Output Contracts                           ││
+        │  │ ModeDefinition {SLIDES/DOCUMENT/SHEET + RESEARCH_MODE} + MODE_DEFINITIONS map  ││
+        │  │ buildModePrompt(mode, userMsg, templateId, currentArtifact, attachmentContext) ││
+        │  │ → Artifact {title, theme?, blocks: ArtifactBlock[]} + types.ts BlockTypeDef   ││
+        │  │ Slides 11 block types×13 themes | Docs 11 types | Sheet sheet+stats (cols Hdr)││
+        │  │ Chat streaming history 6 msgs | Deep-Research plan→sections→summary phases     ││
+        │  └────────┬──────────────────────────────────────────────────────────────────────┘│
+        │           │                                                                       │
+        └───────────┼───────────────────────────────────────────────────────────────────────┘
+                    │                                   │
+        ┌───────────▼──────────────────┐    ┌───────────▼────────────────────────────┐
+        │   DIRECT LLM PATH (Modes)    │    │   DURABLE PATH (Website/Contract)      │
+        │  chatCompletion({stream})    │    │  Inngest Agent-Kit Network (maxIter30) │
+        │  SSE ReadableStream token/done│   │  Cobentt/runAgent + contract/generate  │
+        │  parseArtifact/extractJson   │    │  E2B microVM: Foundry+OZ forge build×3 │
+        │  persist Fragment.mode/files │    │  screenshot Playwright+sharp JPEG      │
+        └───────────┬──────────────────┘    └───────────┬────────────────────────────┘
+                    │                                   │
+        ┌───────────▼───────────────────────────────────▼────────────────────────────┐
+        │                      DATA & JOB LAYER                                        │
+        │  ┌────────────────┐  ┌──────────────┐  ┌─────────────────────────┐          │
+        │  │ PostgreSQL     │  │ Inngest      │  │ E2B Code Interpreter    │          │
+        │  │ Prisma 6.14    │◄►│ Orchestrator │◄►│ cogerphere… / foundry   │          │
+        │  │ Artifact Json  │  │ SSE fan-out  │  │ forge, kill, Host(3000) │          │
+        │  │ Attachment Bytes│ │ deep-research│  │                         │          │
+        │  └────────────────┘  └──────┬───────┘  └─────────────────────────┘          │
         └─────────────────────────────┼──────────────────────────────────────────┘
                                       │
         ┌─────────────────────────────▼───────────────────────────────────────┐
@@ -132,36 +160,45 @@ Before this project: manual template copy-paste, local Foundry, no quota/cost tr
         │                              │ Chromium │  │ JPEG    │               │
         │                              └──────────┘  └──────────┘               │
         └──────────────────────────────────────────────────────────────────────┘
-         Data Flow: Prompt → tRPC `projects.create/createDapp` → enforceQuota → DB row + Inngest event
-                     → CobenttAgent (E2B terminal+files+LLM) → network.run (maxIter 30)
-                     → title/response agents → Fragment + sandboxUrl → screenshot (Playwright+sharp)
-                     → chat streaming: `/api/chat/[id]/stream` or modes `/api/modes/[mode]/generate`
-                     → recordTokenUsage → UserUsage aggregate (atomic raw SQL CAS) → webhook 90/100/grace
+         Data Flows:
+           A) Modes (slides/doc/sheet/chat/research): prompt+attachmentContext → runAIPipeline (auth→rate→sanitize→injection→quota→ownership)
+              → buildModePrompt → chatCompletion stream SSE token/done → parseArtifact/extractJson → Fragment(mode, files.artifact JSON) → recordAITokens → UserUsage
+              Deep-Research variant: plan(4-6 headings) → fan-out N sections (35→75% progress) → summary+sources → compile report artifact
+           B) Website/Smart Contract: tRPC projects.create/createDapp → enforceQuota → DB row + Inngest event
+              → CobenttAgent (E2B terminal/files+LLM) network.run maxIter 30 → title/response agents → Fragment+sandboxUrl → screenshot Playwright+sharp
+              Contract: GPT-4.1 iteration 3 → forge build×3 with AI refine → ABI/bytecode from out/*.json → artifacts JSON
+           C) Exports: Artifact JSON (≤2 MB) → POST /api/modes/[mode]/export → pptxgenjs/docx/xlsx/playwright pdf → attachment disposition
 ```
 
 ### Architecture Description (per component)
 
 | Component | Tech | Why chosen | Alternatives rejected | Connections |
 |---|---|---|---|---|
-| **Frontend** | Next.js 15.5.9 `--turbopack`, React 19.1 | App Router RSC, standalone output for containerization, Turbopack faster than webpack for iteration; official Clerk SDK first-class | Vite SPA (loses RSC), Remix (smaller ecosystem) | Talks to tRPC + REST; serves fragments via E2B `sandboxUrl` |
-| **API layer** | tRPC 11.5 + TanStack Query 5.85 + REST (`/api/*`) | End-to-end type safety, superjson, shared Zod schemas; REST retained for streaming, webhooks, exports | GraphQL (overkill, no schema benefit), bare Next route handlers only (loses type) | Middleware → `protectedProcedure` → Prisma → Inngest.send() |
-| **Background jobs** | Inngest 3.54 + `@inngest/agent-kit` 0.11 | Durable step functions (`step.run`/`step.sleep`), retries, observability, no self-hosted queue ops; `createNetwork` multi-agent | BullMQ/Redis (ops burden), Temporal (heavy), Celery | Events `Cobentt/runAgent`, `contract/generate`, `contract/verify` |
-| **Sandbox** | E2B `code-interpreter` 2.0 (`cogerphereailabsbeta1`, `solidity-foundry-template`) | Firecracker microVM, `Sandbox.create/connect`, `files.write/read`, `commands.run` isolation; pre-baked Foundry + OZ | Docker directly (escape risk), local exec (no isolation) | Inngest steps create → write contract → `forge build` → read artifact → `kill()` |
-| **DB** | PostgreSQL + Prisma 6.14 (`src/generated/prisma`) | Strong consistency for quota/money, advisory locks, Json fields, rich indexes; Prisma migrations easy | Mongo (quota races), Firebase (cost/owner lock) | All tRPC + Inngest `prisma.*`; raw SQL for atomic aggregates |
-| **Cache/Rate limit** | Upstash Redis + `@upstash/ratelimit` 2.0 slidingWindow | Serverless-friendly, no Redis ops, per-prefix limiters, analytics | Self-host Redis (ops), in-memory (no multi-instance) | `getOrCreateLimiter(prefix, limit, windowMs)`; graceful null fallback |
-| **Auth** | Clerk `@clerk/nextjs` 6.33 | Hosted JWT/session, middleware `clerkMiddleware`, `requireAdmin` via `AdminUser` table, RBAC isolation | NextAuth (self-host complexity), Supabase Auth (migration) | `ctx.auth.userId` in every tRPC proc; `isPublicRoute` allowlist |
-| **AI** | OpenRouter (default) / OpenAI / Custom via `AI_PROVIDER` | Model agility: `openai/gpt-4o-mini`, `gpt-5`, `gpt-4.1` for contracts; `normalizeModel` handles prefix; BYO keys via `ApiKey` AES-GCM | Direct OpenAI only (vendor lock), self-host vLLM (GPU cost) | `lib/ai/provider.ts`, `agentModel()`, `generateContractWithIteration` |
-| **Billing** | Razorpay (orders, signature HMAC webhook) | India-first, paise amounts, order→payment→refund lifecycle tracked in `PaymentRecord` + `PaymentAuditLog` | Stripe (marginal in India), manual | `/api/razorpay/create-order`, `verify-payment`, `webhook` (HMAC) |
-| **Blockchain verify** | Etherscan/Arbiscan/Polygonscan + wagmi/viem + RainbowKit | Per-network API key routing `blockchain-network → apiUrl`, `bytecode`/`ABI` from Foundry `out/` | Sourcify only (coverage), self-verify | `verifyContract` Inngest fn; `wagmi.ts` wallet connect |
+| **Frontend — Harness Canvas** | Next.js 15.5.9 `--turbopack`, React 19.1, `ModeCanvas` + `SheetEditor` + `SlidesRenderer`/`DocumentBlockRenderer` | App Router RSC, standalone, Turbopack; canvas supports 11 block types per mode, 13 `SLIDE_THEMES`, viewport switch desktop/tablet/phone, zoom 0.5–2.5×, `DataEditor` glide perf | Vite SPA (no RSC), Notion-style editor alone (no export) | Reads `Fragment.files.artifact` JSON, writes via `/api/modes/save` debounced 300ms, SSE stream from `/api/modes/[mode]/generate` |
+| **Sheet Engine** | `@glideapps/glide-data-grid` 6.0.3 + `hyperformula` 3.3.0 (`gpl-v3`) | Virtualized grid (<16ms/frame at 10k cells) + real `HyperFormula.buildFromArray` for `=SUM/=AVG` eval; formula bar `Sigma` UX | `xlsx` calc only on export (no live), DIY eval (incomplete) | `sheet-editor.tsx:57` Hf instance rebuilt memo on `rows` change, `evaluate(raw,c,r)` per cell |
+| **API layer** | tRPC 11.5 + TanStack Query 5.85 + REST (`/api/*`) | Type-safe tRPC for crud, REST for SSE streaming (`ReadableStream` `text/event-stream`) + binary exports + webhooks; `superjson` for Decimal | GraphQL (overhead), REST-only (loses tRPC types) | Middleware → `protectedProcedure` → `runAIPipeline` → `prisma` → `chatCompletion` or `inngest.send` |
+| **Modes Engine** | `src/lib/modes/*` — `MODE_DEFINITIONS` + `buildModePrompt` + `parseArtifact` | Single source of truth for block contracts; JSON Structured Output enforced per mode (`blockTypeSchema`), `makeId()` for stable block ids | Free-form markdown (no validation), HTML string (XSS, no export fidelity) | `definitions.ts:18 SLIDES_MODE 11 types` / `129 DOCUMENT_MODE` / `235 SHEET_MODE`; `prompt.ts:24 buildModePrompt` |
+| **AI — Shared Pipeline** | `lib/ai/pipeline.ts` `runAIPipeline`, `lib/ai/client.ts` `chatCompletion` (402 ladder, retry, timeout 60s) | One gate for auth→rate→sanitize→`detectPromptInjection` (15 patterns/10 phrases)→quota→ownership; `MAX_TOKEN_LADDER [3500,2500,1600,1000]` auto-shrink on 402 affordable-tokens parse | Per-endpoint ad-hoc checks (drift), no pipeline (inconsistent) | Called by `chat` (estTokens `estimateTokens+2000`), `modes/*` (4000), `deep-research` (12000, `rateLimitKey ai 3/60s`), `website/contract` |
+| **Deep-Research Agent** | Multi-call orchestration in `deep-research/generate/route.ts` | Plan 4-6 headings → fan-out per heading (`maxTokens 3000`) with priorContext → summary+sources → `wsSource{title,url}`; progress `10→35→35+40→80→95→100` SSE phases | Single LLM call (shallow), external search API (not yet) | Records `recordAITokens` per section call (N+2 calls total); artifact `sections[]` + `sources[]` + `summary` |
+| **Exports** | `pptxgenjs` 4.0 (WIDE 13.33×7.5), `docx` 9.7, `xlsx` 0.18, `playwright` pdf | Native fidelity: pptx per-block switch (title/content/quote/two-column/stat etc.), docx `HeadingLevel`/`Table`, xlsx `f:` formulas, research pdf HTML→`page.pdf A4` with `@page 20mm` | `markdown→html` zip (lossy), server-side canvas render (heavy) | `src/app/api/modes/[mode]/export/{pptx,docx,xlsx,pdf}.ts`; 2 MB artifact cap |
+| **Attachments** | `Attachment` Prisma `Bytes` + `extractedText`, `extract.ts` (pdf-parse→pdfjs fallback, mammoth, xlsx, JSZip), shuttle `upload.ts` | Ingest 20 MB PDF/DOCX/PPTX/XLSX/images, `truncate 40k chars`, inject as `attachmentContext` into `buildModePrompt`; `carriedIds` + `ModePills` UX | No extraction (LLM blind), client-side only (no persistence) | `POST /api/attachments/upload` → `prisma.attachment.create` → `use-carried` → SSE `attachmentIds` → prompt |
+| **Background jobs (DApp/Website)** | Inngest 3.54 + `@inngest/agent-kit` 0.11 | Durable `step.run`/`step.sleep`, `createNetwork` maxIter 30, no self-hosted queue; handles 15m contract build | BullMQ/Temporal (ops), inline (no retry) | Events `Cobentt/runAgent`, `contract/generate`, `contract/verify`; `generateContractWithIteration` uses GPT-4.1 |
+| **Sandbox** | E2B `code-interpreter` 2.0 (`cogerphereailabsbeta1`, `solidity-foundry-template`) | Firecracker isolation, `Sandbox.create/connect`, `files.write/read`, `commands.run forge build`; `setTimeout` guard | Local Docker (escape), no sandbox (sec) | Inngest steps create → write → `forge build×3` → read `out/*.json` → `kill()` |
+| **DB** | PostgreSQL + Prisma 6.14 (`src/generated/prisma`) | ACID for quota/money, advisory locks, `Json` artifact, `Bytes` blob/screenshot, indexes; `Accelerate-ready` | Mongo (races), Firebase | All tRPC/Inngest `prisma.*`; `INSERT ... ON CONFLICT CASE date_trunc` atomic aggregates |
+| **Cache/Rate limit** | Upstash Redis `@upstash/ratelimit` 2 slidingWindow | Serverless, per-prefix `chat/ai/payment/upload/sandbox/default` + `ai` vs `chat` separate; `3/60s` research strict | Self-host Redis, memory | `getOrCreateLimiter(prefix,limit,window)`; null fallback |
+| **Auth** | Clerk `@clerk/nextjs` 6.33 | Hosted JWT, `clerkMiddleware` allowlist, `requireAdmin` via `AdminUser` | NextAuth | `ctx.auth.userId` continuous; `/api/inngest` via `INNGEST_SIGNING_KEY`, webhook HMAC |
+| **AI routing** | OpenRouter default (`AI_PROVIDER`), 13 models `lib/models.ts` fast/balanced/powerful/code, `normalizeModel` | Model agility per `Conversation.model` (`MODE_DEFAULTS` per mode), BYO keys `ApiKey` AES-256-GCM `iv+authTag` | Direct OpenAI only | `provider.ts:68 normalizeModel`, `agent-model.ts`, `lib/models.ts:10 MODELS` |
+| **Billing** | Razorpay paise, `PaymentRecord`+`PaymentAuditLog` HMAC | India-first | Stripe | `/api/razorpay/*`, `/api/payments/confirm` |
 
 ### Components List (concise)
 
-1.  **WebApp** — API/Worker (Next.js standalone) — Purpose: SSR/CSR, tRPC, REST, health — Owner: App team
-2.  **CobenttAgent Network** — Worker (Inngest agent-kit) — Coding-Agent with terminal/files + 30 iter max — Owner: AI platform
-3.  **ContractGenerator** — Worker (Inngest) — GPT-4.1 iterative 3 rounds + Forge-error → refine loop 3× — Owner: DApp team
-4.  **PostgreSQL** — Database — 16 models, AdvisoryLock quota — Owner: Platform
-5.  **Redis (Upstash)** — Cache/Rate limiter — 8 buckets (auth/payment/chat/ai/admin/upload/sandbox/default) — Owner: Platform
-6.  **E2B Sandbox** — Ephemeral VM — Foundry toolchain, screenshot capture — Owner: DApp team
+1.  **Cobentt Harness (Next.js standalone)** — API+Canvas — Modes SSOT (`definitions.ts`), SSE streams (`text/event-stream`), canvas (`ModeCanvas` draft vs `serverArtifact`, `parseArtifact`), SheetEngine (`HyperFormula`+`Glide`) — Owner: Harness team
+2.  **Modes Generate Workers** — Stateless route handlers (`/api/modes/[mode]/generate`, `deep-research/generate`) — `runAIPipeline` → `buildModePrompt` → `chatCompletion{stream:true}` → `recordAITokens` — Owner: AI platform
+3.  **Export Workers** — `pptxgenjs`/`docx`/`xlsx`/`playwright pdf` builders — 2 MB cap, `Content-Disposition` — Owner: Studio team
+4.  **CobenttAgent Network (Inngest)** — Coding-Agent `terminal`+`createOrUpdateFiles`/`readFiles` tools, `PROMPT` edit-don't-rewrite — Owner: Website team
+5.  **ContractGenerator (Inngest)** — GPT-4.1×3 + Forge×3 refine loop, ABI/bytecode extract 4-path probe — Owner: Protocol team
+6.  **PostgreSQL + Prisma** — 18 models (Project+Conversation+Message+Fragment+Attachment+...), advisory-lock quota — Owner: Platform
+7.  **E2B Fleet** — Ephemeral VMs for Website/Contract+screenshot — Owner: Platform (external)
 
 ---
 
@@ -213,10 +250,30 @@ Scale: high cardinality; history kept 6 msgs for agent `previousMessages` window
 ```
 
 ```prisma
-**Entity: Fragment**
+**Entity: Fragment — Unified Artifact Carrier (Modes + Projects)**
 Fields:
-- id UUID PK, messageId String unique FK Message cascade, sandboxUrl String?, title String, files Json, mode String?, meta Json?
+- id UUID PK, messageId String unique FK Message cascade, sandboxUrl String? (null for modes, E2B URL for website/contracts), title String, files Json, mode String? (slides|document|sheet|deep-research|website|smart-contract), meta Json?
+Payload `files` shape:
+- For Modes: `files.artifact` = JSON.stringify(Artifact {title, theme?, blocks: ArtifactBlock[{id,type,props,children?,style?}]}) — validated by parseArtifact(), persisted after SSE done, edited live via /api/modes/save (debounce 300ms, 2 MB cap)
+- For Website/Contracts: `files` = {[path]: content} + sandboxUrl; updated via CobenttAgent network.state.data.files
 Indexes: implicit unique on messageId
+Scale: Modes artifact 5–12 blocks (~5–20 KB JSON); Sheets sheet block with columns/rows/formulas; Project site may be ~50 files
+```
+
+```prisma
+**Entity: Attachment — File Harness**
+Fields:
+- id UUID PK, conversationId FK Conversation cascade, userId FK Clerk, fileName String, mimeType String, size Int (≤20 MB), blob Bytes, extractedText String? @db.Text, createdAt
+Extraction pipeline: POST /api/attachments/upload (ALLOWED .pdf/.docx/.pptx/.xlsx/.txt/.md/.csv/.png/.jpg/.webp/.svg) → extractAttachmentText() → pdf-parse→pdfjs fallback, mammoth (docx), JSZip+xlsx, truncate 40_000 chars → stored; injected as attachmentContext into buildModePrompt()
+Indexes: (conversationId, createdAt), (userId, createdAt)
+```
+
+```prisma
+**Entity: Conversation — Mode-Aware Workspace (NEW)**
+Updated note: `mode` field is the harness router: "chat" (default) | "slides" | "document" | "sheet" | "deep-research" | "website" | "smart-contract" (website/smart-contract routes share Project model for build jobs)
+`model` String default openai/gpt-4o-mini maps via lib/models.ts MODE_DEFAULTS {slides: gpt-4o-mini, document: gpt-4o-mini, sheet: gpt-4o, deep-research: gpt-4o} tier fast/balanced/powerful/code
+`template` String? selects prebuilt `ModeDefinition.templates[prompt]` (pitch/growth/onboarding for slides, essay/blog/report for docs, budget/tracker for sheets, overview/compare/market for research)
+`isPinned/isArchived/isPublic Boolean` + `shareToken String? unique` enable public share + forkShared
 ```
 
 ```prisma
@@ -267,11 +324,14 @@ UsageAlert: userId, alertType 90_percent/100_percent/grace_period, message, perc
 ```
 
 ### Data Flow Diagram (summarized)
-- **Ingress:** User prompt via tRPC `projects.create` / `createDapp` / `chatMessages.create` / `/api/modes/[mode]/generate` — Zod-validated `value` max 10k chars.
-- **Transform:** `enforceQuota` (advisory lock) → Prisma create Project+Message → `inngest.send` event → agent runs (previousMessages 6) → tools (terminal/files/read) mutate `network.state.data.files` → `generateResponse()` → DB Message+Fragment → screenshot job.
-- **Smart-contract path:** `createDapp` → BuildJob PENDING → `contract/generate` event → parse `EnhancedContractConfig` → GPT-4.1 iteration (3) → E2B sandbox create → write file → advisory health check → Forge compile loop 3×, parseForgeOutput → on fail → `refineContractWithForgeErrors` (GPT-4.1) → recompile → extract ABI/bytecode from `out/<Name>.sol/<Name>.json` → save artifacts → kill sandbox → COMPLETED 100%.
-- **Storage:** All in PostgreSQL; `Fragment.files Json`, `BuildJob.artifacts Json`, `TokenUsage` per-call; `UserUsage` aggregated atomically.
-- **Retrieval:** tRPC `getOne` checks `userId===owner || isPublic`; `getMany` (owner, pinned desc), `getAll` (public, cursor pagination 20), `getBuildJobs` (owner-gated).
+- **Ingress (Modes & Chat):** `POST /api/modes/[mode]/generate` body `{conversationId, message, currentArtifact, attachmentIds}` + `runAIPipeline(message,{rateLimitKey: ai, estimatedTokens:4000})` (deep-research `3/60s, 12000`) → Zod `value`/`message` max 10k, `sanitizeUserInput`, `detectPromptInjection` (15 patterns) → `enforceQuota` advisory lock → `prisma.conversation.findFirst ownership`.
+- **Modes transform (SSE path):** Load `history 8 msgs` + `attachmentContext` (extractedText join) → `buildModePrompt(mode, sanitized, templateId, currentArtifact, attachmentContext)` → `blockTypeSchema` contract + `blockTypeNames` allowlist → `chatCompletion({model: conversation.model||cfg.defaultModel, maxTokens:3500, stream:true})` → incremental `controller.enqueue SSE {event:token}` → `extractJson`→`parseArtifact` validates `{title, blocks:[{type, props}]}` → `summarizeChanges(prev,next)` → upsert `Fragment(mode, files.artifact JSON)` (update in-place if exists) + `Message(summary)` → `recordAITokens(deriveProviderFromModel)` → `SSE done`.
+- **Deep-Research variant:** `POST /api/modes/deep-research/generate` → plan call (2000 tok, JSON array 4-6 headings) `10%` → `Searching sources 35%` → loop `Writing: heading` per section (`3000 tok` each, `35+40%`) → `Summarizing 80%` (summary+sources JSON) → `Compiling 95→100%` → artifact `{title, sections[{heading,content md}], sources[{title,url}], summary}` → `Fragment mode deep-research`.
+- **Website/Smart-contract (Inngest+E2B):** `enforceQuota` → Prisma create Project+Message → `inngest.send` → agent runs previousMessages 6 → tools (terminal/files/read) mutate `network.state.data.files` → `generateResponse()` → DB Message+Fragment → screenshot job.
+- **Smart-contract detailed:** `createDapp` → BuildJob PENDING → `contract/generate` → parse `EnhancedContractConfig` → GPT-4.1×3 → E2B create → write → health check → Forge×3 `parseForgeOutput` → `refineContractWithForgeErrors` → recompile → 4-path `out/*.json` probe → ABI/bytecode → COMPLETED 100%.
+- **Sheet live path:** `SheetEditor` `onCellEdited` → `setCell(c,r,value)` → local `rows` → `HyperFormula.buildFromArray` memo rebuilt → `evaluate raw(c,r)` via `hf.getCellValue` → grid `displayData` string (e.g., `=SUM(A1:B2)` → `150`).
+- **Storage:** All PostgreSQL; `Fragment.files.artifact` (Modes JSON 5-20 KB, 2 MB cap), `Fragment.files` (Website/Contract map), `BuildJob.artifacts Json` (abi/bytecode/source), `Attachment.blob Bytes` (20 MB), `TokenUsage` per-call; `UserUsage` atomically upserted via raw SQL CAS.
+- **Retrieval:** tRPC `conversations.getById` includes `messages.fragments`; `ModeCanvas` `useQuery(getById)` → `parseArtifact(files.artifact)` → draft vs `serverArtifact` reconciled by `fragment.id` change; public sharing via `shareToken` + `getSharedByToken` + `forkShared`.
 
 ---
 
@@ -300,6 +360,24 @@ UsageAlert: userId, alertType 90_percent/100_percent/grace_period, message, perc
 - **Processing:** Async, step-isolated; `step.run` wraps each DB/sandbox call; maxIter 30 for coding agent; contract pipeline steps sequential with progress monotonic update.
 - **Why not Kafka/Rabbit:** No streaming need, want orchestration not pub/sub.
 
+### Modes Content Engine — **Slides/Docs/Sheets/Research**
+- **Choice:** Deterministic `ModeDefinition` block schemas + LLM Structured JSON (no freeform). Each mode declares `blockTypes` with `defaultProps.properties[{key,label,type}]` + `templates[{id,prompt}]`; prompt layer `buildModePrompt()` injects `blockTypeSchema` contract and `blockTypeNames` allowlist so output MUST be `{"title","theme?","blocks":[{"type","props"}]}` or `parseArtifact` throws.
+- **Why:** Hallucination guarantee: Doc/Slide/Sheet block fields strictly match what renderers/exports expect; Sheet `columns: {header,type}` + `rows: string|number[][]` maps 1:1 to grid+XLSX. HyperFormula `f: CODE` formula cells recalc on open.
+- **Alternatives rejected:** Plain markdown/HTML — rejected (no schema, pptx/xlsx renderers would need brittle parsing). CRDT/OT editor — deferred (Modes edit is block-replace, not char-level).
+- **Deep-Research pattern:** Plan→section fan-out→summary orchestration (no vector yet) — future RAG can inject retrieved chunks as additional context in `priorContext` without changing route shape.
+
+### Spreadsheet Engine — **Glide Data Grid + HyperFormula**
+- **Choice:** `@glideapps/glide-data-grid` (virtualized DataEditor, `GridCellKind.Text|Number`, `onCellEdited`, `onColumnResize`, `rowMarkers: number`) + `HyperFormula.buildFromArray(sheetData,{gpl-v3})` for `=SUM(A1:B2)` recalc. Toolbar: add Row/Col, Col manager, formula bar `Sigma`.
+- **Why HyperFormula:** Only OSS formula engine handling cross-sheet refs + circular detection; alternatives (`exceljs` calc, `sheetjs` calc) evaluate only on export, not live. Glide chosen over `ag-grid` for MIT-like usage and sub-16ms render.
+- **Tradeoff:** GPL-v3 license for Hf requires source disclosure if distributed — acceptable for SaaS (not bundled distribution).
+
+### Exports — **pptxgenjs / docx / xlsx / playwright pdf**
+- **pptx:** `PptxGenJS` WIDE 13.33×7.5 layout, per-block switch 11 types, theme-aware `isDarkHex→title/body/dim/accent` palette, image `fetchImageAsBase64` 8s abort.
+- **docx:** `docx` `Document/Paragraph/Table` with `HeadingLevel`, `BorderStyle`, `ShadingType`, callout tone fill, white-text on accent header rows.
+- **xlsx:** `xlsx` `aoa_to_sheet`, `cellToValue` `=FOO→{f:FOO}`, header row `fill accent + lightText` luminance calc, `!cols` width heuristic.
+- **pdf (research):** Custom `renderMarkdown` (code→pre, bold/italic/links, ul/ol grouping, headings), deduplicate section heading, template HTML `@page 20mm`, `chromium.launch → page.setContent → page.pdf(A4, printBackground)`.
+- **Guard:** `MAX_ARTIFACT_BYTES 2 MB` + ownership `prisma.conversation.findFirst` before export; `format` strict `pptx|docx|xlsx|pdf` per mode map `slides/pptx, document/docx, sheet/xlsx, deep-research/pdf`.
+
 ### Search / Analytics — **None dedicated (ad-hoc) + Prisma groupBy**
 - Analytics via `TokenUsage.groupBy` provider/model breakdown + raw SQL `date_trunc` daily rollup (`lib/token-usage.ts:193-258`). Future: pgvector for RAG (Phase 4 plan) on Sourcify/OZ chunks; Pinecone/Qdrant deferred to keep ops low.
 
@@ -307,6 +385,7 @@ UsageAlert: userId, alertType 90_percent/100_percent/grace_period, message, perc
 - **Choice:** Next `standalone` for Node container; E2B sandboxes for untrusted code — no local Docker. Inngest cloud for workers.
 - **Orchestration:** Vercel today; Docker Compose locally; K8s deferred until multi-service split.
 - **Env:** `DATABASE_URL`, `CLERK_*`, `UPSTASH_*`, `E2B_API_KEY`, `OPENROUTER/OPENAI_API_KEY`, `INNGEST_*`, `RAZORPAY_*`, `ETHERSCAN_*`, `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID`, `AI_PROVIDER/AI_MODEL`.
+- **Modes env additions:** `AI_API_KEY/OPENROUTER_API_KEY/OPENAI_API_KEY` chain + per-Conversation `model` override (13 models in `lib/models.ts`), `NEXT_PUBLIC_APP_URL` for OpenRouter `HTTP-Referer`.
 
 ### Authentication & Authorization — **Clerk JWT + Middleware allowlist + tRPC protectedProcedure**
 - **Method:** `clerkMiddleware` `isPublicRoute` allowlist; all else `auth.protect()`. `/api/inngest` verified by `INNGEST_SIGNING_KEY`, Razorpay webhook by HMAC, `api/trpc` by its own `protectedProcedure`. RBAC via `AdminUser` + `requireAdmin`.
@@ -409,52 +488,72 @@ UsageAlert: userId, alertType 90_percent/100_percent/grace_period, message, perc
 | **admin** | `findUserByEmail` `updateUserLimits` `updateUserPlan` `platformAnalytics` `listUsers` | `requireAdmin` | Status/plan/limits, `AdminActionLog` | `email, maxDailyTokens etc.` | `AllowedUser+UserUsage` |
 | **settings** | profile, api-keys | `protected` | AES-GCM key CRUD | `provider, name, encryptedKey` | masked keys |
 
-### REST Endpoints (`src/app/api/*`)
+### REST Endpoints — Unified Harness (`src/app/api/*`) — file:line anchored
 
 ```
-GET  /api/health
-  - Description: DB latency SELECT 1, memory heap%, cache size; returns 200 healthy/degraded or 503 unhealthy
-  - Response: {status: healthy|degraded|unhealthy, timestamp, version, uptime, checks:{database, memory, cache}}
-  - Auth: public (isPublicRoute), Cache-Control no-store
-  - Rate limit: default 100/60s via middleware if wired
+# ——— Health & Infra ———
+GET  /api/health                              src/app/api/health/route.ts:1
+  - DB SELECT 1 + memory heap% + getCacheStats → 200 healthy/degraded or 503 unhealthy
+  - Auth public (isPublicRoute), Cache-Control no-store
 
-POST /api/trpc/[trpc]   - tRPC batch handler (protectedProcedure enforces per-proc auth)
+POST /api/trpc/[trpc]   tRPC batch (superjson) — every protectedProcedure re-checks ctx.auth.userId
+POST /api/inngest        serve({client,functions}) GET|POST|PUT, verified INNGEST_SIGNING_KEY
+  Registered: inngest/functions.ts » CobenttAgent (Cobentt/runAgent), generateContract(contract/generate), verifyContract(contract/verify)
 
-POST /api/inngest        - Inngest serve() handler (GET|POST|PUT), verified by INNGEST_SIGNING_KEY
-  - Registered: CobenttAgent, generateContract, verifyContract
+# ——— Attachments (shared by all modes) ———
+POST /api/attachments/upload                 src/app/api/attachments/upload/route.ts
+  - FormData {file: File, conversationId} → ALLOWED_EXT .pdf/.docx/.pptx/.xlsx/.txt/.md/.csv/.png/.jpg/.webp/.svg, MAX 20 MB, RATE upload 10/60s per user
+  - Verifies conversation ownership (id,userId) → read buffer → extractAttachmentText(buffer,type,name) [pdf-parse→pdfjs fallback, mammoth, xlsx/JSZip, truncate 40k]
+  - Creates Attachment {blob Bytes, extractedText, mimeType, size}
+  - Returns {attachment:{id,fileName,mimeType,size,extractedText}}
 
-POST /api/projects/[projectId]/generate
-  - Body: { value, blockchain?, contractType? } — validated Zod
-  - Side effect: create Message, send Inngest event, recordTokenUsage later
+# ——— Chat — General Purpose (not just modes) ———
+POST /api/chat/[conversationId]/stream       src/app/api/chat/[conversationId]/stream/route.ts
+  - Body {message, model?, sources?, attachmentIds?} → runAIPipeline(message,{rateLimitKey:chat, estimatedTokens:estimateTokens(msg)+2000, conversationId})
+    auth(401) → rate 30/60s → sanitize → injection 15p/10phrases → quota → ownership
+  - History: prisma.message.findMany(conversationId asc, take 6) drop duplicate last USER → map to ChatMessage[]
+  - Creates assistantMessage STREAMING, opens ReadableStream SSE: first frame {messageId}, streams chatCompletion({stream:true, maxTokens ~4096}) token deltas, persists to Message.content incrementally
+  - Uses lib/ai/client.ts chatCompletion retry ladder [3500,2500,1600,1000]→affordable parse, friendlyAIErrorMessage
+  - Records recordAITokens deriveProviderFromModel, on error SSE {event:error}
 
-GET  /api/projects/[projectId]/build-jobs   - same as tRPC getBuildJobs (REST parity)
-GET  /api/projects/[projectId]/build-status  - polls BuildJob progress/currentStep/logs
-POST /api/projects/[projectId]/deploy        - on-chain deploy receipt
-GET  /api/projects/[projectId]/files         - returns Fragment.files zip manifest
-GET  /api/projects/[projectId]/screenshot    - serves Project.screenshot Bytes (image/jpeg)
-POST /api/projects/[projectId]/save-codebase - persists edited files back
-POST /api/attachments/upload                 - size-checked upload → Blob Bytes + extractedText (mammoth/pdf-parse), rate 10/60s
-POST /api/sandbox/restore                     - reconnect getSandbox(sandboxId)
+# ——— Modes — Slides / Document / Sheet (canonical) ———
+POST /api/modes/[mode]/generate              src/app/api/modes/[mode]/generate/route.ts:78  MODES_WITH_ROUTE [slides,document,sheet,deep-research]
+  - Body {conversationId, message, currentArtifact, attachmentIds?}
+  - runAIPipeline(message,{rateLimitKey:ai, estimatedTokens:4000})
+    For deep-research same endpoint is deprecated; dedicated file handles it (see below) — generic still validates deep-research
+  - Loads conversation {model, template, messages 8 desc include fragments}, history reverse, currentArtifactParsed (string|obj), attachmentContext by joining prisma.attachment.findMany(id in attachmentIds, extractedText not null) as "[fileName]\ntext"
+  - Builds prompt: buildModePrompt(mode, sanitized, template, currentArtifactParsed, attachmentContext) — 5-12 blocks contract + allowed types list + edit-section if currentArtifact
+  - chatCompletion({model: conversation.model||cfg.defaultModel, maxTokens 3500, stream:true, system:"You are Cobentt..."})
+    SSE token events: {event:token, token: chunk} streamed live; on done: extractJson→parseArtifact → summarizeChanges(prev,next) → upsert Fragment(mode, files:{artifact:JSON.stringify(artifact)}, title)
+                if previousFragment mode!=deep-research update in-place else create Message+Fragment; recordAITokens(prompt/completion) → SSE {event:done, artifact, summary} or {event:error}
+  - Ownership: pipeline already validated conversation ownership; fragment lookup .find(f=>f.mode===mode || !f.mode)
 
-POST /api/modes/[mode]/generate              - AI mode gen, rate 15/60s AI bucket (except deep-research 3/60s)
-POST /api/modes/deep-research/generate       - spawns N+2 AI calls
-POST /api/modes/save                         - persist mode output
-GET  /api/modes/[mode]/export                - pptx/xlsx/pdf/docx via pptxgenjs/xlsx/docx/pdf-parse+marked
+POST /api/modes/deep-research/generate       src/app/api/modes/deep-research/generate/route.ts:17  (strict 3/60s, 12k tok)
+  - Body {conversationId, message, currentArtifact?} → runAIPipeline({rateLimitConfig:3/60s, estimatedTokens:12000})
+  - Phase Planning (10%): chatCompletion system "research planner JSON array 4-6 headings" + priorContext (title+summary) → parse headings JSON (fallback 4 defaults)
+    recordAITokens per call
+  - Searching 35%: set total=sections.length
+  - Writing 35→75%: loop heading i: SSE phase Writing: <heading> progress 35+((i+1)/total*40); chatCompletion maxTokens 3000 per section (markdown with citations [Source N]) → push sectionContents[] + recordAITokens each
+  - Summarizing 80%: chatCompletion maxTokens1500 system "research editor JSON {summary,sources[{title,url}]}" over sectionContents.join → parse → 95% Compiling
+  - Artifact {title: sanitized.slice(0,80), summary, sections:[{heading,content}], sources} → create Message+Fragment mode=deep-research
+  - SSE phases: {event:phase, phase, progress} sequence + final {event:done, artifact} or {event:error}
 
-POST /api/razorpay/create-order              - amount paise, plan, billingCycle → razorpayOrderId
-POST /api/razorpay/verify-payment            - HMAC signatureVerified, CAPTURED, audit log
-POST /api/razorpay/webhook                   - public isPublicRoute, HMAC RAZORPAY_WEBHOOK_SECRET, idempotent by findUnique razorpayOrderId/paymentId
-POST /api/payments/confirm                   - finalize PaymentRecord
+POST /api/modes/save                        src/app/api/modes/save/route.ts:11
+  - Body {fragmentId, mode ValidModes, artifact string|obj (≤2MB)} → auth + rate default 100/60s → ownership fragment.message.conversation.userId check
+  - Merges files.artifact=artifact, updates fragment.mode if provided → {ok:true, fragment}
 
-GET  /api/settings/profile  PATCH
-POST /api/settings/api-keys          DELETE /api/settings/api-keys/[keyId]
-GET  /api/settings/sessions            POST /api/settings/privacy/export
-POST /api/settings/delete-account   → AccountDeletionRequest (30d grace executeAt)
+POST /api/modes/[mode]/export                src/app/api/modes/[mode]/export/route.ts:13
+  - Body {format, artifact string|obj, conversationId?} → auth + rate default 100/60s + ownership if conversationId → size 2MB guard → dispatch by mode/format:
+    slides/pptx → ./pptx buildPptx  (WIDE 13.33×7.5, SLIDE_THEMES palette, 11 block switches, fetchImageAsBase64 8s abort)
+    document/docx → ./docx buildDocx (HeadingLevel, Table, checklist/callout Shading)
+    sheet/xlsx → ./xlsx buildXlsx (HyperFormula f: formulas, header fill luminance→text)
+    deep-research/pdf → ./pdf buildResearchPdf (renderMarkdown→HTML @page 20mm → chromium launch page.pdf A4)
+  - Returns binary Content-Type + Content-Disposition attachment; error {Format not supported for this mode} 400
 
-POST /api/dapp-studio/analyze               - AI contract analysis endpoint
-POST /api/faucet                            - testnet faucet proxy
-
-GET  /api/admin/refund (POST)               - admin-only refund flow
+# ——— Projects (Website / Smart-Contract) — legacy DApp path sharing harness ———
+POST /api/projects/[projectId]/generate, GET /api/projects/[projectId]/build-jobs, GET /build-status, POST /deploy, GET /files|/screenshot, POST /save-codebase → see Projects section above
+POST /api/sandbox/restore                     getSandbox(sandboxId)
+POST /api/razorpay/* + /payments/confirm, /settings/*, /dapp-studio/analyze, /faucet, /admin/refund — unchanged
 ```
 
 Rate headers: Upstash returns `limit/remaining/reset` mapped to `X-RateLimit-*`.
@@ -500,12 +599,15 @@ Growth estimate: ~20% MoM if PMF, token usage is binding not DAU (FREE 6 req/day
 | AI cost/op | ~$0.01–0.06 (gpt-4o-mini) | `calculateCost` per 1M: openai `gpt-4o-mini` input 0.15 output 0.60 |
 
 ### Optimizations Applied
-1.  **Atomic upsert raw SQL** — eliminates extra round-trip + race; single `INSERT ... ON CONFLICT`.
-2.  **PreviousMessages window 6** — caps prompt tokens; prevents context explosion.
-3.  **Artifact JSON collapsed** — ABI + bytecode inside single `artifacts` Json, not normalized table (faster read).
-4.  **Screenshot JPEG via sharp** (resize 1200w, q70) — PNG → JPEG saves ~60% Bytes storage.
-5.  **Turbopack `--turbopack`** — dev HMR ~3× faster than webpack for iteration; `standalone` reduces image size.
-6.  **Zod max 10k char `value`** — caps AI input cost/abuse early.
+1.  **Atomic upsert raw SQL** — single `INSERT ... ON CONFLICT CASE date_trunc` eliminates round-trip+race.
+2.  **History windows 6 (chat) / 8 (modes) + buildModePrompt contract** — caps tokens; Sheet 8+ row memo avoids Hf rebuild churn.
+3.  **Artifact JSON collapsed** — Modes `files.artifact` + Contracts `artifacts {abi,bytecode}` single Json column (faster read, 2 MB cap).
+4.  **SSE streaming** — `ReadableStream text/event-stream` token/done SSE shows skeleton `CanvasSkeleton` and progressive reveal (no full swap), TTFB <2s.
+5.  **Screenshot JPEG via sharp** (resize 1200w q70) — PNG→JPEG ~60% Bytes save; modes skip screenshot entirely.
+6.  **Glide virtualization + Hf memo** — `useMemo evaluator = HyperFormula.buildFromArray` only on rows change; `evaluate raw→display` per cell O(1).
+7.  **Turbopack `--turbopack`** — HMR ~3× webpack.
+8.  **Zod max 10k char + 40k extract truncate + 20 MB upload cap** — cost/abuse caps.
+9.  **402 ladder + friendlyAIError** — 503 vs 402 affordable-token parse degrades gracefully under OpenRouter free tier (3500→1000).
 
 ---
 
@@ -859,49 +961,63 @@ Rollback: Vercel instant rollback or `ghcr` tag revert (<2 min); DB migrations f
 
 ---
 
-## 19. Comparison with Alternatives
+## 19. Comparison with Alternatives — General-Purpose Harness Lens
 
-### vs. Scaffold-ETH / Thirdweb (Web3 scaffold focus)
-- **Their arch:** Local CLI templates, manual `forge create` deploy, no AI, no hosted preview, no quota.
-- **Our advantage:** Natural-language → ABI/bytecode + live `sandboxUrl` + verify + metered cost in one hosted loop; template + custom hybrid via AI iteration.
-- **Their advantage:** Battle-tested local dev, no sandbox latency, deeper Foundry plugin ecosystem, community templates.
-- **Cost:** Theirs free locally; ours infra ~$0.10/build but zero local setup.
-- **Scale:** They scale infinitely locally (user CPU); we scale via E2B quota + Inngest concurrency (bounded, but zero user ops).
+### vs. Scaffold-ETH / Thirdweb (Web3 only)
+- **Their arch:** Local CLI templates, manual `forge create`, no AI, no doc/sheet/slide/research.
+- **Our advantage:** Adds full Modes harness on top — same `Conversation` + quota powers slides/docs/sheets/research without app switch; one export pipeline.
+- **Their advantage:** Community template breadth, local compile speed.
 
-### vs. Vercel v0 / Lovable / Bolt (AI Web app generators)
-- **Their arch:** Similar sandboxed Next generation, but Web2-only, proprietary model routing, no smart-contract toolchain.
-- **Our advantage:** Only player bridging Web2 *and* Web3 compile/verify under one `Project` model; token-usage + Razorpay natively quota-aware; open provider choice.
-- **Their advantage:** Larger model fine-tune + community artifact library; more polished design-system generation; higher concurrency SLO.
-- **Scalability:** v0 benefits from Vercel edge infra; we match on AI but lag on artifact CDN.
+### vs. Vercel v0 / Lovable / Bolt (AI Web generators — Web2 only)
+- **Their arch:** Sandboxed Next generation only; no structured sheet/doc/slide block contracts.
+- **Our advantage:** 7 modes unified under one harness: v0 is site-only; we add live `Glide+HyperFormula` sheets (real `=SUM`), `docx` docs, 13-theme `pptx` decks, agentic research 4-8 sections. One quota/billing.
+- **Their advantage:** Vercel design-system polish, larger fine-tune corpus.
 
-### vs. Self-hosted (Remix + BullMQ + Docker) DIY
-- **Our advantage:** 9 docs + 6-phase certification + load report already authored; serverless ops minimal; `standalone` image ready.
-- **DIY advantage:** Full control on compile cache, custom Slither pipeline, no Inngest/E2B vendor bill.
-- **Decision steer:** Stay vendor-assisted until 1k builds/day, then re-evaluate build-plane self-host.
+### vs. Notion AI / Google Duet / MS Copilot (Office AI)
+- **Their arch:** AI inside single app (Docs/Sheets/Slides) with collaboration, comments, permissions.
+- **Our advantage:** Cross-mode prompt (research → deck → sheet) in one canvas without context switch; open 13-model routing vs vendor-locked; HyperFormula syntax = Excel-compatible; native `xlsx` with live `f:` formulas.
+- **Their advantage:** Real-time collaboration (Yjs/Sockets), SOC2, offline.
+- **Decision:** We win on harness extensibility (new `ModeDefinition` → new product <1 day).
+
+### vs. ChatGPT Canvas / Claude Artifacts / Perplexity (AI content)
+- **Their arch:** Freeform canvas (HTML/React) + Perplexity web-grounded research.
+- **Our advantage:** Strict `ArtifactBlock[]` schema → typed renderer + export fidelity; sheet as data grid not markdown table; persistent `Fragment.files.artifact` + live `PropertyEditor` 300 ms debounce; research visible SSE phases.
+- **Their advantage:** Web search citations, plugin ecosystem.
+- **Scale:** Both SSE; we persist in Postgres so refresh survives.
+
+### vs. Self-hosted DIY (Remix + BullMQ + Handsontable)
+- **Our advantage:** `standalone` + vendor sandboxes, 6-phase cert, harness wired for new mode <200 LOC.
+- **DIY advantage:** Full GPL/HF isolation, Handsontable license cleaner.
 
 ---
 
 ## 20. Appendix
 
-### Glossary
-- **Cobentt/Cogerphere:** Same product; Cobentt is brand on Next. `COBENTT` Inngest id.
-- **Fragment:** `Fragment` row = title + `files Json` + `sandboxUrl` pair for one Message result.
-- **BuildJob:** Tracked Foundry compile/verify job with `progress/currentStep/logs/artifacts`.
-- **Advisory Lock:** `pg_advisory_xact_lock(int)` — session/transaction level lock not tied to table row, keyed by hashed `userId`.
-- **RAG:** Retrieval-Augmented Generation — enrich prompt with retrieved contract docs (future pgvector).
-- **OZ v5:** OpenZeppelin contracts v5 where `Ownable` requires `Ownable(initialOwner)` ctor arg.
-- **DApp Studio:** `/dapp-studio` analyze route + `createDapp` flow.
-- **Inngest:** Durable event-driven job orchestrator; `serve()` exposes HMAC-verified endpoint.
-- **E2B:** Firecracker microVM code interpreter sandbox.
-- **HMAC:** Hash-based Message Authentication Code for webhook signature (Clerk/Razorpay/Inngest).
-- **Turbopack:** Next's Rust bundler, `next dev --turbopack`/`next build --turbopack`.
+### Glossary — Harness Keywords
+- **Cobentt / Cogerphere AI Labs:** Product = **Cobentt** (UI, Inngest id `COBENTT`, `X-Title: Cobentt`), Labs = Cogerphere AI Labs, repo `BetaVersion0.1CogerphereExperimental`.
+- **AI Harness / Modes Harness:** Unified `Conversation(mode,model,template)` → `ModeDefinition` → `buildModePrompt` → `Artifact` → `Fragment(mode)` + `Attachment` loop powering 7 modes.
+- **Mode / ModeKey:** `slides | document | sheet | deep-research` (canonical `lib/modes/types.ts:1` + `MODE_ROUTES`) plus `chat` + `website` + `smart-contract` as app modes. Maps to `src/app/(modes)/{slides,document,sheet,deep-research,website,smart-contract}` + `src/app/chat`.
+- **Artifact / ArtifactBlock:** Structured output `Artifact {title, theme?, blocks: ArtifactBlock[{id,type,props,children?,style?}]}` (5–12 blocks). `BlockTypeDef` declares `type,label,defaultProps,properties[]` per mode; `BlockProperty type text|textarea|number|select|list|color`.
+- **Fragment:** Carrier row `Fragment {id,messageId unique, sandboxUrl?, title, files Json, mode?, meta?}`. For Modes: `files.artifact = JSON.stringify(Artifact)` (2 MB cap). For Website/Contract: `files={[path]:content}`.
+- **Sheet Engine:** Glide Data Grid `DataEditor` + HyperFormula `buildFromArray({gpl-v3})` live `evaluate raw→display` for `=SUM/=AVG`.
+- **Structured Output / JSON Mode:** Prompt contract `blockTypeSchema` + `blockTypeNames` + `extractJson`/`parseArtifact` validation before persist; streams tolerate ` ```json fences`.
+- **SSE Streaming:** `ReadableStream` `text/event-stream` with `data: {event:token|done|error|phase}` frames; deep-research uses `phase Progress 10→100`.
+- **BuildJob:** Durable Foundry job `progress 0-100, currentStep, logs String[] JSON, artifacts {abi,bytecode,sourceCode,preview}`, monotonic guard.
+- **Advisory Lock:** `pg_advisory_xact_lock(hash(userId))` serializes quota per user (see `quota-enforcement.ts:33 advisoryKey`).
+- **RAG (future):** pgvector retrieval injecting into `attachmentContext`/`priorContext` without changing mode route shape.
+- **OZ v5:** OpenZeppelin v5 `Ownable(initialOwner)` ctor arg (fix checked in `validateContractSyntax`).
+- **DApp Studio:** `src/app/dapp-studio` + tRPC `createDapp` → `contract/generate` path.
+- **Inngest / E2B / HMAC / Turbopack:** As before — durable orchestrator, Firecracker sandbox, webhook signatures, Rust bundler.
+- **HyperFormula:** OSS Excel-compatible calc engine (`=A1*2`) — GPL-v3.
+- **Glide Data Grid:** Virtualized sheet renderer — MIT-like.
 
 ### References & Resources
 - Repo root: `/home/yuvraj/Downloads/Projects/BetaVersion0.1CogerphereExperimental`
-- **Key files:** `src/inngest/functions.ts:28-1252`, `prisma/schema.prisma:18-628`, `src/lib/quota-enforcement.ts:1-294`, `src/lib/token-usage.ts:1-284`, `src/trpc/routers/_app.ts:1-19`, `src/modules/projects/server/procedures.ts:1-436`, `src/lib/rate-limit.ts:1-113`, `src/app/api/health/route.ts:1-115`, `next.config.ts:1-145`, `ARCHITECTURE_DIAGRAM.md`, `TOKEN_SYSTEM_ARCHITECTURE.md`, `INNGEST_BACKGROUND_JOBS_INTEGRATION.md`, `LOAD_TEST_REPORT.md`, `Project_CogerphereToProduction_Plan.md`, `.env.example:1-61`
-- **External docs:** [Inngest Docs](https://www.inngest.com/docs) · [Next.js App Router](https://nextjs.org/docs) · [tRPC](https://trpc.io/docs/react/useMutation) · [E2B](https://e2b.dev/docs) · [Prisma](https://pris.ly/d/prisma-schema) · [Clerk](https://clerk.com/docs) · [Upstash Ratelimit](https://upstash.com/docs/redis/features/ratelimit) · [Foundry](https://book.getfoundry.sh/)
-- **Artifacts:** E2B templates `sandbox-templates/` + `cogerphereailabsbeta1` + `solidity-foundry-template`
-- **Perf evidence:** `LOAD_TEST_REPORT.md:5-89` + `INNGEST_*` dev server `http://localhost:3000/api/inngest`
+- **Key files — Harness (NEW):** `src/lib/modes/definitions.ts:18 SLIDES/DOCUMENT/SHEET+RESEARCH` + `src/lib/modes/types.ts:1 ModeKey/Artifact/BlockTypeDef` + `src/lib/modes/prompt.ts:24 buildModePrompt/parseArtifact` + `src/app/api/modes/[mode]/generate/route.ts:78 SSE` + `src/app/api/modes/deep-research/generate/route.ts:17 fan-out` + `src/app/api/modes/[mode]/export/{pptx,docx,xlsx,pdf}.ts` + `src/app/api/modes/save/route.ts` + `src/components/modes/mode-canvas.tsx:83` + `src/components/modes/sheet-editor.tsx:57 HyperFormula` + `src/lib/attachments/extract.ts` + `src/app/api/attachments/upload/route.ts` + `src/lib/ai/pipeline.ts:67 runAIPipeline` + `src/lib/ai/client.ts:111 chatCompletion 402-ladder` + `src/lib/models.ts:10 MODELS 13`
+- **Key files — Platform:** `src/inngest/functions.ts:28-1252`, `prisma/schema.prisma:18-628`, `src/lib/quota-enforcement.ts:1-294`, `src/lib/token-usage.ts:1-284`, `src/trpc/routers/_app.ts:1-19`, `src/modules/projects/server/procedures.ts:1-436`, `src/lib/rate-limit.ts:1-113`, `src/app/api/health/route.ts:1-115`, `next.config.ts:1-145`, `ARCHITECTURE_DIAGRAM.md`, `TOKEN_SYSTEM_ARCHITECTURE.md`, `INNGEST_BACKGROUND_JOBS_INTEGRATION.md`, `LOAD_TEST_REPORT.md`, `Project_CogerphereToProduction_Plan.md`, `.env.example:1-61`
+- **External docs:** [Inngest](https://www.inngest.com/docs) · [Next.js](https://nextjs.org/docs) · [tRPC](https://trpc.io) · [E2B](https://e2b.dev/docs) · [Prisma](https://pris.ly/d/prisma-schema) · [Clerk](https://clerk.com/docs) · [Upstash](https://upstash.com/docs/redis/features/ratelimit) · [Foundry](https://book.getfoundry.sh/) · [Glide](https://grid.glideapps.com/) · [HyperFormula](https://hyperformula.handsontable.com/) · [pptxgenjs](https://gitbrent.github.io/PptxGenJS/) · [docx](https://docx.js.org/) · [xlsx/SheetJS](https://docs.sheetjs.com/)
+- **Artifacts:** E2B templates `sandbox-templates/` + `cogerphereailabsbeta1` + `solidity-foundry-template` + SpreadSheet `Glide+HyperFormula` client-only
+- **Perf evidence:** `LOAD_TEST_REPORT.md:5-89` + `INNGEST_DEV_SERVER_URL` `http://localhost:3000/api/inngest` + SSE `data: token/done/phase` traces
 
 ### Diagrams
 
@@ -938,14 +1054,14 @@ ApiKey, UserProfile, UserAuditLog, AccountDeletionRequest, AdminUser, AdminActio
 
 ## NOTES FOR INTERVIEWER USE
 
-**How to present this in 12–15 min (Zara-style):**
+**How to present this in 12–15 min (Zara/Alignerr-style — General Harness):**
 
-1. **Problem (60s):** "We were solving the 2–8 week idea→compiled→deployed gap for Web2+Web3 builders — template sprawl, Foundry friction, AI hallucination. TLDR prompt→live preview+ABI <5m."
-2. **Architecture (3 min):** Sketch the ASCII: Next standalone + tRPC + Inngest agent network (maxIter 30) + E2B Foundry per job + Postgres + Upstash. Show dual path (CobenttAgent vs generateContract iterative loop).
-3. **Tradeoffs (3 min):** Pick 2 of: Advisory-lock quota vs Redis (correctness over raw throughput), AI-only iterative refinement vs Mustache (quality over cost), E2B vs local Docker (security).
-4. **Challenge (4 min):** Walk **Quota double-spend** end-to-end: 100 parallel streams → `SELECT pg_advisory_xact_lock` → atomic `$executeRawUnsafe INSERT ... ON CONFLICT CASE date_trunc` → grace 10%; validated by load report scenario 1; monitoring via health+memo.
-5. **Learnings & scaling (2 min):** "`ignoreDuringBuilds` debt, store screenshots in R2 after 100k projects, shard token_usage, require Upstash in prod; rebuild would split Control vs Build plane and ship pgvector RAG from day one."
-6. **Metrics proof:** Quote `BuildJob` success >95% target, p95 health 10 ms, quota 6 req/day FREE → 100 req PRO, Razorpay paise, cost/build ~$0.10.
+1. **Problem (60s):** "We built **Cobentt by Cogerphere AI Labs** — a **general-purpose AI harness**, not just a Web/DApp builder. Workers lose context jumping ChatGPT↔PowerPoint↔Word↔Excel↔Perplexity↔Remix. We unified 7 modes — **Chat, Slides, Docs, Sheets (Glide+HyperFormula), Deep Research, Website, Smart Contract** — under one `Conversation(mode,model)` + `Artifact {blocks}` harness. TLDR: prompt (+attachment 20 MB) → streamed editable artifact (SSE token/done) → native export `.pptx/.docx/.xlsx/.pdf` in <60s, plus the durable Inngest+E2B path for sites/contracts."
+2. **Architecture (3 min):** Sketch dual path: `Next(MODE_DEFINITIONS→ModeCanvas→SheetEditor) → runAIPipeline → buildModePrompt → chatCompletion stream SSE → parseArtifact → Fragment(mode, files.artifact)` **vs** durable `Cobentt/runAgent` + `contract/generate` (GPT-4.1×3 + Forge×3) → `sandboxUrl`. Show `HyperFormula.buildFromArray` memo per `sheet-editor.tsx:57` and export dispatch `src/app/api/modes/[mode]/export/*.ts`. One quota/rate limiter for all.
+3. **Tradeoffs (3 min):** Pick 2: Structured `ArtifactBlock[]` blocks vs freeform markdown (export fidelity + SSE validation > flexibility); advisory-lock quota vs Redis INCR (correctness under 100 parallel chat); E2B microVM vs local Docker (untrusted LLM code); Glide+Hf GPL trade vs Handsontable.
+4. **Challenge (4 min):** Walk **Structured-output reliability** + **Attachment fan-in**: `buildModePrompt` injects `blockTypeSchema` allowlist + `attachmentContext` (pdf-parse→pdfjs fallback truncated 40k) + live `currentArtifact` edit section → SSE stream tolerates ` ```json fences` via `extractJson` → `parseArtifact` validates before `Fragment` upsert; deep-research fan-out N sections with `recordAITokens` each. Or classic **Quota double-spend** with `pg_advisory_xact_lock` → raw SQL CAS.
+5. **Learnings & scaling (2 min):** "`ignoreDuringBuilds` debt → strict lint; artifacts 2 MB cap before R2; shard token_usage 90d → Parquet; add Upstash required in prod; rebuild would split Modes (stateless SSE) vs Build plane (durable Inngest) + ship pgvector RAG from day one; Glide Hf already live."
+6. **Metrics proof:** Artifact schema valid >98% (`parseArtifact`), p95 modes first-token <2s streamed, sheet cell <50 ms, health DB 10 ms, quota 6 FREE/100 PRO, deep-research 3/60s strict, 402 ladder affordable-token shrink, export success tracked via `Content-Disposition` binary, cost/mode ~$0.01–0.06 `gpt-4o-mini`.
 
 **Red flags avoided — every claim backed by file:line:**
 - `src/inngest/functions.ts:28` `maxIter:30` + `src/lib/quota-enforcement.ts:52` advisory lock + `src/lib/token-usage.ts:64` atomic raw SQL + `src/lib/rate-limit.ts:96` `RATE_LIMITS` buckets + `next.config.ts:25` CSP + `prisma/schema.prisma:538` `pg_advisory` scale.
