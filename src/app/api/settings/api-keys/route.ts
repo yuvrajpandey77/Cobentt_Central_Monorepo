@@ -77,7 +77,17 @@ export async function POST(req: Request) {
     );
   }
 
-  const { encrypted, iv, authTag } = encryptApiKey(apiKey);
+  let encrypted: string;
+  let iv: string;
+  let authTag: string;
+  try {
+    ({ encrypted, iv, authTag } = encryptApiKey(apiKey));
+  } catch {
+    return NextResponse.json(
+      { error: "Server misconfigured: API_KEY_ENCRYPTION_SECRET is missing. See server logs." },
+      { status: 500 }
+    );
+  }
   const { prefix, suffix } = maskKey(apiKey);
 
   const key = await prisma.apiKey.create({

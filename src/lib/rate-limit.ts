@@ -55,19 +55,35 @@ export interface RateLimitResult {
 
 export async function checkRateLimit(
   key: string,
-  opts?: { requests?: number; window?: string }
+  opts?: { requests?: number; window?: string; failClosed?: boolean }
 ): Promise<RateLimitResult> {
+  const limit = opts?.requests || 100;
+  const windowMs = parseWindow(opts?.window || "60 s");
+  // SECURITY: money/spend paths pass `failClosed: true` so a missing/broken
+  // Redis rejects instead of silently disabling limits (fail-open).
+  const denied: RateLimitResult = {
+    success: false,
+    limit,
+    remaining: 0,
+    reset: Date.now() + windowMs,
+  };
   const redis = getRedis();
   if (!redis) {
+    if (opts?.failClosed) {
+      console.error(`[rate-limit] Redis not configured — rejecting ${key} (fail-closed)`);
+      return denied;
+    }
     return { success: true, limit: 100, remaining: 100, reset: Date.now() + 60_000 };
   }
 
-  const limit = opts?.requests || 100;
-  const windowMs = parseWindow(opts?.window || "60 s");
   const prefix = key.split(":")[0];
 
   const limiter = getOrCreateLimiter(prefix, limit, windowMs);
   if (!limiter) {
+    if (opts?.failClosed) {
+      console.error(`[rate-limit] Limiter unavailable — rejecting ${key} (fail-closed)`);
+      return denied;
+    }
     return { success: true, limit, remaining: limit, reset: Date.now() + windowMs };
   }
 

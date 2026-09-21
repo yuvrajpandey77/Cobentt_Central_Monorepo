@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Ensure this API route is always dynamic (avoid static path generation attempts)
 export const dynamic = 'force-dynamic';
@@ -11,14 +13,27 @@ const faucetSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = faucetSchema.parse(body);
 
-    // Rate limiting - simple implementation
-    const rateLimitKey = `faucet_${validatedData.address}_${validatedData.network}`;
-    
-    // In production, you'd use Redis or similar for rate limiting
-    // For now, we'll just simulate the faucet request
+    // Throttle per user: unauthenticated, unthrottled server-side POSTs to
+    // third parties are free abuse/egress. Fail closed if Redis is down.
+    const rateLimit = await checkRateLimit(`faucet:${userId}`, {
+      requests: 5,
+      window: "60 s",
+      failClosed: true,
+    });
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Too many faucet requests. Try again later.' },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.reset - Date.now()) / 1000)) } }
+      );
+    }
     
     const faucetUrls = {
       'sepolia': 'https://sepoliafaucet.com',

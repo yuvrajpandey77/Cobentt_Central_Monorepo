@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { EnhancedContractConfig } from '@/types/contract-config';
 import { chatCompletion } from '@/lib/ai/client';
 import { runAIPipeline, recordAITokens, aiErrorResponse } from '@/lib/ai/pipeline';
+import { resolveByokCredential, ByokError } from '@/lib/byok';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,22 @@ export async function POST(request: NextRequest) {
     if (!pipeline.ok) return pipeline.response;
 
     const { userId, sanitizedMessage } = pipeline.ctx;
+
+    // SECURITY: bill the user's own key (BYOK), not the server key.
+    // chatCompletion falls back to the server env key when `credential` is
+    // omitted — always resolve explicitly so keyless users get a clear
+    // "add your key" 402 instead of silently spending server balance.
+    const requestedModel = 'openai/gpt-4.1';
+    let credential;
+    try {
+      credential = await resolveByokCredential(userId, requestedModel);
+    } catch (err) {
+      if (err instanceof ByokError) {
+        return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+      }
+      throw err;
+    }
+    const model = credential.model;
 
     const enhancedSystemPrompt = `You are a blockchain expert. Analyze user requirements and provide detailed configuration including:
 
@@ -94,7 +111,8 @@ Analysis Guidelines:
 
     const start = Date.now();
     const response = await chatCompletion({
-      model: 'openai/gpt-4.1',
+      model,
+      credential,
       maxTokens: 1000,
       messages: [
         {
@@ -120,7 +138,7 @@ Analysis Guidelines:
     if (usage) {
       await recordAITokens({
         userId,
-        model: 'openai/gpt-4.1',
+        model,
         promptTokens: usage.prompt_tokens ?? 0,
         completionTokens: usage.completion_tokens ?? 0,
         endpoint: '/api/dapp-studio/analyze',

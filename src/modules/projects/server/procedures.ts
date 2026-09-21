@@ -4,6 +4,8 @@ import { createTRPCRouter, baseProcedure, protectedProcedure } from "@/trpc/init
 import { z } from "zod";
 import {generateSlug} from "random-word-slugs"
 import { TRPCError } from "@trpc/server";
+import { enforceQuota } from "@/lib/quota-enforcement";
+import { estimateTokens } from "@/lib/token-estimator";
 
 export const projectsRouter = createTRPCRouter({
     getOne: baseProcedure
@@ -111,6 +113,10 @@ export const projectsRouter = createTRPCRouter({
             value: z.string().min(1, { message: "Value is required" }).max(10000, { message: "Value must be less than 10000 characters" }),
         }))
         .mutation(async ({ input, ctx }) => {
+            // SECURITY: project creation fires an Inngest agent run (sandbox +
+            // server-key LLM calls). Enforce quota first so spamming creation
+            // can't mint unlimited spend.
+            await enforceQuota(ctx.auth.userId, estimateTokens(input.value) + 2000);
 
             const createdProject = await prisma.project.create({
                 data: {
@@ -167,7 +173,11 @@ export const projectsRouter = createTRPCRouter({
         }))
         .mutation(async ({ input, ctx }) => {
             console.log('🔥 createDapp mutation called with input:', input);
-            
+
+            // SECURITY: contract generation runs multi-iteration AI loops.
+            // Enforce quota first with a larger reservation.
+            await enforceQuota(ctx.auth.userId, estimateTokens(input.value) + 8000);
+
             const createdProject = await prisma.project.create({
                 data: {
                     userId: ctx.auth.userId,
