@@ -1,25 +1,24 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useAccount, useDeployContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { useDeployContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, Loader2, AlertCircle, ExternalLink, XCircle } from 'lucide-react';
+import type { Abi } from 'viem';
 
 interface DeployStepProps {
   onNext: () => void;
   onBack: () => void;
-  contractABI: any[];
+  contractABI: Abi;
   contractBytecode: string;
-  constructorArgs?: any[];
+  constructorArgs?: unknown[];
   projectId?: string;
   buildJobId?: string;
 }
 
 export function DeployStep({ onNext, onBack, contractABI, contractBytecode, constructorArgs = [], projectId, buildJobId }: DeployStepProps) {
-  const { address } = useAccount();
   const publicClient = usePublicClient();
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployedAddress, setDeployedAddress] = useState<string | null>(null);
@@ -37,7 +36,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
 
   const { deployContract, data: hash, error: writeError, isPending } = useDeployContract();
   
-  const { isLoading: isConfirming, isSuccess: isConfirmed, data: receipt } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
 
@@ -119,7 +118,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
     };
 
     extractContractAddress();
-  }, [isConfirmed, hash, publicClient]);
+  }, [isConfirmed, hash, publicClient, projectId, buildJobId]);
 
   // Show write error if contract deployment fails
   useEffect(() => {

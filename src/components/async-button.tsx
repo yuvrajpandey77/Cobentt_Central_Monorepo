@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AsyncButtonProps extends React.ComponentProps<typeof Button> {
-  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => Promise<any> | any;
+  onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => Promise<unknown> | unknown;
   loadingText?: string;
 }
 

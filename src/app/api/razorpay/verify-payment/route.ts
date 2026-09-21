@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { z } from "zod";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logPaymentEvent } from "@/lib/payment-audit";
+import { fetchProviderPayment } from "@/lib/razorpay";
 import prisma from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rateLimit = await checkRateLimit(`payment:verify:${userId}`);
+    const rateLimit = await checkRateLimit(`payment:verify:${userId}`, {
+      requests: 20,
+      window: "60 s",
+      failClosed: true,
+    });
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
@@ -97,19 +102,70 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // SECURITY: Only upgrade status, never downgrade
-    // CREATED → AUTHORIZED is ok. CAPTURED → AUTHORIZED is NOT ok.
-    const statusUpgradeOrder = ["CREATED", "AUTHORIZED", "CAPTURED"] as const;
-    const currentIdx = statusUpgradeOrder.indexOf(existing.status as typeof statusUpgradeOrder[number]);
-    const targetIdx = statusUpgradeOrder.indexOf("AUTHORIZED");
-    const canUpgrade = currentIdx < targetIdx;
+    // SECURITY: orders belong to exactly one user. Return the same 404 so a
+    // caller can't probe for other users' order ids.
+    if (existing.clerkUserId !== userId) {
+      await logPaymentEvent({
+        paymentRecordId: existing.id,
+        clerkUserId: userId,
+        event: "payment.verification_failed",
+        actor: "user",
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        correlationId,
+        success: false,
+        errorMessage: "Order does not belong to user",
+      });
+      return NextResponse.json(
+        { error: "No matching order found for this payment" },
+        { status: 404 }
+      );
+    }
 
-    if (canUpgrade) {
+    // SECURITY: reconcile against Razorpay's servers. The HMAC above only
+    // proves the pair came from Checkout — it says nothing about capture.
+    let providerStatus: string;
+    try {
+      const providerPayment = await fetchProviderPayment(razorpay_order_id, razorpay_payment_id);
+      providerStatus = providerPayment.status;
+    } catch (providerErr) {
+      await logPaymentEvent({
+        paymentRecordId: existing.id,
+        clerkUserId: userId,
+        event: "payment.verification_failed",
+        actor: "system",
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        correlationId,
+        success: false,
+        errorMessage: providerErr instanceof Error ? providerErr.message : "Provider lookup failed",
+      });
+      return NextResponse.json(
+        { error: "Could not confirm payment with provider. Retry." },
+        { status: 502 }
+      );
+    }
+
+    // Map provider truth to record status — never downgrade a CAPTURED record,
+    // and never promote on `created`/`failed` provider states.
+    const nextStatus =
+      providerStatus === "captured"
+        ? "CAPTURED"
+        : providerStatus === "authorized"
+          ? "AUTHORIZED"
+          : providerStatus === "failed"
+            ? "FAILED"
+            : null;
+
+    // Provider reconciliation is server-to-server, so its status is truthful
+    // bookkeeping (not attacker-controlled). Only rule: never downgrade a
+    // CAPTURED record — capture is terminal here; refunds arrive via webhook.
+    if (nextStatus && nextStatus !== existing.status && existing.status !== "CAPTURED") {
       await prisma.paymentRecord.update({
         where: { razorpayOrderId: razorpay_order_id },
         data: {
           razorpayPaymentId: razorpay_payment_id,
-          status: "AUTHORIZED",
+          status: nextStatus as "AUTHORIZED" | "CAPTURED" | "FAILED",
           signatureVerified: true,
           verifiedAt: new Date(),
         },

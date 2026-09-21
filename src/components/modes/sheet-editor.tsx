@@ -37,10 +37,17 @@ function colLetter(i: number): string {
 
 export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditorProps) {
   const p = block.props as AnyProps;
-  const columns: { key: string; header: string; type?: string }[] = Array.isArray(p.columns)
-    ? p.columns
-    : [{ key: "A", header: "Column A", type: "text" }];
-  const rows: (string | number | null)[][] = Array.isArray(p.rows) ? p.rows : [];
+  // Memoized so the downstream useMemos keep stable deps: without this the
+  // `[]` / `[{...}]` fallbacks would be fresh array identities every render,
+  // forcing a HyperFormula rebuild each time.
+  const columns: { key: string; header: string; type?: string }[] = useMemo(
+    () => (Array.isArray(p.columns) ? p.columns : [{ key: "A", header: "Column A", type: "text" }]),
+    [p]
+  );
+  const rows: (string | number | null)[][] = useMemo(
+    () => (Array.isArray(p.rows) ? p.rows : []),
+    [p]
+  );
 
   const [activeCell, setActiveCell] = useState<Item | null>(null);
   const [formulaDraft, setFormulaDraft] = useState("");

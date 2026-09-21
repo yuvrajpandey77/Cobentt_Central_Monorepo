@@ -13,7 +13,10 @@ const serverSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1, { message: "CLERK_SECRET_KEY is required" }),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
-  API_KEY_ENCRYPTION_SECRET: z.string().min(1).optional(),
+  // Required: BYOK ciphertexts are unreadable without it. Fail at boot
+  // (via src/instrumentation.ts) instead of 500ing every api-keys request.
+  // Generate: openssl rand -hex 32. Never rotate while keys are stored.
+  API_KEY_ENCRYPTION_SECRET: z.string().min(1, { message: "API_KEY_ENCRYPTION_SECRET is required (openssl rand -hex 32)" }),
   BYOK_ALLOW_SERVER_FALLBACK: z.string().optional(),
   E2B_API_KEY: z.string().min(1).optional(),
   INNGEST_EVENT_KEY: z.string().min(1, { message: "INNGEST_EVENT_KEY is required" }),

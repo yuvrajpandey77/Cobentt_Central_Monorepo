@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -126,11 +125,13 @@ function loadSettings(): StoredSettings {
   return loadFromStorage<StoredSettings>(STORAGE_KEYS.settings, {});
 }
 
-function mapPrismaMessage(m: {
+interface PrismaMessageLike {
   id: string; content: string; role: string;
   createdAt: Date | string; modelUsed?: string | null;
-  thinking?: any; sources?: any; attachments?: unknown;
-}): Message {
+  thinking?: unknown; sources?: unknown; attachments?: unknown;
+}
+
+function mapPrismaMessage(m: PrismaMessageLike): Message {
   return {
     id: m.id,
     role: m.role.toLowerCase() as "user" | "assistant",
@@ -145,20 +146,24 @@ function mapPrismaMessage(m: {
   };
 }
 
+interface PrismaMessagePreview {
+  content: string; role: string;
+  createdAt: Date | string;
+}
+
 function mapPrismaConversation(c: {
   id: string; title?: string | null; updatedAt: Date | string;
-  messages: any[];
+  messages: PrismaMessagePreview[];
 }): Thread {
   return {
     id: c.id,
     title: c.title || "New chat",
     date: new Date(c.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    messages: (c.messages || []).map(mapPrismaMessage),
+    messages: (c.messages || []).map((m) => mapPrismaMessage(m as unknown as PrismaMessageLike)),
   };
 }
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -381,7 +386,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const editMessage = useCallback((msgId: string) => {
     if (!activeThreadId || !activeConversation) return;
     const msgs = activeConversation.messages || [];
-    const idx = msgs.findIndex((m: any) => m.id === msgId);
+    const idx = msgs.findIndex((m: { id: string }) => m.id === msgId);
     if (idx === -1) return;
     setPendingEditContent(msgs[idx].content);
   }, [activeThreadId, activeConversation]);

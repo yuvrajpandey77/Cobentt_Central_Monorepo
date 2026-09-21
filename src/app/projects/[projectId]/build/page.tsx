@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,18 +19,38 @@ import {
   AlertCircle,
   Download,
   Rocket,
-  FileJson,
-  FileCode,
   Play,
   ExternalLink,
-  EyeIcon,
   CodeIcon,
   Zap,
   RefreshCw,
   XCircle,
 } from 'lucide-react';
-import Editor from '@monaco-editor/react';
 import { FileExplorer } from '@/components/file-explorer';
+
+interface BuildArtifacts {
+  sourceCode?: string | null;
+  contractName?: string | null;
+  contractType?: string | null;
+  abi?: unknown[] | null;
+  bytecode?: string | null;
+  error?: string | null;
+  compilationFailed?: boolean;
+  generationFailed?: boolean;
+}
+
+interface BuildProject {
+  name?: string | null;
+  tokenName?: string | null;
+  tokenSymbol?: string | null;
+  tokenSupply?: string | null;
+  decimals?: string | null;
+  contractType?: string | null;
+  blockchain?: string | null;
+  network?: string | null;
+  features?: string[];
+  contractAddress?: string | null;
+}
 
 interface BuildStatus {
   id: string;
@@ -38,7 +58,7 @@ interface BuildStatus {
   progress: number;
   currentStep: string | null;
   logs: string[];
-  artifacts: any;
+  artifacts: BuildArtifacts | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,11 +68,10 @@ export default function BuildPage() {
   const router = useRouter();
   const projectId = params.projectId as string;
   
-  const [project, setProject] = useState<any>(null);
+  const [project, setProject] = useState<BuildProject | null>(null);
   const [buildStatus, setBuildStatus] = useState<BuildStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [isRestarting, setIsRestarting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'source' | 'abi' | 'bytecode'>('source');
   const [showArtifacts, setShowArtifacts] = useState(false);
   const [sourceCode, setSourceCode] = useState('');
   const [tabsState, setTabsState] = useState<"preview" | "code">("code");
@@ -120,6 +139,12 @@ export default function BuildPage() {
   }, [projectId]);
 
   // Poll build status every 2 seconds
+  // realFiles/project are read via refs so the interval is created once per
+  // projectId (adding them to deps would reset the timer on every update).
+  const realFilesRef = useRef(realFiles);
+  realFilesRef.current = realFiles;
+  const projectRef = useRef(project);
+  projectRef.current = project;
   useEffect(() => {
     if (!projectId) return;
 
@@ -136,11 +161,11 @@ export default function BuildPage() {
           }
           
           // Also update realFiles with artifacts if available
-          if (data.artifacts && Object.keys(realFiles).length === 0) {
+          if (data.artifacts && Object.keys(realFilesRef.current).length === 0) {
             const artifactFiles: { [path: string]: string } = {};
             
             if (data.artifacts.sourceCode) {
-              const contractName = data.artifacts.contractName || project?.tokenName?.replace(/\s+/g, '') || 'Token';
+              const contractName = data.artifacts.contractName || projectRef.current?.tokenName?.replace(/\s+/g, '') || 'Token';
               artifactFiles[`src/${contractName}.sol`] = data.artifacts.sourceCode;
             }
             
@@ -204,12 +229,6 @@ export default function BuildPage() {
       fetchRealFiles();
     }
   }, [projectId, buildStatus?.status]);
-
-  const handleSourceCodeChange = (value: string | undefined) => {
-    if (value) {
-      setSourceCode(value);
-    }
-  };
 
   // Create file structure - prioritize artifacts from database, then E2B sandbox files
   const createFileStructure = () => {
@@ -557,24 +576,24 @@ forge test
                         )}
                         {buildStatus?.artifacts && typeof buildStatus.artifacts === 'object' && (
                           <>
-                            {'error' in buildStatus.artifacts && (buildStatus.artifacts as any).error && (
+                            {'error' in buildStatus.artifacts && buildStatus.artifacts.error && (
                               <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
                                 <p className="text-xs text-red-200 font-mono whitespace-pre-wrap break-words">
-                                  {String((buildStatus.artifacts as any).error)}
+                                  {String(buildStatus.artifacts.error)}
                                 </p>
                               </div>
                             )}
-                            {'compilationFailed' in buildStatus.artifacts && (buildStatus.artifacts as any).compilationFailed && (
+                            {'compilationFailed' in buildStatus.artifacts && buildStatus.artifacts.compilationFailed && (
                               <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
                                 <p className="text-xs text-red-200 font-mono whitespace-pre-wrap break-words">
                                   Compilation failed. Check logs below for details.
                                 </p>
                               </div>
                             )}
-                            {'generationFailed' in buildStatus.artifacts && (buildStatus.artifacts as any).generationFailed && (
+                            {'generationFailed' in buildStatus.artifacts && buildStatus.artifacts.generationFailed && (
                               <div className="bg-black/30 rounded-lg p-3 border border-red-500/20">
                                 <p className="text-xs text-red-200 font-mono whitespace-pre-wrap break-words">
-                                  Contract generation failed. {String((buildStatus.artifacts as any).error || 'Unknown error')}
+                                  Contract generation failed. {String(buildStatus.artifacts.error || 'Unknown error')}
                                 </p>
                               </div>
                             )}
@@ -705,7 +724,7 @@ forge test
                         <div className="bg-black/30 rounded p-2 max-h-32 overflow-y-auto thin-scrollbar">
                           <pre className="text-xs text-green-400 font-mono">
                             {JSON.stringify(buildStatus.artifacts.abi?.slice(0, 3), null, 2)}
-                            {buildStatus.artifacts.abi?.length > 3 && '\n...'}
+                            {(buildStatus.artifacts.abi?.length ?? 0) > 3 && '\n...'}
                           </pre>
                         </div>
                       </div>
@@ -715,7 +734,7 @@ forge test
                         <div className="bg-black/30 rounded p-2 max-h-20 overflow-y-auto thin-scrollbar">
                           <pre className="text-xs text-blue-400 font-mono">
                             {buildStatus.artifacts.bytecode?.substring(0, 100)}
-                            {buildStatus.artifacts.bytecode?.length > 100 && '...'}
+                            {(buildStatus.artifacts.bytecode?.length ?? 0) > 100 && '...'}
                           </pre>
                         </div>
                       </div>

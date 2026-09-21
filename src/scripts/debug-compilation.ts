@@ -55,14 +55,20 @@ async function main() {
       console.log('━'.repeat(60));
       logs.forEach((log: string) => console.log(log));
       console.log('━'.repeat(60));
-    } catch (e) {
+    } catch {
       console.log('\n📝 Raw Logs:', failedJob.logs);
     }
   }
 
   // Show artifacts (contains the error details)
   if (failedJob.artifacts) {
-    const artifacts = failedJob.artifacts as any;
+    const artifacts = failedJob.artifacts as unknown as {
+      error?: string;
+      stderr?: string;
+      stdout?: string;
+      contractCode?: string;
+      validationErrors?: string[];
+    };
     
     console.log('\n🔴 Error Details:');
     console.log('━'.repeat(60));

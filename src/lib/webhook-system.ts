@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import type { Prisma } from "@/generated/prisma";
 import crypto from "crypto";
 
 export type WebhookEventType =
@@ -13,7 +14,7 @@ interface WebhookPayload {
   event: WebhookEventType;
   userId: string;
   timestamp: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 /**
@@ -71,7 +72,7 @@ async function sendWebhook(
 export async function triggerWebhook(
   userId: string,
   eventType: WebhookEventType,
-  data: Record<string, any>
+  data: Record<string, unknown>
 ) {
   // Get user's webhook configuration
   const allowedUser = await prisma.allowedUser.findUnique({
@@ -117,7 +118,7 @@ export async function triggerWebhook(
       userId,
       eventType,
       webhookUrl: allowedUser.webhookUrl,
-      payload: payload as any, // Store webhook payload as JSON
+      payload: payload as unknown as Prisma.InputJsonValue, // Store webhook payload as JSON
       responseCode: result.statusCode,
       responseBody: result.error,
       success: result.success,

@@ -69,7 +69,7 @@ const formSchema = z.object({
   reasoning: z.string().optional(),
 });
 
-export interface DappStudioFormValues extends z.infer<typeof formSchema> {}
+export type DappStudioFormValues = z.infer<typeof formSchema>;
 
 interface DappStudioFormProps {
   onSubmit: (values: DappStudioFormValues) => void;
@@ -395,7 +395,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       />
                     </FormControl>
                     <FormDescription className="text-white/50 text-xs">
-                      The full name of your token (e.g., "Ethereum")
+                      The full name of your token (e.g., &quot;Ethereum&quot;)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -418,7 +418,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       />
                     </FormControl>
                     <FormDescription className="text-white/50 text-xs">
-                      Short ticker symbol (e.g., "ETH", usually 3-5 characters)
+                      Short ticker symbol (e.g., &quot;ETH&quot;, usually 3-5 characters)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -723,7 +723,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       <div className="mb-4">
                         <p className="text-xs text-white/60 mb-2">Custom Requirements Detected</p>
                         <div className="space-y-2">
-                          {Object.entries(form.watch("aiConfiguration").customRequirements).map(([key, value]: [string, any]) => {
+                          {Object.entries(form.watch("aiConfiguration").customRequirements).map(([key, value]: [string, unknown]) => {
                             if (value && typeof value === 'object' && Object.keys(value).length > 0) {
                               return (
                                 <div key={key} className="flex items-start gap-2">

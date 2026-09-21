@@ -25,7 +25,6 @@ export const MessageBubble = ({
   modelUsed,
   feedbackValue,
   messageId,
-  conversationId,
   onRegenerate,
 }: MessageBubbleProps) => {
   const isUser = role === "USER";

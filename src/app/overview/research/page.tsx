@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Globe,
   FileText,
@@ -94,13 +95,13 @@ export default function ResearchPage() {
           <p className="text-base lg:text-lg text-white/40 mb-6">
             Ready to accelerate your research?
           </p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black text-sm font-medium rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-gray-100 transition-all"
           >
             Open Workspace
             <ArrowRight className="w-3.5 h-3.5" />
-          </a>
+          </Link>
         </div>
       </div>
     </main>

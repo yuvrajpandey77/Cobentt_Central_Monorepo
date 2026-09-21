@@ -92,7 +92,17 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  const { encrypted, iv, authTag } = encryptApiKey(parsed.data.apiKey);
+  let encrypted: string;
+  let iv: string;
+  let authTag: string;
+  try {
+    ({ encrypted, iv, authTag } = encryptApiKey(parsed.data.apiKey));
+  } catch {
+    return NextResponse.json(
+      { error: "Server misconfigured: API_KEY_ENCRYPTION_SECRET is missing. See server logs." },
+      { status: 500 }
+    );
+  }
   const { prefix, suffix } = maskKey(parsed.data.apiKey);
 
   const updated = await prisma.apiKey.update({

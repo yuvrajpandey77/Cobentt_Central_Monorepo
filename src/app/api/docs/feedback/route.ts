@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     // For now, just log to server console. In production, persist to DB or analytics.
     console.log("docs.feedback", { pagePath, value, at: new Date().toISOString() });
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

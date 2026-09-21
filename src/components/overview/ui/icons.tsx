@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 type Icon = (props: SVGProps<SVGSVGElement>) => React.ReactElement;
 
 function i(path: string): Icon {
-  return ({ className, ...props }) => (
+  const SvgIcon = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
     <svg
       viewBox="0 0 24 24"
       fill="none"
@@ -17,6 +17,8 @@ function i(path: string): Icon {
       {path}
     </svg>
   );
+  SvgIcon.displayName = "SvgIcon";
+  return SvgIcon;
 }
 
 export const ArrowRight = i("<path d='M5 12h14' /><path d='m12 5 7 7-7 7' />");

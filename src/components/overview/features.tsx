@@ -10,6 +10,7 @@ import {
   Code2,
   BrainCircuit,
   ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 import { SectionContainer } from "@/components/overview/ui/section-container";
 
@@ -47,7 +48,7 @@ const capabilities = [
 ];
 
 /* ── Visual icon background for each capability ── */
-function CapabilityGraphic({ icon: Icon, index }: { icon: any; index: number }) {
+function CapabilityGraphic({ icon: Icon, index }: { icon: LucideIcon; index: number }) {
   return (
     <div className="relative w-full h-full flex items-center justify-center">
       {/* Animated rings */}

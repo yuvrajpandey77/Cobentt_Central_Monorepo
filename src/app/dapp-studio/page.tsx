@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -171,7 +170,7 @@ const PageShell = () => {
                     </p>
                     <div className="bg-white/10 rounded-lg p-3">
                       <p className="text-white/80 text-sm italic">
-                        "{prompt}"
+                        &quot;{prompt}&quot;
                       </p>
                     </div>
                   </div>

@@ -7,7 +7,9 @@ const IV_LENGTH = 16;
 function getEncryptionKey(): Buffer {
   const raw = process.env.API_KEY_ENCRYPTION_SECRET;
   if (!raw) {
-    throw new Error("API_KEY_ENCRYPTION_SECRET not configured");
+    throw new Error(
+      "API_KEY_ENCRYPTION_SECRET not configured. Generate one with `openssl rand -hex 32` and set it in .env / .env.local, then restart the dev server."
+    );
   }
   return Buffer.from(raw, "hex").length === KEY_LENGTH
     ? Buffer.from(raw, "hex")

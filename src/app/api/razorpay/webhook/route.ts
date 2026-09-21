@@ -44,8 +44,16 @@ export async function POST(req: NextRequest) {
 
   const { event: eventType, payload } = event;
 
-  // Webhook event deduplication: check for existing audit log with same event + order ID
-  const dedupeKey = `${eventType}:${JSON.stringify(Object.keys(payload).sort())}`;
+  // Webhook event deduplication: key on the Razorpay entity id so that
+  // re-deliveries of the SAME event dedupe, but distinct payments never collide.
+  // (The old key used only top-level payload key names, which are identical for
+  // every event of a given type — it dropped all payments after the first.)
+  const entityKey = Object.keys(payload ?? {})[0] ?? "unknown";
+  const entity = (payload?.[entityKey] as { entity?: Record<string, unknown> } | undefined)?.entity;
+  const entityId = typeof entity?.id === "string" && entity.id ? entity.id : null;
+  const dedupeKey = entityId
+    ? `${eventType}:${entityKey}:${entityId}`
+    : `${eventType}:body:${crypto.createHash("sha256").update(rawBody).digest("hex")}`;
   const existingLog = await prisma.paymentAuditLog.findFirst({
     where: {
       event: `webhook.${eventType}`,
@@ -137,7 +145,24 @@ async function handlePaymentCaptured(payload: Record<string, { entity: Record<st
     );
     const planDef = planKey ? PAYMENT_PLANS[planKey] : null;
 
-    if (planDef && existing.clerkUserId) {
+    // SECURITY: only entitle when the captured amount matches the order amount.
+    // A mismatch means the money paid differs from the plan price — record it,
+    // but do NOT activate the plan (prevents pay-less-get-plan via tampered orders).
+    const capturedAmount = Number(payment.amount);
+    if (planDef && existing.clerkUserId && capturedAmount !== existing.amount) {
+      await logPaymentEvent({
+        paymentRecordId: existing.id,
+        clerkUserId: existing.clerkUserId,
+        event: "payment.amount_mismatch",
+        actor: "webhook",
+        razorpayOrderId: orderId,
+        razorpayPaymentId: paymentId,
+        success: false,
+        errorMessage: `Captured ${capturedAmount} != order ${existing.amount} for plan ${existing.plan}`,
+      });
+    }
+
+    if (planDef && existing.clerkUserId && capturedAmount === existing.amount) {
       const periodStart = new Date();
       const periodEnd = new Date();
       periodEnd.setDate(periodEnd.getDate() + 30);

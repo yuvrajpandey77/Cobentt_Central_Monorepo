@@ -6,34 +6,36 @@ interface ProjectLoadingProps {
   onComplete: () => void;
 }
 
+// Module scope: stable across renders so the interval effect below never
+// re-runs spuriously (they are pure constants).
+const steps = [
+  "Understanding your prompt...",
+  "Analyzing requirements...",
+  "Planning project structure...",
+  "Setting up Next.js framework...",
+  "Generating initial code...",
+  "Creating components...",
+  "Configuring project files...",
+  "Finalizing setup..."
+];
+
+const activities = [
+  "🧠 Processing natural language...",
+  "📋 Breaking down requirements...",
+  "🏗️ Designing architecture...",
+  "⚛️ Setting up React components...",
+  "🎨 Applying UI patterns...",
+  "📁 Creating file structure...",
+  "🔧 Configuring TypeScript...",
+  "📦 Installing dependencies...",
+  "🎯 Optimizing for performance...",
+  "✨ Adding interactive features..."
+];
+
 export const ProjectLoading = ({ onComplete }: ProjectLoadingProps) => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [backgroundActivity, setBackgroundActivity] = useState("");
-
-  const steps = [
-    "Understanding your prompt...",
-    "Analyzing requirements...",
-    "Planning project structure...",
-    "Setting up Next.js framework...",
-    "Generating initial code...",
-    "Creating components...",
-    "Configuring project files...",
-    "Finalizing setup..."
-  ];
-
-  const activities = [
-    "🧠 Processing natural language...",
-    "📋 Breaking down requirements...",
-    "🏗️ Designing architecture...",
-    "⚛️ Setting up React components...",
-    "🎨 Applying UI patterns...",
-    "📁 Creating file structure...",
-    "🔧 Configuring TypeScript...",
-    "📦 Installing dependencies...",
-    "🎯 Optimizing for performance...",
-    "✨ Adding interactive features..."
-  ];
 
   useEffect(() => {
     console.log("ProjectLoading component mounted");

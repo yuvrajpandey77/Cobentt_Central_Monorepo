@@ -6,6 +6,7 @@ import prisma from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { PAYMENT_PLANS } from "@/lib/payment-plans";
 import { logPaymentEvent } from "@/lib/payment-audit";
+import { ensurePaymentCaptured, fetchProviderPayment } from "@/lib/razorpay";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimit = await checkRateLimit(`payment:confirm:${session.userId}`);
+  const rateLimit = await checkRateLimit(`payment:confirm:${session.userId}`, {
+    requests: 20,
+    window: "60 s",
+    failClosed: true,
+  });
   if (!rateLimit.success) {
     return NextResponse.json(
       { error: "Too many requests. Please try again later." },
@@ -140,7 +145,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
     }
 
-    // Idempotency: if payment already captured, return success
+    // Idempotency: if payment already captured, return success without
+    // re-hitting the provider (a previous confirm already verified it).
     if (paymentRecord.status === "CAPTURED") {
       await logPaymentEvent({
         paymentRecordId: paymentRecord.id,
@@ -159,6 +165,89 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // SECURITY: reconcile against Razorpay's servers BEFORE granting
+    // entitlement. The HMAC only proves the pair came from Checkout; an
+    // authorized-but-never-captured (or wrong-amount) payment must not
+    // activate a plan.
+    let providerPayment;
+    try {
+      providerPayment = await fetchProviderPayment(razorpay_order_id, razorpay_payment_id);
+    } catch (providerErr) {
+      await logPaymentEvent({
+        paymentRecordId: paymentRecord.id,
+        clerkUserId: session.userId,
+        event: "payment.confirm_failed",
+        actor: "system",
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        correlationId,
+        success: false,
+        errorMessage: providerErr instanceof Error ? providerErr.message : "Provider lookup failed",
+      });
+      return NextResponse.json(
+        { error: "Could not confirm payment with provider. Retry." },
+        { status: 502 }
+      );
+    }
+
+    // Provider amount/currency must match the plan price.
+    if (
+      providerPayment.amountPaise !== planDef.amountPaise ||
+      providerPayment.amountPaise !== paymentRecord.amount ||
+      providerPayment.currency.toUpperCase() !== planDef.currency.toUpperCase()
+    ) {
+      await logPaymentEvent({
+        paymentRecordId: paymentRecord.id,
+        clerkUserId: session.userId,
+        event: "payment.confirm_failed",
+        actor: "system",
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        correlationId,
+        success: false,
+        errorMessage: `Provider amount mismatch: got ${providerPayment.amountPaise} ${providerPayment.currency}, expected ${planDef.amountPaise} ${planDef.currency}`,
+      });
+      return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
+    }
+
+    // Capture if still only authorized (covers manual-capture merchants);
+    // refuse entitlement for anything not captured.
+    try {
+      providerPayment = await ensurePaymentCaptured(providerPayment);
+    } catch (captureErr) {
+      await logPaymentEvent({
+        paymentRecordId: paymentRecord.id,
+        clerkUserId: session.userId,
+        event: "payment.confirm_failed",
+        actor: "system",
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        correlationId,
+        success: false,
+        errorMessage: captureErr instanceof Error ? captureErr.message : "Capture failed",
+      });
+      return NextResponse.json(
+        { error: "Payment could not be captured. Contact support." },
+        { status: 402 }
+      );
+    }
+    if (providerPayment.status !== "captured") {
+      await logPaymentEvent({
+        paymentRecordId: paymentRecord.id,
+        clerkUserId: session.userId,
+        event: "payment.confirm_failed",
+        actor: "system",
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        correlationId,
+        success: false,
+        errorMessage: `Provider status is ${providerPayment.status}, not captured`,
+      });
+      return NextResponse.json(
+        { error: "Payment not completed. Finish the checkout and retry." },
+        { status: 402 }
+      );
+    }
     // Atomic transaction: verify → activate → update quota
     const periodStart = new Date();
     const periodEnd = new Date();

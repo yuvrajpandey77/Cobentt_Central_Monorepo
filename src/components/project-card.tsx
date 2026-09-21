@@ -1,11 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Code2, ExternalLink, Zap, Play, Eye, Copy, Loader2, MoreHorizontal, Pin, PinOff, Pencil, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Code2, Zap, Eye, Copy, Loader2, MoreHorizontal, Pin, PinOff, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -43,8 +41,6 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, showCopyButton, onCopy, isCopying, onRename, onTogglePin, onDelete }) => {
-  const latestMessage = project.messages[0];
-  const previewText = latestMessage?.content?.slice(0, 120) + "..." || "No description available";
   const isSmartContract = 
     project.projectType === 'DAPP' || 
     project.projectType === 'SMART_CONTRACT' || 

@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Wallet, AlertCircle } from 'lucide-react';
 
 interface WalletStepProps {

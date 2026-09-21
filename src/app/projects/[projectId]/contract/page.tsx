@@ -22,6 +22,7 @@ import {
 import { ContractInteraction } from '@/modules/projects/ui/components/ContractInteraction';
 import { WalletProvider } from '@/components/providers/wallet-provider';
 import { motion } from 'framer-motion';
+import type { Abi } from 'viem';
 
 export default function ContractPage() {
   return (
@@ -56,7 +57,7 @@ function ContractPageContent() {
     };
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -320,7 +321,7 @@ function ContractPageContent() {
 
           <ContractInteraction
             contractAddress={contractAddress}
-            contractABI={artifacts?.abi as any || []}
+            contractABI={(artifacts?.abi as Abi | undefined) ?? []}
             blockchain={project.blockchain}
             network={project.network}
             buildJob={buildJob ? {

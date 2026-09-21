@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   motion,
   useScroll,
@@ -8,6 +9,7 @@ import {
   useMotionValue,
   useSpring,
   useInView,
+  type MotionValue,
 } from "framer-motion";
 import {
   ArrowRight,
@@ -32,7 +34,6 @@ import {
   Heart,
   Share2,
   RefreshCw,
-  Sparkles,
   Globe,
   Terminal,
   Smartphone,
@@ -55,8 +56,8 @@ function FloatCard({
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  mouseX: any;
-  mouseY: any;
+  mouseX: MotionValue<number>;
+  mouseY: MotionValue<number>;
   floatClass: string;
 }) {
   const rotateY = useSpring(useTransform(mouseX, [-400, 400], [4, -4]), { stiffness: 30, damping: 15 });
@@ -73,7 +74,7 @@ function FloatCard({
 }
 
 /* ── Left: Meridian Intelligence chip ── */
-function MeridianFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function MeridianFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   return (
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat1" className="left-[3%] top-[10%] z-10">
       <div className="w-[170px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[40px] rounded-tr-[12px] rounded-br-[40px] rounded-bl-[12px] p-3.5 shadow-2xl shadow-black/30">
@@ -104,7 +105,7 @@ function MeridianFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
 }
 
 /* ── Left: Context card ── */
-function ContextFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function ContextFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   const items = [
     { label: "Memory", icon: BrainCircuit },
     { label: "Projects", icon: FolderKanban },
@@ -138,7 +139,7 @@ function ContextFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
 }
 
 /* ── Right: Code Editor card ── */
-function CodeEditorFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function CodeEditorFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   return (
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat4" className="right-[3%] top-[6%] z-10">
       <div className="w-[180px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[12px] rounded-tr-[40px] rounded-br-[12px] rounded-bl-[40px] p-3.5 shadow-2xl shadow-black/30">
@@ -165,7 +166,7 @@ function CodeEditorFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
 }
 
 /* ── Right: Research card ── */
-function ResearchFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function ResearchFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   return (
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat1" className="right-[1%] top-[30%] z-10">
       <div className="w-[175px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[40px] rounded-tr-[12px] rounded-br-[40px] rounded-bl-[12px] p-3.5 shadow-2xl shadow-black/30">
@@ -194,7 +195,7 @@ function ResearchFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
 }
 
 /* ── Right: Model Router card ── */
-function ModelRouterFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function ModelRouterFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   const models = ["GPT-4o", "Claude", "Gemini", "DeepSeek", "Qwen"];
   const [active, setActive] = useState(0);
 
@@ -245,7 +246,7 @@ function ModelRouterFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) 
 }
 
 /* ── Right: Agent Execution card ── */
-function AgentExecFloatCard({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function AgentExecFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   const steps = [
     { label: "Planning", status: "done" as const },
     { label: "Reasoning", status: "done" as const },
@@ -415,7 +416,7 @@ function PromptBar() {
 /* ───────────────────────────────────────────
    Browser Window
    ─────────────────────────────────────────── */
-function BrowserWindow({ mouseX, mouseY }: { mouseX: any; mouseY: any }) {
+function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   const windowRotateY = useSpring(useTransform(mouseX, [-400, 400], [1.5, -1.5]), { stiffness: 25, damping: 20 });
   const windowRotateX = useSpring(useTransform(mouseY, [-300, 300], [-1.5, 1.5]), { stiffness: 25, damping: 20 });
 
@@ -665,13 +666,13 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 lg:mt-8"
             >
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black text-sm font-medium rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] hover:bg-gray-100 transition-all duration-300 shadow-lg shadow-white/10"
               >
                 Open Workspace
                 <ArrowRight className="w-3.5 h-3.5" />
-              </a>
+              </Link>
               <a
                 href="/overview/docs"
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/50 hover:text-white transition-all duration-300"

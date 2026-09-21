@@ -47,8 +47,8 @@ export const MessageForm = ({ projectId }: Props) => {
                 projectId: projectId,
             }));
             // Invalidate usage queries to refresh quota display
-            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
-            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId }) as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId }) });
         },
         onError: (error) => {
             // Show error toast for quota exceeded or other errors

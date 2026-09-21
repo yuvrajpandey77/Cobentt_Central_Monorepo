@@ -43,6 +43,8 @@ export async function POST(req: Request) {
   const rateLimit = await checkRateLimit(`byok:test:${session.userId}`, {
     requests: 5,
     window: "60 s",
+    // Hits upstream providers (= spend) — never run unlimited.
+    failClosed: true,
   });
   if (!rateLimit.success) {
     return NextResponse.json({ error: "Too many tests. Wait a minute and retry." }, { status: 429 });

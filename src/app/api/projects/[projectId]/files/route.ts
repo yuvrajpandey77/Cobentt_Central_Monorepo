@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Extract sandbox ID from build job logs or create a new one
-    let sandboxId = (buildJob as any).sandboxId;
+    let sandboxId = buildJob.sandboxId;
     let sandbox;
     
     if (!sandboxId || sandboxId === 'undefined') {
@@ -61,7 +61,7 @@ export async function GET(
         // Update build job with sandbox ID
         await prisma.buildJob.update({
           where: { id: buildJob.id },
-          data: { sandboxId: sandboxId } as any,
+          data: { sandboxId: sandboxId },
         });
         
         console.log('✅ Created new sandbox:', sandboxId);
@@ -78,16 +78,16 @@ export async function GET(
         console.log('🔍 Connecting to existing E2B sandbox:', sandboxId);
         sandbox = await Sandbox.connect(sandboxId);
         console.log('✅ Successfully connected to existing sandbox');
-      } catch (error) {
+      } catch {
         console.log('⚠️ Failed to connect to existing sandbox, creating new one...');
         try {
           sandbox = await Sandbox.create("solidity-foundry-template");
-          sandboxId = (sandbox as any).id;
+          sandboxId = (sandbox as unknown as { id: string }).id;
           
           // Update build job with new sandbox ID
           await prisma.buildJob.update({
             where: { id: buildJob.id },
-            data: { sandboxId: sandboxId } as any,
+            data: { sandboxId: sandboxId },
           });
           
           console.log('✅ Created replacement sandbox:', sandboxId);
@@ -139,7 +139,7 @@ export async function GET(
           const fullPath = `/home/user/hello_template/${path}`;
           const content = await sandbox.files.read(fullPath);
           files[path] = content;
-        } catch (error) {
+        } catch {
           // File doesn't exist, continue
         }
       }
@@ -149,7 +149,15 @@ export async function GET(
         console.log('📂 No files found, checking build job artifacts...');
         
         // First check if we have a saved codebase
-        const artifacts = buildJob.artifacts as any;
+        interface BuildJobFilesArtifacts {
+          codebase?: Record<string, string>;
+          sourceCode?: string;
+          contractName?: string;
+          contractType?: string;
+          abi?: unknown;
+          bytecode?: string;
+        }
+        const artifacts = buildJob.artifacts as unknown as BuildJobFilesArtifacts | null;
         if (artifacts?.codebase) {
           console.log('📁 Found saved codebase in artifacts, using it...');
           Object.assign(files, artifacts.codebase);

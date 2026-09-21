@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
@@ -21,6 +20,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Pure helper — module scope so callbacks can safely depend on it.
+const truncateText = (text: string, maxLength: number = 100): string => {
+  if (!text || text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+};
+
 const PageShell = () => {
   const { isCollapsed } = useSidebar();
   const [step, setStep] = useState<"form" | "preview">("form");
@@ -34,23 +39,8 @@ const PageShell = () => {
     content: '',
   });
 
-  // Helper function to truncate text
-  const truncateText = (text: string, maxLength: number = 100): string => {
-    if (!text || text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + '...';
-  };
-
-  // Get prompt from URL and analyze it
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlPrompt = searchParams.get('prompt');
-    if (urlPrompt) {
-      setPrompt(urlPrompt);
-      analyzePrompt(urlPrompt);
-    }
-  }, []);
-
-  const analyzePrompt = async (userPrompt: string) => {
+  // Get prompt from URL and analyze it (effect placed after analyzePrompt).
+  const analyzePrompt = useCallback(async (userPrompt: string) => {
     setIsAnalyzing(true);
     
     try {
@@ -141,7 +131,7 @@ const PageShell = () => {
       
       // FALLBACK: Pattern matching if AI fails
       const lowerPrompt = userPrompt.toLowerCase();
-      let config: Partial<DappStudioFormValues> = {
+      const config: Partial<DappStudioFormValues> = {
         network: "testnet",
         autoVerify: true,
         generateFrontend: true,
@@ -234,7 +224,17 @@ const PageShell = () => {
       setSuggestedConfig(config);
       setIsAnalyzing(false);
     }
-  };
+  }, []);
+
+  // Get prompt from URL and analyze it on mount.
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt) {
+      setPrompt(urlPrompt);
+      analyzePrompt(urlPrompt);
+    }
+  }, [analyzePrompt]);
 
   const handleSubmit = (data: DappStudioFormValues) => {
     setFormData(data);

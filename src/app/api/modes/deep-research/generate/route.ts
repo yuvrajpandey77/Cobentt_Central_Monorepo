@@ -70,7 +70,6 @@ export async function POST(req: NextRequest) {
           return;
         }
         const model = credential.model;
-        const start = Date.now();
 
         // Phase 1: Plan research outline
         const planRes = await chatCompletion({

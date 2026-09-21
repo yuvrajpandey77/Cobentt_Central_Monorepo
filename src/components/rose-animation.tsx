@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react";
 
 export function RoseAnimation() {
   const [animKey, setAnimKey] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [, setIsHovered] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleHover = useCallback(() => {

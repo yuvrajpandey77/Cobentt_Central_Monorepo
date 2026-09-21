@@ -8,6 +8,7 @@ import {
   sendPlanDowngraded,
 } from "@/lib/webhook-system";
 import { PLAN_LIMITS } from "@/lib/token-pricing";
+import type { Decimal } from "@prisma/client/runtime/library";
 
 /**
  * Check if user is admin
@@ -322,7 +323,7 @@ export const adminRouter = createTRPCRouter({
         Array<{
           date: Date;
           total_tokens: bigint;
-          total_cost: any;
+          total_cost: Decimal;
           request_count: bigint;
         }>
       >`

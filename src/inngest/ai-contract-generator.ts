@@ -6,7 +6,6 @@ import {
   buildValidationPrompt, 
   buildRefinementPrompt 
 } from '@/lib/contract-prompts';
-import { recordTokenUsage } from "@/lib/token-usage";
 
 export interface ContractGenerationResult {
   contractCode: string;

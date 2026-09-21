@@ -9,12 +9,9 @@ import {
   Book, 
   Mail, 
   Phone, 
-  Clock, 
   Users,
-  FileText,
   Video,
   HelpCircle,
-  Search,
   Send
 } from "lucide-react";
 
@@ -94,7 +91,7 @@ export default function SupportPage() {
             Support
           </Badge>
           <h1 className="text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight">
-            We're here to help
+            We&apos;re here to help
           </h1>
           <p className="text-2xl text-white/70 max-w-4xl mx-auto leading-relaxed">
              Get the support you need to build amazing applications with Cobentt. Our team is ready to assist you every step of the way.
@@ -185,7 +182,7 @@ export default function SupportPage() {
           <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
             <CardHeader className="text-center pb-8">
               <CardTitle className="text-3xl font-bold mb-4 text-white">Still need help?</CardTitle>
-              <p className="text-xl text-white/70">Send us a message and we'll get back to you quickly.</p>
+              <p className="text-xl text-white/70">Send us a message and we&apos;ll get back to you quickly.</p>
             </CardHeader>
             <CardContent className="p-8">
               <form className="space-y-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Heart } from "lucide-react";
 
 const footerLinks = [
@@ -45,7 +46,7 @@ export function Footer() {
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10 py-16 lg:py-20">
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
           <div className="lg:col-span-1">
-            <a href="/" className="flex items-center gap-3 group mb-4">
+            <Link href="/" className="flex items-center gap-3 group mb-4">
               <Image
                 src="/logo.webp"
                 alt="Cobentt"
@@ -54,7 +55,7 @@ export function Footer() {
                 className="rounded-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               <span className="text-xl font-bold tracking-tight">Cobentt</span>
-            </a>
+            </Link>
             <p className="text-sm text-text-secondary leading-relaxed max-w-xs mb-6">
               The AI workspace where ideas become execution.
             </p>

@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Activity, Shield, CreditCard, Key, Users, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Activity, Shield, CreditCard, Key, Search } from "lucide-react";
 import { useState } from "react";
 
 const EVENT_CATEGORIES = [

@@ -10,7 +10,7 @@ interface SidebarSearchProps {
   isCollapsed: boolean;
 }
 
-export function SidebarSearch({ value, onChange, isCollapsed }: SidebarSearchProps) {
+export function SidebarSearch({ value, onChange }: SidebarSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
 

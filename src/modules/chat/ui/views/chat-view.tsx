@@ -2,12 +2,12 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { MessageList } from "../components/message-list";
 import { ChatComposer } from "../components/chat-composer";
 import { ModelSelector } from "../components/model-selector";
 import { ChatSkeleton } from "../components/chat-skeleton";
-import { ArrowLeft, Trash2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -25,8 +25,6 @@ export const ChatView = ({ conversationId }: ChatViewProps) => {
   const { data: conversation, isLoading } = useQuery({
     ...trpc.conversations.getById.queryOptions({ id: conversationId }),
   });
-
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
 
   const deleteConversation = useMutation(trpc.conversations.delete.mutationOptions({
     onSuccess: () => {
@@ -90,7 +88,7 @@ export const ChatView = ({ conversationId }: ChatViewProps) => {
           queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
         }
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to get AI response");
       queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
     }

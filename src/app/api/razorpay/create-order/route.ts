@@ -31,7 +31,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rateLimit = await checkRateLimit(`payment:create:${userId}`);
+    const rateLimit = await checkRateLimit(`payment:create:${userId}`, {
+      requests: 20,
+      window: "60 s",
+      failClosed: true,
+    });
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
@@ -54,10 +58,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    // Prevent rapid duplicate orders: check for existing pending order within last 5 minutes
+    // Prevent rapid duplicate orders: reuse a pending order for the SAME plan
+    // only. (A plan-blind reuse returned another plan's order id with this
+    // plan's amount — user pays one price, gets the other plan.)
     const recentPendingOrder = await prisma.paymentRecord.findFirst({
       where: {
         clerkUserId: userId,
+        plan: planDef.id,
         status: { in: ["CREATED", "AUTHORIZED"] },
         createdAt: { gt: new Date(Date.now() - 5 * 60 * 1000) },
       },

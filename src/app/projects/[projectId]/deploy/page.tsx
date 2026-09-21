@@ -18,7 +18,24 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { CheckCircle2, ArrowLeft, ArrowRight, Loader2, Rocket, Wallet, Coins, Shield, ExternalLink } from 'lucide-react';
-import { useTRPC } from '@/trpc/client';
+import type { Abi } from 'viem';
+
+interface ContractArtifacts {
+  abi?: Abi;
+  bytecode?: string;
+  contractName?: string;
+  contractType?: string;
+  buildJobId?: string;
+}
+
+interface DeployProjectInfo {
+  name?: string;
+  tokenName?: string;
+  contractType?: string;
+  blockchain?: string;
+  network?: string;
+  features?: string[];
+}
 
 const DEPLOY_STEPS = [
   { id: 'wallet', title: 'Connect Wallet', description: 'Connect your wallet to deploy', icon: Wallet },
@@ -53,12 +70,11 @@ function DeployPageContent() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
-  const trpc = useTRPC();
   const [currentStep, setCurrentStep] = useState(0);
-  const [contractArtifacts, setContractArtifacts] = useState<any>(null);
+  const [contractArtifacts, setContractArtifacts] = useState<ContractArtifacts | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [project, setProject] = useState<any>(null);
-  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deploying' | 'completed' | 'failed'>('idle');
+  const [project, setProject] = useState<DeployProjectInfo | null>(null);
+  const [deploymentStatus] = useState<'idle' | 'deploying' | 'completed' | 'failed'>('idle');
 
   // Use wagmi hook (safe because component only renders after mounting)
   const { address } = useAccount();

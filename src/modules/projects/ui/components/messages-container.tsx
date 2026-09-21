@@ -36,7 +36,7 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
             setActiveFragment(assistantWithFragment.fragments);
             initialSelectDone.current = true;
         }
-       }, [messages]);
+       }, [messages, setActiveFragment]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });

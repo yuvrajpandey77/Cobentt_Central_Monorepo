@@ -77,7 +77,7 @@ export async function POST(
     } else {
       try {
         sandbox = await Sandbox.connect(sandboxId);
-      } catch (error) {
+      } catch {
         console.log('Failed to connect to existing sandbox, creating new one...');
         sandbox = await Sandbox.create("solidity-foundry-template");
         sandboxId = sandbox.sandboxId;
@@ -115,7 +115,7 @@ export async function POST(
 
     // Update build job artifacts with the complete codebase
     const existingArtifacts = buildJob.artifacts && typeof buildJob.artifacts === 'object' 
-      ? buildJob.artifacts as Record<string, any>
+      ? buildJob.artifacts as Record<string, unknown>
       : {};
       
     const updatedArtifacts = {
