@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
-import { ArrowUp, Loader2Icon, ChevronDown, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
+import { ArrowUp, Loader2Icon, ChevronDown, Check, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
@@ -19,6 +19,7 @@ import { useClerk } from "@clerk/nextjs";
 import { useMode } from "@/contexts/mode-context";
 import { AttachInput, AttachmentPills, type AttachInputHandle, type AttachmentMeta, type AttachmentPill } from "@/components/chat/attach-input";
 import { stashPendingFiles } from "@/lib/attachments/shuttle";
+import { UNIQUE_MODELS, getModelById } from "@/lib/models";
 
 
 
@@ -30,7 +31,7 @@ interface Props {
     projectCategory?: string | null;
     onCategoryClear?: () => void;
     onStartChat?: (prompt: string) => void;
-    onModePrompt?: (mode: string, prompt: string, templateId?: string) => void;
+    onModePrompt?: (mode: string, prompt: string, templateId?: string, model?: string) => void;
 }
 
 const MODE_CATEGORY_MAP: Record<string, string> = {
@@ -47,7 +48,7 @@ const formSchema = z.object({
 
 
 
-export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, projectCategory, onCategoryClear, onStartChat, onModePrompt }: Props) => {
+export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory, onCategoryClear, onStartChat, onModePrompt }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -59,6 +60,31 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
     const [isAnalyzingContract, setIsAnalyzingContract] = useState(false);
     const [showModelMenu, setShowModelMenu] = useState(false);
     const modelMenuRef = useRef<HTMLDivElement | null>(null);
+    // Model picked here is shared with the chat input via the same
+    // localStorage key the chat store persists (cb_settings.modelId),
+    // so the /chat composer picks it up after the redirect.
+    const [selectedModel, setSelectedModel] = useState<string>(() => {
+        if (typeof window === "undefined") return "";
+        try {
+            const raw = localStorage.getItem("cb_settings");
+            const parsed = raw ? JSON.parse(raw) : null;
+            return typeof parsed?.modelId === "string" ? parsed.modelId : "";
+        } catch {
+            return "";
+        }
+    });
+    const pickModel = (id: string) => {
+        setSelectedModel(id);
+        setShowModelMenu(false);
+        try {
+            const raw = localStorage.getItem("cb_settings");
+            const parsed = raw ? JSON.parse(raw) : {};
+            localStorage.setItem("cb_settings", JSON.stringify({ ...(typeof parsed === "object" && parsed ? parsed : {}), modelId: id }));
+        } catch {
+            // selection still applies for this session
+        }
+    };
+    const selectedLabel = selectedModel ? (getModelById(selectedModel)?.label ?? selectedModel) : "Auto";
     const ideasMenuRef = useRef<HTMLDivElement | null>(null);
     const ideasButtonRef = useRef<HTMLButtonElement | null>(null);
     const attachRef = useRef<AttachInputHandle>(null);
@@ -168,7 +194,7 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
         // Mode categories (slides/docs/sheet/deep research) → mode conversation
         if (projectCategory && onModePrompt && MODE_CATEGORY_MAP[projectCategory]) {
             const targetMode = MODE_CATEGORY_MAP[projectCategory];
-            onModePrompt(targetMode, values.value, templateId || undefined);
+            onModePrompt(targetMode, values.value, templateId || undefined, selectedModel || undefined);
             return;
         }
 
@@ -208,8 +234,6 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
     const [isFocused, setIsFocused] = useState(false);
     const isPending = createProject.isPending;
     const isButtonDisabled = isPending || isAnalyzingContract || !form.formState.isValid;
-
-    const modelName = mode === "contract" ? "GPT-4.1" : "GPT-5";
 
     return (
         <>
@@ -309,26 +333,42 @@ export const ProjectForm = ({ mode = "app", contractPreview, onContractPrompt, p
                                     onClick={() => setShowModelMenu((v) => !v)}
                                     className="h-10 px-4 rounded-full bg-transparent text-white/90 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none -ml-2"
                                 >
-                                    Auto
+                                    <span className="max-w-[160px] truncate">{selectedLabel}</span>
                                     <ChevronDown className="ml-1 size-3 opacity-80" />
                                 </Button>
                                 {showModelMenu && (
-                                    <div className="absolute bottom-12 left-0 w-50 rounded-md border border-white/15 bg-black text-white shadow-2xl p-3 z-20">
-                                        <div className="text-[11px] text-white/80 mb-2 text-left">{modelName}</div>
-                                        <div className="flex items-center justify-start gap-1">
-                                            <div className="text-left">
+                                    <div className="absolute bottom-12 left-0 w-72 max-h-72 overflow-y-auto thin-scrollbar rounded-xl border border-white/15 bg-black/95 backdrop-blur-xl text-white shadow-2xl p-2 z-20">
+                                        <button
+                                            type="button"
+                                            onClick={() => pickModel("")}
+                                            className={cn(
+                                                "w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
+                                                selectedModel === "" ? "bg-white/10" : "hover:bg-white/10"
+                                            )}
+                                        >
+                                            <div className="flex-1">
                                                 <div className="text-sm font-medium leading-tight">Auto</div>
-                                                <div className="text-[11px] text-white/60 leading-snug">Balanced quality and speed, recommended for most tasks</div>
+                                                <div className="text-[11px] text-white/60 leading-snug">Recommended default for this workspace</div>
                                             </div>
+                                            {selectedModel === "" && <Check className="h-4 w-4 shrink-0 text-white/80" />}
+                                        </button>
+                                        {UNIQUE_MODELS.map((m) => (
                                             <button
+                                                key={m.id}
                                                 type="button"
-                                                aria-disabled
-                                                title="Fixed option"
-                                                className="relative inline-flex h-5 w-14 items-center rounded-full bg-white/20 border border-white/40 cursor-not-allowed"
+                                                onClick={() => pickModel(m.id)}
+                                                className={cn(
+                                                    "w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
+                                                    selectedModel === m.id ? "bg-white/10" : "hover:bg-white/10"
+                                                )}
                                             >
-                                                <div className="h-4 w-4 rounded-full bg-white translate-x-3 transition-transform" />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium leading-tight truncate">{m.label}</div>
+                                                    <div className="text-[11px] text-white/60 leading-snug truncate">{m.provider} · {Math.round(m.context / 1000)}K context</div>
+                                                </div>
+                                                {selectedModel === m.id && <Check className="h-4 w-4 shrink-0 text-white/80" />}
                                             </button>
-                                        </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>

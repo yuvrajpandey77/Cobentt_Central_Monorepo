@@ -5,6 +5,7 @@ import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ModeProvider } from "@/contexts/mode-context";
 import { Sidebar } from "@/components/layout/sidebar";
 import { cn } from "@/lib/utils";
+import { ByokGate } from "@/components/byok-gate";
 
 function ModesLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -34,7 +35,7 @@ function ModesLayoutInner({ children }: { children: React.ReactNode }) {
               ? "flex-1 min-h-0 overflow-hidden"
               : isEmpty ? "" : "flex-1 overflow-y-auto thin-scrollbar"
           )}>
-            {children}
+            <ByokGate>{children}</ByokGate>
           </div>
         </div>
       </div>

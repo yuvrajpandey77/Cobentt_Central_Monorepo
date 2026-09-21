@@ -151,6 +151,9 @@ export function getModelById(id: string): ModelInfo | undefined {
   return MODELS.find((m) => m.id === id);
 }
 
+/** MODELS contains the same id under multiple tiers — deduped list for flat dropdowns (unique React keys). */
+export const UNIQUE_MODELS: ModelInfo[] = [...new Map(MODELS.map((m) => [m.id, m])).values()];
+
 export function getModelsByTier(tier: string): ModelInfo[] {
   return MODELS.filter((m) => m.tier === tier);
 }

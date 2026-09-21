@@ -13,6 +13,8 @@ const serverSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1, { message: "CLERK_SECRET_KEY is required" }),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),
+  API_KEY_ENCRYPTION_SECRET: z.string().min(1).optional(),
+  BYOK_ALLOW_SERVER_FALLBACK: z.string().optional(),
   E2B_API_KEY: z.string().min(1).optional(),
   INNGEST_EVENT_KEY: z.string().min(1, { message: "INNGEST_EVENT_KEY is required" }),
   INNGEST_SIGNING_KEY: z.string().min(1, { message: "INNGEST_SIGNING_KEY is required" }),

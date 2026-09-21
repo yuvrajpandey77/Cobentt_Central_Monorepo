@@ -86,7 +86,8 @@ const STORAGE_KEYS = {
 
 interface StoredSettings {
   provider?: Provider;
-  apiKey?: string;
+  // NOTE: apiKey is intentionally NOT persisted. BYOK keys live encrypted
+  // server-side only and must never touch localStorage (XSS exfiltration risk).
   baseUrl?: string;
   modelId?: string;
   temperature?: number;
@@ -258,8 +259,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     if (savedActiveId) setActiveThreadId(savedActiveId);
     if (savedSettings.provider) setProvider(savedSettings.provider);
-    if (savedSettings.apiKey) setApiKey(savedSettings.apiKey);
-    if (savedSettings.baseUrl) setBaseUrl(savedSettings.baseUrl);
+    // Legacy localStorage apiKey/baseUrl are ignored (BYOK keys are server-side only).
+    try {
+      localStorage.removeItem("cb_settings_apiKey");
+      const raw = localStorage.getItem(STORAGE_KEYS.settings);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && ("apiKey" in parsed || "baseUrl" in parsed)) {
+          delete parsed.apiKey;
+          delete parsed.baseUrl;
+          localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(parsed));
+        }
+      }
+    } catch {}
     if (savedSettings.modelId) setModelId(savedSettings.modelId);
     if (savedSettings.temperature !== undefined) setTemperature(savedSettings.temperature);
     if (savedSettings.topP !== undefined) setTopP(savedSettings.topP);
@@ -282,18 +294,19 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [activeThreadId]);
 
   // Auto-save settings (debounced)
+  // NOTE: apiKey/baseUrl secrets are never written to localStorage.
   useEffect(() => {
     if (!initialLoadDone.current) return;
     const timer = setTimeout(() => {
       saveToStorage(STORAGE_KEYS.settings, {
-        provider, apiKey, baseUrl, modelId, temperature, topP, topK,
+        provider, modelId, temperature, topP, topK,
         contentFilter, webSearch, webSearchEngine, searxngUrl, customInstructions,
         sidebarCollapsed,
       });
     }, 500);
     return () => clearTimeout(timer);
   }, [
-    provider, apiKey, baseUrl, modelId, temperature, topP, topK,
+    provider, baseUrl, modelId, temperature, topP, topK,
     contentFilter, webSearch, webSearchEngine, searxngUrl, customInstructions,
     sidebarCollapsed,
   ]);
@@ -313,12 +326,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const saveSettings = useCallback(() => {
     saveToStorage(STORAGE_KEYS.settings, {
-      provider, apiKey, baseUrl, modelId, temperature, topP, topK,
+      provider, modelId, temperature, topP, topK,
       contentFilter, webSearch, webSearchEngine, searxngUrl, customInstructions,
       sidebarCollapsed,
     });
   }, [
-    provider, apiKey, baseUrl, modelId, temperature, topP, topK,
+    provider, modelId, temperature, topP, topK,
     contentFilter, webSearch, webSearchEngine, searxngUrl, customInstructions,
     sidebarCollapsed,
   ]);

@@ -49,7 +49,7 @@ const PageContent = () => {
         onError: (err) => toast.error(err.message || "Failed to create"),
     }));
 
-    const handleModePrompt = (mode: string, prompt: string, templateId?: string) => {
+    const handleModePrompt = (mode: string, prompt: string, templateId?: string, model?: string) => {
         if (!userId) {
             router.push("/sign-in");
             return;
@@ -58,9 +58,12 @@ const PageContent = () => {
             initialMessage: prompt,
             mode,
             ...(templateId ? { template: templateId } : {}),
-            ...(MODE_DEFAULTS[mode as keyof typeof MODE_DEFAULTS]
-                ? { model: MODE_DEFAULTS[mode as keyof typeof MODE_DEFAULTS] }
-                : {}),
+            // Honor the model picked in the input box; otherwise use the mode default.
+            ...(model
+                ? { model }
+                : MODE_DEFAULTS[mode as keyof typeof MODE_DEFAULTS]
+                    ? { model: MODE_DEFAULTS[mode as keyof typeof MODE_DEFAULTS] }
+                    : {}),
         });
     };
 

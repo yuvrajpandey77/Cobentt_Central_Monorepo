@@ -12,6 +12,8 @@ interface CompletionOptions {
   temperature?: number;
   topP?: number;
   stream?: boolean;
+  /** BYOK credential resolved server-side — never expose the key to the client. */
+  credential?: { apiKey: string; baseUrl: string; extraHeaders?: Record<string, string> };
 }
 
 // Free/limited tier models cap max_tokens per request (e.g. OpenRouter free → 3999).
@@ -113,6 +115,16 @@ export async function chatCompletion(
   retryOpts: RetryOptions = {}
 ): Promise<Response> {
   const config = getProviderConfig();
+  const baseUrl = options.credential?.baseUrl || config.baseUrl;
+  const apiKey = options.credential?.apiKey || config.apiKey;
+  const extraHeaders = options.credential?.extraHeaders ?? config.extraHeaders;
+  if (!apiKey) {
+    throw makeAIError({
+      code: "AUTH",
+      userMessage: "No AI key configured. Add your key in Settings → API Keys to continue.",
+      rawStatus: 401,
+    });
+  }
   const { maxRetries = 3, baseDelayMs = 1000, maxDelayMs = 30000, timeoutMs = 60000 } = {
     ...DEFAULT_RETRY_OPTIONS,
     ...retryOpts,
@@ -120,11 +132,11 @@ export async function chatCompletion(
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${config.apiKey}`,
-    ...config.extraHeaders,
+    Authorization: `Bearer ${apiKey}`,
+    ...extraHeaders,
   };
 
-  if (config.baseUrl.includes("openrouter.ai")) {
+  if (baseUrl.includes("openrouter.ai")) {
     headers["HTTP-Referer"] = process.env.NEXT_PUBLIC_APP_URL || "https://cobentt.com";
     headers["X-Title"] = "Cobentt";
   }
@@ -147,7 +159,7 @@ export async function chatCompletion(
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(`${config.baseUrl}/chat/completions`, {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers,
         body: JSON.stringify(body()),

@@ -10,6 +10,8 @@ import { Plus, Globe, Send, Square } from "lucide-react";
 import { toast } from "sonner";
 import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { AttachInput, AttachmentPills, type AttachmentMeta, type AttachmentPill, type AttachInputHandle } from "@/components/chat/attach-input";
+import { ModelSelector } from "@/modules/chat/ui/components/model-selector";
+import { DEFAULT_MODEL } from "@/lib/models";
 
 const starters = [
   "Turn this into a slide deck",
@@ -36,10 +38,14 @@ export function Composer({
 }) {
   const {
     activeThread, createThread, isStreaming, setIsStreaming,
-    provider, apiKey, baseUrl, modelId, temperature, topP,
+    provider, apiKey, baseUrl, modelId, setModelId, temperature, topP,
     webSearch, setWebSearch, pendingEditContent, clearPendingEdit,
     refetchConversations, selectThread,
   } = useChat();
+
+  // The model shown in the input-box picker is the model actually used:
+  // it is sent with every stream request and stored on new conversations.
+  const effectiveModel = modelId || DEFAULT_MODEL;
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -129,7 +135,7 @@ export function Composer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userContent,
-          model: modelId || undefined,
+          model: effectiveModel,
           sources: webSources,
           attachmentIds,
         }),
@@ -138,7 +144,18 @@ export function Composer({
 
       if (!res.ok) {
         const errText = await res.text().catch(() => res.statusText);
-        throw new Error(`API error (${res.status}): ${errText}`);
+        try {
+          const parsed = JSON.parse(errText);
+          if (parsed?.code === "BYOK_REQUIRED") {
+            toast.error("Add your API key to use AI", {
+              description: "Go to Settings → API Keys, test it, then retry.",
+            });
+            throw new Error(`${parsed.error || "API key required"} (Add it in Settings → API Keys)`);
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message.includes("API key required")) throw e;
+        }
+        throw new Error(`API error (${res.status}): ${errText.slice(0, 300)}`);
       }
 
       const reader = res.body?.getReader();
@@ -279,6 +296,7 @@ export function Composer({
         // Fresh conversation: create it first so queued files can attach to it.
         const result = await createConvMutation.mutateAsync({
           initialMessage: trimmed,
+          model: effectiveModel,
           attachmentIds: attachmentIdsFromState,
         });
         selectThread(result.id);
@@ -408,6 +426,14 @@ export function Composer({
                 </div>
               </>
             )}
+          </div>
+
+          {/* Model picker — inline in the same row, no separator (matches / page input) */}
+          <div className="flex-shrink-0">
+            <ModelSelector
+              currentModel={effectiveModel}
+              onChange={setModelId}
+            />
           </div>
 
           {/* Input */}

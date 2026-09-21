@@ -15,6 +15,31 @@ const createKeySchema = z.object({
   apiKey: z.string().min(10).max(500),
 });
 
+export async function GET() {
+  const session = await auth();
+  if (!session?.userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Masked metadata only — decrypted keys never leave the server.
+  const keys = await prisma.apiKey.findMany({
+    where: { clerkUserId: session.userId, isActive: true },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      provider: true,
+      name: true,
+      keyPrefix: true,
+      keySuffix: true,
+      isActive: true,
+      lastUsedAt: true,
+      createdAt: true,
+    },
+  });
+
+  return NextResponse.json({ keys });
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.userId) {

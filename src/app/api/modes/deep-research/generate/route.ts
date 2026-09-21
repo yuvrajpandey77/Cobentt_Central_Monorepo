@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/db";
 import { chatCompletion } from "@/lib/ai/client";
-import { getProviderConfig } from "@/lib/ai/provider";
 import { extractJson } from "@/lib/modes/prompt";
 import { runAIPipeline, recordAITokens } from "@/lib/ai/pipeline";
+import { resolveByokCredential, ByokError } from "@/lib/byok";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -58,13 +58,24 @@ export async function POST(req: NextRequest) {
       try {
         sse(controller, "phase", { phase: "Planning", progress: 10 });
 
-        const cfg = getProviderConfig();
-        const model = conversation.model || cfg.defaultModel;
+        let credential;
+        try {
+          credential = await resolveByokCredential(userId, conversation.model || "openai/gpt-4o");
+        } catch (err) {
+          sse(controller, "error", {
+            error: err instanceof Error ? err.message : "BYOK key required",
+            code: err instanceof ByokError ? err.code : "BYOK_REQUIRED",
+          });
+          controller.close();
+          return;
+        }
+        const model = credential.model;
         const start = Date.now();
 
         // Phase 1: Plan research outline
         const planRes = await chatCompletion({
           model,
+          credential,
           maxTokens: 2000,
           messages: [
             { role: "system", content: "You are a research planner. Respond with a JSON array of 4-6 section headings for a research report on the topic." },
@@ -102,6 +113,7 @@ export async function POST(req: NextRequest) {
           sse(controller, "phase", { phase: `Writing: ${heading}`, progress: 35 + Math.round(((i + 1) / total) * 40) });
           const sectionRes = await chatCompletion({
             model,
+            credential,
             maxTokens: 3000,
             messages: [
               {
@@ -129,6 +141,7 @@ export async function POST(req: NextRequest) {
         // Phase 3: Summary + sources
         const summaryRes = await chatCompletion({
           model,
+          credential,
           maxTokens: 1500,
           messages: [
             { role: "system", content: "You are a research editor. Based on the sections below, produce a 1-2 sentence executive summary and a JSON list of 4-8 plausible source titles with URLs (authoritative domains). Respond ONLY with valid JSON: {\"summary\": \"...\", \"sources\": [{\"title\": \"...\", \"url\": \"...\"}]}" },
