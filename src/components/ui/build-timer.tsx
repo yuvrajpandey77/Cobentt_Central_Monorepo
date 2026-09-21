@@ -56,7 +56,7 @@ export const BuildTimer = ({ isBuilding, className = "" }: BuildTimerProps) => {
               r="16" 
               fill="none" 
               stroke="currentColor" 
-              className="text-white/10" 
+              className="text-text-disabled" 
               strokeWidth="3" 
             />
             {/* Progress circle */}
@@ -83,7 +83,7 @@ export const BuildTimer = ({ isBuilding, className = "" }: BuildTimerProps) => {
           <div className={`text-xs font-medium ${getProgressColor()}`}>
             {getStatusText()}
           </div>
-          <div className="text-[10px] text-white/60 font-mono">
+          <div className="text-[10px] text-text-secondary font-mono">
             {formatElapsed(elapsedMs)} • 2–8 min typical
           </div>
         </div>

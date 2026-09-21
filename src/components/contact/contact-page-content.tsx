@@ -45,18 +45,18 @@ export function ContactPageContent() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-12 lg:mb-16 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             Contact
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-            Talk to us. <span className="text-white/60">We listen.</span>
+            Talk to us. <span className="text-text-secondary">We listen.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             Questions, issues, feedback, or industry-level integrations — one
             form, one inbox:{" "}
             <a
               href={`mailto:${SUPPORT_EMAIL}`}
-              className="text-white/70 hover:text-white underline underline-offset-2"
+              className="text-text-secondary hover:text-white underline underline-offset-2"
             >
               {SUPPORT_EMAIL}
             </a>
@@ -74,11 +74,11 @@ export function ContactPageContent() {
                 <c.icon className="w-4 h-4 text-white" />
               </div>
               <h2 className="text-sm font-semibold text-white mb-1">{c.title}</h2>
-              <p className="text-xs text-white/40 leading-relaxed mb-3">{c.desc}</p>
-              <p className="text-[11px] text-white/30 mb-4">{c.meta}</p>
+              <p className="text-xs text-text-tertiary leading-relaxed mb-3">{c.desc}</p>
+              <p className="text-[11px] text-text-muted mb-4">{c.meta}</p>
               <a
                 href={c.href}
-                className="mt-auto inline-flex items-center text-xs font-medium text-white/70 hover:text-white transition-colors"
+                className="mt-auto inline-flex items-center text-xs font-medium text-text-secondary hover:text-white transition-colors"
               >
                 {c.cta} →
               </a>
@@ -89,13 +89,13 @@ export function ContactPageContent() {
         <div className="max-w-3xl mx-auto pb-20 lg:pb-28">
           <div className="p-6 lg:p-8 bg-bg-card border border-white/10 rounded-tr-[20px] rounded-bl-[20px] rounded-tl-[12px] rounded-br-[12px]">
             <div className="flex items-center gap-2 mb-1">
-              <Bug className="w-4 h-4 text-white/40" />
-              <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">
+              <Bug className="w-4 h-4 text-text-tertiary" />
+              <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
                 Contact form
               </span>
             </div>
             <h2 className="text-xl font-bold text-white mb-1">Send us a message</h2>
-            <p className="text-sm text-white/40 mb-6">
+            <p className="text-sm text-text-tertiary mb-6">
               We typically reply within 24 hours on business days.
             </p>
             <ContactForm key={initialTopic} initialTopic={initialTopic} />

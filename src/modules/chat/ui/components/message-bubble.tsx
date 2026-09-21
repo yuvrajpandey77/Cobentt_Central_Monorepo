@@ -68,12 +68,12 @@ export const MessageBubble = ({
         isUser && "items-end"
       )}>
         <div className={cn(
-          "text-xs text-white/40",
+          "text-xs text-text-tertiary",
           isUser ? "text-right" : "text-left"
         )}>
           {isUser ? "You" : "Cobentt"}
           {modelUsed && !isUser && (
-            <span className="ml-2 text-[10px] text-white/30">via {modelUsed}</span>
+            <span className="ml-2 text-[10px] text-text-muted">via {modelUsed}</span>
           )}
         </div>
 
@@ -95,12 +95,12 @@ export const MessageBubble = ({
 
         {/* Actions bar */}
         {!isUser && !isStreaming && !isError && (
-          <div className="flex items-center gap-1 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button onClick={copyToClipboard} className="p-1 hover:text-white/60 transition-colors" title="Copy">
+          <div className="flex items-center gap-1 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button onClick={copyToClipboard} className="p-1 hover:text-text-secondary transition-colors" title="Copy">
               <Copy className="h-3.5 w-3.5" />
             </button>
             {onRegenerate && (
-              <button onClick={onRegenerate} className="p-1 hover:text-white/60 transition-colors" title="Regenerate">
+              <button onClick={onRegenerate} className="p-1 hover:text-text-secondary transition-colors" title="Regenerate">
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>
             )}
@@ -108,14 +108,14 @@ export const MessageBubble = ({
               <>
                 <button
                   onClick={() => feedbackMutation.mutate({ id: messageId, value: feedbackValue === 1 ? 0 : 1 })}
-                  className={cn("p-1 transition-colors", feedbackValue === 1 ? "text-green-400" : "hover:text-white/60")}
+                  className={cn("p-1 transition-colors", feedbackValue === 1 ? "text-green-400" : "hover:text-text-secondary")}
                   title="Helpful"
                 >
                   <ThumbsUp className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => feedbackMutation.mutate({ id: messageId, value: feedbackValue === -1 ? 0 : -1 })}
-                  className={cn("p-1 transition-colors", feedbackValue === -1 ? "text-red-400" : "hover:text-white/60")}
+                  className={cn("p-1 transition-colors", feedbackValue === -1 ? "text-red-400" : "hover:text-text-secondary")}
                   title="Not helpful"
                 >
                   <ThumbsDown className="h-3.5 w-3.5" />

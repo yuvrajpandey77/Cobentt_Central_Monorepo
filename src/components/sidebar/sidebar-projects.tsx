@@ -213,7 +213,7 @@ export function SidebarProjects(props: SidebarProjectsProps) {
           <ChevronDown className="w-3 h-3 text-muted-foreground" />
         </motion.div>
         <FolderOpen className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Projects</span>
+        <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Projects</span>
         <span className="text-[10px] text-muted-foreground ml-auto">{filtered.length}</span>
       </button>
       <AnimatePresence initial={false}>

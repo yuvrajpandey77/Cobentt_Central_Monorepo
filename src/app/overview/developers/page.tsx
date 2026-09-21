@@ -41,7 +41,7 @@ export default function DevelopersPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             <Code2 className="w-3 h-3" />
             For Developers
           </span>
@@ -49,7 +49,7 @@ export default function DevelopersPage() {
             Build with Cobentt.{" "}
             <span className="text-white">Ship faster.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             AI-powered development tools, SDKs, and APIs for building production software.
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function DevelopersPage() {
                 <feat.icon className="w-4.5 h-4.5 text-white" />
               </div>
               <h3 className="text-sm font-semibold text-white mb-1">{feat.title}</h3>
-              <p className="text-xs text-white/40 leading-relaxed">{feat.desc}</p>
+              <p className="text-xs text-text-tertiary leading-relaxed">{feat.desc}</p>
             </div>
           ))}
         </div>
@@ -81,14 +81,14 @@ export default function DevelopersPage() {
                   <feat.icon className="w-4.5 h-4.5 text-white" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1">{feat.title}</h3>
-                <p className="text-xs text-white/40 leading-relaxed">{feat.desc}</p>
+                <p className="text-xs text-text-tertiary leading-relaxed">{feat.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         <div className="max-w-3xl mx-auto text-center pb-20 lg:pb-28">
-          <p className="text-base lg:text-lg text-white/40 mb-6">
+          <p className="text-base lg:text-lg text-text-tertiary mb-6">
             Ready to build with the Cobentt API?
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -101,7 +101,7 @@ export default function DevelopersPage() {
             </a>
             <a
               href="https://github.com"
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/50 hover:text-white transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-text-tertiary hover:text-white transition-all"
             >
               <GitPullRequest className="w-3.5 h-3.5" />
               Browse GitHub

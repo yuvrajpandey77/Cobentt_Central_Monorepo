@@ -37,7 +37,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
           <Coins className="h-5 w-5" />
           Check Balance
         </CardTitle>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-text-secondary">
           Ensure your wallet has enough funds for gas fees
         </p>
       </CardHeader>
@@ -45,14 +45,14 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
         {isCheckingBalance ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/40 mx-auto mb-4"></div>
-            <p className="text-white/60">Checking wallet balance...</p>
+            <p className="text-text-secondary">Checking wallet balance...</p>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="p-4 rounded-lg border border-white/10 bg-white/5">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium text-white">Current Balance</p>
-                <Badge variant="outline" className="border-white/20 text-white/70">
+                <Badge variant="outline" className="border-white/20 text-text-secondary">
                   {balance?.symbol}
                 </Badge>
               </div>
@@ -66,7 +66,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
                 <CheckCircle2 className="h-5 w-5 text-green-400" />
                 <div>
                   <p className="text-sm font-medium text-white">Sufficient Balance</p>
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs text-text-secondary">
                     You have enough funds to deploy your contract
                   </p>
                 </div>
@@ -77,7 +77,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
                   <AlertTriangle className="h-5 w-5 text-yellow-400" />
                   <div>
                     <p className="text-sm font-medium text-white">Insufficient Balance</p>
-                    <p className="text-xs text-white/60">
+                    <p className="text-xs text-text-secondary">
                       You need at least 0.001 ETH for gas fees
                     </p>
                   </div>
@@ -89,7 +89,7 @@ export function FundStep({ onNext, onBack, onGetFaucet }: FundStepProps) {
                       <Coins className="h-5 w-5 text-blue-400 mt-0.5" />
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-white">Get Testnet ETH</p>
-                        <p className="text-xs text-white/60">
+                        <p className="text-xs text-text-secondary">
                           Use our faucet to get free testnet ETH for deployment
                         </p>
                         <Button

@@ -333,7 +333,7 @@ export const ProjectView = ({ projectId }: Props) => {
                                             project.isPublic ? 'right-0.5' : 'left-0.5'
                                         }`} />
                                     </button>
-                                    <span className={`text-xs font-medium ${project.isPublic ? 'text-green-400' : 'text-white/50'}`}>
+                                    <span className={`text-xs font-medium ${project.isPublic ? 'text-green-400' : 'text-text-tertiary'}`}>
                                         {project.isPublic ? 'Public' : 'Private'}
                                     </span>
                                 </div>
@@ -343,7 +343,7 @@ export const ProjectView = ({ projectId }: Props) => {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <button className="h-8 w-8 shrink-0 rounded-lg border border-white/10 hover:bg-white/10 flex items-center justify-center transition-all duration-200 focus:outline-none">
-                                                <MoreHorizontal className="h-4 w-4 text-white/60" />
+                                                <MoreHorizontal className="h-4 w-4 text-text-secondary" />
                                             </button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" side="bottom" className="w-40">

@@ -111,10 +111,10 @@ export const ProjectLoading = ({ onComplete }: ProjectLoadingProps) => {
             />
           </div>
           <div className="flex justify-between items-center mt-2">
-            <p className="text-white/60 text-sm">
+            <p className="text-text-secondary text-sm">
               {Math.round(progress)}%
             </p>
-            <p className="text-white/60 text-sm">
+            <p className="text-text-secondary text-sm">
               Step {currentStep + 1} of {steps.length}
             </p>
           </div>
@@ -124,7 +124,7 @@ export const ProjectLoading = ({ onComplete }: ProjectLoadingProps) => {
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 max-w-md mx-auto">
           <div className="flex items-center justify-center space-x-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <p className="text-white/70 text-sm font-mono">
+            <p className="text-text-secondary text-sm font-mono">
               {backgroundActivity}
             </p>
           </div>

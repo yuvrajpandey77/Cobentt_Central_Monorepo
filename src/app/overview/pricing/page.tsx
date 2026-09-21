@@ -77,14 +77,14 @@ export default function PricingPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             Plans & Pricing
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Simple pricing.{" "}
             <span className="text-white">No surprises.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             Start free. Upgrade when you need more power, storage, or team features.
           </p>
         </div>
@@ -112,15 +112,15 @@ export default function PricingPage() {
                 <h3 className="text-lg font-semibold text-white mb-1">{plan.name}</h3>
                 <div className="flex items-baseline gap-0.5">
                   <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  {plan.period && <span className="text-sm text-white/40">{plan.period}</span>}
+                  {plan.period && <span className="text-sm text-text-tertiary">{plan.period}</span>}
                 </div>
-                <p className="text-sm text-white/40 mt-1">{plan.desc}</p>
+                <p className="text-sm text-text-tertiary mt-1">{plan.desc}</p>
               </div>
               <div className="flex-1 space-y-2.5 mb-8">
                 {plan.features.map((feat) => (
                   <div key={feat} className="flex items-center gap-2.5">
-                    <Check className="w-3.5 h-3.5 text-white/50 flex-shrink-0" />
-                    <span className="text-sm text-white/50">{feat}</span>
+                    <Check className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
+                    <span className="text-sm text-text-tertiary">{feat}</span>
                   </div>
                 ))}
               </div>
@@ -129,7 +129,7 @@ export default function PricingPage() {
                 className={`inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-300 w-full ${
                   plan.featured
                     ? "bg-white text-bg-primary hover:bg-white/90 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
-                    : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
+                    : "bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10 hover:text-white rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
                 }`}
               >
                 {plan.cta}
@@ -143,11 +143,11 @@ export default function PricingPage() {
           <div className="p-8 lg:p-10 bg-bg-card border border-white/10 rounded-tl-[40px] rounded-tr-[16px] rounded-br-[40px] rounded-bl-[16px]">
             <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
               <div>
-                <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Enterprise</span>
+                <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">Enterprise</span>
                 <h2 className="text-2xl lg:text-3xl font-bold text-white mt-2">
                   Need more? We cover the rest.
                 </h2>
-                <p className="text-sm text-white/40 mt-1 max-w-lg">
+                <p className="text-sm text-text-tertiary mt-1 max-w-lg">
                   Custom deployments, dedicated infrastructure, on-premise Meridian, and enterprise-grade security for organizations with advanced requirements.
                 </p>
               </div>
@@ -161,8 +161,8 @@ export default function PricingPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
               {enterpriseFeatures.map((feat) => (
-                <div key={feat} className="flex items-center gap-2 text-sm text-white/40">
-                  <Check className="w-3 h-3 text-white/30 flex-shrink-0" />
+                <div key={feat} className="flex items-center gap-2 text-sm text-text-tertiary">
+                  <Check className="w-3 h-3 text-text-muted flex-shrink-0" />
                   {feat}
                 </div>
               ))}
@@ -182,11 +182,11 @@ export default function PricingPage() {
               { q: "Do you offer student or academic pricing?", a: "Yes. Contact us with your academic email for a discount on Pro plans." },
             ].map((item) => (
               <details key={item.q} className="group border border-white/10 bg-bg-card rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] overflow-hidden">
-                <summary className="px-5 py-3.5 text-sm font-medium text-white/70 cursor-pointer hover:text-white transition-colors list-none flex items-center justify-between">
+                <summary className="px-5 py-3.5 text-sm font-medium text-text-secondary cursor-pointer hover:text-white transition-colors list-none flex items-center justify-between">
                   {item.q}
-                  <ArrowRight className="w-3 h-3 text-white/30 rotate-90 group-open:rotate-[-90deg] transition-transform" />
+                  <ArrowRight className="w-3 h-3 text-text-muted rotate-90 group-open:rotate-[-90deg] transition-transform" />
                 </summary>
-                <div className="px-5 pb-4 text-sm text-white/40 leading-relaxed">
+                <div className="px-5 pb-4 text-sm text-text-tertiary leading-relaxed">
                   {item.a}
                 </div>
               </details>

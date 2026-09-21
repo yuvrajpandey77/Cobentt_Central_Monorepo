@@ -93,7 +93,7 @@ export default function SupportPage() {
           <h1 className="text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight">
             We&apos;re here to help
           </h1>
-          <p className="text-2xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-2xl text-text-secondary max-w-4xl mx-auto leading-relaxed">
              Get the support you need to build amazing applications with Cobentt. Our team is ready to assist you every step of the way.
           </p>
         </div>
@@ -107,12 +107,12 @@ export default function SupportPage() {
                   {option.icon}
                 </div>
                 <CardTitle className="text-xl break-words text-white">{option.title}</CardTitle>
-                <p className="text-white/70 break-words">{option.description}</p>
+                <p className="text-text-secondary break-words">{option.description}</p>
               </CardHeader>
               <CardContent className="text-center flex flex-col flex-1">
                 <div className="mb-6 flex-shrink-0">
                   <p className="text-sm text-green-400 mb-2 font-semibold">{option.availability}</p>
-                  <p className="text-xs text-white/70 break-words">{option.responseTime}</p>
+                  <p className="text-xs text-text-secondary break-words">{option.responseTime}</p>
                 </div>
                 <Button asChild className="w-full bg-white/10 text-white hover:bg-white/20 border-white/15 backdrop-blur-sm font-semibold mt-auto">
                   <Link href="/docs">
@@ -130,9 +130,9 @@ export default function SupportPage() {
             <CardContent className="p-8 text-center flex flex-col h-full">
               <Phone className="h-12 w-12 mx-auto mb-6 text-white flex-shrink-0" />
               <h3 className="text-2xl font-bold mb-4 break-words text-white">Phone Support</h3>
-              <p className="text-white/70 mb-6 text-lg break-words">Speak directly with our support team</p>
+              <p className="text-text-secondary mb-6 text-lg break-words">Speak directly with our support team</p>
               <p className="text-lg text-white font-semibold break-words">+1 (555) 123-4567</p>
-              <p className="text-sm text-white/70 mt-2 break-words">Mon-Fri, 9AM-6PM EST</p>
+              <p className="text-sm text-text-secondary mt-2 break-words">Mon-Fri, 9AM-6PM EST</p>
             </CardContent>
           </Card>
 
@@ -140,9 +140,9 @@ export default function SupportPage() {
             <CardContent className="p-8 text-center flex flex-col h-full">
               <Mail className="h-12 w-12 mx-auto mb-6 text-white flex-shrink-0" />
               <h3 className="text-2xl font-bold mb-4 break-words text-white">Email Support</h3>
-              <p className="text-white/70 mb-6 text-lg break-words">Send us detailed questions</p>
+              <p className="text-text-secondary mb-6 text-lg break-words">Send us detailed questions</p>
               <p className="text-lg text-white font-semibold break-words">support@cobentt.com</p>
-              <p className="text-sm text-white/70 mt-2 break-words">24/7 Response</p>
+              <p className="text-sm text-text-secondary mt-2 break-words">24/7 Response</p>
             </CardContent>
           </Card>
 
@@ -150,9 +150,9 @@ export default function SupportPage() {
             <CardContent className="p-8 text-center flex flex-col h-full">
               <Users className="h-12 w-12 mx-auto mb-6 text-white flex-shrink-0" />
               <h3 className="text-2xl font-bold mb-4 break-words text-white">Community</h3>
-              <p className="text-white/70 mb-6 text-lg break-words">Join our developer community</p>
+              <p className="text-text-secondary mb-6 text-lg break-words">Join our developer community</p>
               <p className="text-lg text-white font-semibold break-words">Discord & GitHub</p>
-              <p className="text-sm text-white/70 mt-2 break-words">Always Active</p>
+              <p className="text-sm text-text-secondary mt-2 break-words">Always Active</p>
             </CardContent>
           </Card>
         </div>
@@ -170,7 +170,7 @@ export default function SupportPage() {
                     <HelpCircle className="h-6 w-6 mr-3 text-white flex-shrink-0 mt-0.5" />
                     <span className="break-words">{item.question}</span>
                   </h3>
-                  <p className="text-white/70 text-lg leading-relaxed break-words">{item.answer}</p>
+                  <p className="text-text-secondary text-lg leading-relaxed break-words">{item.answer}</p>
                 </CardContent>
               </Card>
             ))}
@@ -182,7 +182,7 @@ export default function SupportPage() {
           <Card className="border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
             <CardHeader className="text-center pb-8">
               <CardTitle className="text-3xl font-bold mb-4 text-white">Still need help?</CardTitle>
-              <p className="text-xl text-white/70">Send us a message and we&apos;ll get back to you quickly.</p>
+              <p className="text-xl text-text-secondary">Send us a message and we&apos;ll get back to you quickly.</p>
             </CardHeader>
             <CardContent className="p-8">
               <form className="space-y-6">
@@ -190,23 +190,23 @@ export default function SupportPage() {
                   <input
                     type="text"
                     placeholder="Your Name"
-                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-text-muted focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 backdrop-blur-sm"
                   />
                   <input
                     type="email"
                     placeholder="Your Email"
-                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-text-muted focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 backdrop-blur-sm"
                   />
                 </div>
                 <input
                   type="text"
                   placeholder="Subject"
-                  className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 backdrop-blur-sm"
+                  className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-text-muted focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 backdrop-blur-sm"
                 />
                 <textarea
                   placeholder="Your Message"
                   rows={5}
-                  className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 resize-none backdrop-blur-sm"
+                  className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-text-muted focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all duration-300 resize-none backdrop-blur-sm"
                 />
                 <Button asChild className="w-full py-4 text-lg font-semibold bg-white/10 text-white hover:bg-white/20 border-white/15 backdrop-blur-sm">
                   <Link href="/sign-up">

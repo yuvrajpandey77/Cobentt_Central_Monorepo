@@ -231,7 +231,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
                   <FolderOpen className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">Create Something</h3>
-                <p className="text-sm text-white/60 mb-6">Sign up to start building and save your projects</p>
+                <p className="text-sm text-text-secondary mb-6">Sign up to start building and save your projects</p>
                 <Link href="/sign-up" className="w-full">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
                     <Sparkles className="w-4 h-4 mr-2" /> Get Started

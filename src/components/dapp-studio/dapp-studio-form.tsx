@@ -182,16 +182,16 @@ const StepProgress = ({ current }: { current: number }) => {
           <div
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all",
-              index <= current ? "bg-blue-500 text-white" : "bg-white/10 text-white/50",
+              index <= current ? "bg-blue-500 text-white" : "bg-white/10 text-text-tertiary",
             )}
           >
             {index <= current ? <CheckCircle2 className="h-5 w-5" /> : index + 1}
           </div>
           <div className="hidden md:block">
-            <p className={cn("font-medium", index <= current ? "text-white" : "text-white/60")}>{step.title}</p>
-            <p className="text-xs text-white/50">{step.description}</p>
+            <p className={cn("font-medium", index <= current ? "text-white" : "text-text-secondary")}>{step.title}</p>
+            <p className="text-xs text-text-tertiary">{step.description}</p>
           </div>
-          {index < STEP_ENTRIES.length - 1 && <ArrowRight className="hidden h-4 w-4 text-white/30 md:block" />}
+          {index < STEP_ENTRIES.length - 1 && <ArrowRight className="hidden h-4 w-4 text-text-muted md:block" />}
         </div>
       ))}
     </div>
@@ -277,7 +277,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                                 <chain.icon className="h-7 w-7 text-sky-300" />
                                 <div className="space-y-2">
                                   <p className="font-medium text-white">{chain.label}</p>
-                                  <p className="text-sm text-white/60">{chain.description}</p>
+                                  <p className="text-sm text-text-secondary">{chain.description}</p>
                                 </div>
                               </CardContent>
                             </Card>
@@ -317,14 +317,14 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                                 <div className="space-y-2">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <p className="font-semibold text-white">{contract.label}</p>
-                                    <Badge variant="outline" className="border-white/20 text-white/70">
+                                    <Badge variant="outline" className="border-white/20 text-text-secondary">
                                       Scaffold ready
                                     </Badge>
                                   </div>
-                                  <p className="text-sm text-white/60">{contract.description}</p>
+                                  <p className="text-sm text-text-secondary">{contract.description}</p>
                                   <div className="flex flex-wrap gap-2">
                                     {contract.highlights.map((item) => (
-                                      <Badge key={item} variant="secondary" className="bg-white/10 text-white/70">
+                                      <Badge key={item} variant="secondary" className="bg-white/10 text-text-secondary">
                                         {item}
                                       </Badge>
                                     ))}
@@ -348,7 +348,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
         return (
           <StepWrapper>
             <div className="space-y-8">
-              <div className="flex items-center gap-2 text-sm text-white/60">
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Sparkles className="h-4 w-4 text-sky-300" />
                 {hasAISuggestions 
                   ? "AI has pre-filled these values. Review and customize as needed."
@@ -365,9 +365,9 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                         {hasAISuggestions && defaultValues?.tokenName && <AIBadge />}
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g., My Awesome Token" className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
+                        <Input {...field} placeholder="e.g., My Awesome Token" className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary" />
                       </FormControl>
-                      <FormDescription className="text-white/50 text-xs">
+                      <FormDescription className="text-text-tertiary text-xs">
                         The full name of your token (e.g., &quot;Ethereum&quot;)
                       </FormDescription>
                       <FormMessage />
@@ -384,9 +384,9 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                         {hasAISuggestions && defaultValues?.tokenSymbol && <AIBadge />}
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g., TKN" className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
+                        <Input {...field} placeholder="e.g., TKN" className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary" />
                       </FormControl>
-                      <FormDescription className="text-white/50 text-xs">
+                      <FormDescription className="text-text-tertiary text-xs">
                         Short ticker symbol (e.g., &quot;ETH&quot;, usually 3-5 characters)
                       </FormDescription>
                       <FormMessage />
@@ -403,9 +403,9 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                         {hasAISuggestions && defaultValues?.tokenSupply && <AIBadge />}
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g., 1000000" className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
+                        <Input {...field} placeholder="e.g., 1000000" className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary" />
                       </FormControl>
-                      <FormDescription className="text-white/50 text-xs">
+                      <FormDescription className="text-text-tertiary text-xs">
                         Maximum number of tokens that will exist
                       </FormDescription>
                       <FormMessage />
@@ -422,9 +422,9 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                         {hasAISuggestions && defaultValues?.decimals && <AIBadge />}
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="18 (standard)" className="border-white/20 bg-white/10 text-white placeholder:text-white/40" />
+                        <Input {...field} placeholder="18 (standard)" className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary" />
                       </FormControl>
-                      <FormDescription className="text-white/50 text-xs">
+                      <FormDescription className="text-text-tertiary text-xs">
                         Divisibility (18 is standard, 0 for NFTs)
                       </FormDescription>
                       <FormMessage />
@@ -462,7 +462,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
         return (
           <StepWrapper>
             <div className="space-y-6">
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-text-secondary">
                 Attach optional modules. Your template will include audited patterns for each module you enable.
               </p>
               <FormField
@@ -490,7 +490,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                             </FormControl>
                             <div className="space-y-1 text-white">
                               <FormLabel className="font-medium">{feature.label}</FormLabel>
-                              <FormDescription className="text-white/60">{feature.description}</FormDescription>
+                              <FormDescription className="text-text-secondary">{feature.description}</FormDescription>
                             </div>
                           </FormItem>
                         )}
@@ -518,34 +518,34 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                   <CardContent className="p-6 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-white/60">Blockchain</p>
+                        <p className="text-sm text-text-secondary">Blockchain</p>
                         <p className="text-white font-medium capitalize">{form.watch("blockchain")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-white/60">Contract Type</p>
+                        <p className="text-sm text-text-secondary">Contract Type</p>
                         <p className="text-white font-medium uppercase">{form.watch("contractType")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-white/60">Token Name</p>
+                        <p className="text-sm text-text-secondary">Token Name</p>
                         <p className="text-white font-medium">{form.watch("tokenName")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-white/60">Symbol</p>
+                        <p className="text-sm text-text-secondary">Symbol</p>
                         <p className="text-white font-medium">{form.watch("tokenSymbol")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-white/60">Total Supply</p>
+                        <p className="text-sm text-text-secondary">Total Supply</p>
                         <p className="text-white font-medium">{form.watch("tokenSupply")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-white/60">Network</p>
+                        <p className="text-sm text-text-secondary">Network</p>
                         <p className="text-white font-medium capitalize">{form.watch("network")}</p>
                       </div>
                     </div>
 
                     {form.watch("features")?.length > 0 && (
                       <div>
-                        <p className="text-sm text-white/60 mb-2">Features</p>
+                        <p className="text-sm text-text-secondary mb-2">Features</p>
                         <div className="flex flex-wrap gap-2">
                           {form.watch("features").map((feature) => (
                             <Badge key={feature} className="bg-blue-500/20 text-blue-300 border-blue-500/30">
@@ -564,7 +564,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                     <Rocket className="h-4 w-4" />
                     What happens next?
                   </h4>
-                  <ul className="space-y-2 text-sm text-white/70">
+                  <ul className="space-y-2 text-sm text-text-secondary">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
                       <span>Generate Solidity contract from template</span>
@@ -597,7 +597,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                       <FormItem className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 p-4">
                         <div className="space-y-1">
                           <FormLabel className="text-white">Auto-verify on Etherscan</FormLabel>
-                          <FormDescription className="text-white/60">
+                          <FormDescription className="text-text-secondary">
                             Automatically verify contract after deployment
                           </FormDescription>
                         </div>
@@ -615,7 +615,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
                       <FormItem className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 p-4">
                         <div className="space-y-1">
                           <FormLabel className="text-white">Generate test suite</FormLabel>
-                          <FormDescription className="text-white/60">
+                          <FormDescription className="text-text-secondary">
                             Create Foundry tests for your contract
                           </FormDescription>
                         </div>
@@ -656,7 +656,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
           </Button>
 
           <div className="flex items-center gap-4">
-            <span className="text-sm text-white/60">Step {step + 1} of {totalSteps}</span>
+            <span className="text-sm text-text-secondary">Step {step + 1} of {totalSteps}</span>
             {step === totalSteps - 1 ? (
               <Button
                 type="submit"

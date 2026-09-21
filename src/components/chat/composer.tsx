@@ -415,7 +415,7 @@ export function Composer({
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/60 flex-shrink-0"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-text-secondary flex-shrink-0"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -424,7 +424,7 @@ export function Composer({
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                 <div className="absolute bottom-11 left-0 z-20 w-48 py-1 bg-black/90 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl">
                   {["Camera", "Gallery", "Files", "Web Search", "Connectors"].map((item) => (
-                    <button key={item} onClick={() => setShowMenu(false)} className="w-full text-left px-3 py-2.5 text-sm text-white/60 hover:bg-white/10 hover:text-white transition-colors">
+                    <button key={item} onClick={() => setShowMenu(false)} className="w-full text-left px-3 py-2.5 text-sm text-text-secondary hover:bg-white/10 hover:text-white transition-colors">
                       {item}
                     </button>
                   ))}
@@ -451,7 +451,7 @@ export function Composer({
             maxLength={8000}
             minRows={1}
             maxRows={6}
-            className="flex-1 bg-transparent text-base text-white/60 placeholder:text-white/30 outline-none resize-none px-2 py-[10px] leading-relaxed"
+            className="flex-1 bg-transparent text-base text-text-secondary placeholder:text-text-muted outline-none resize-none px-2 py-[10px] leading-relaxed"
           />
 
           {/* Right actions */}
@@ -469,7 +469,7 @@ export function Composer({
               onClick={() => setWebSearch(!webSearch)}
               className={webSearch
                 ? "w-9 h-9 flex items-center justify-center rounded-full text-white bg-white/10"
-                : "w-9 h-9 flex items-center justify-center rounded-full text-white/40 hover:text-white/60 hover:bg-white/10"}
+                : "w-9 h-9 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-white/10"}
             >
               <Globe className="w-4 h-4" />
             </button>

@@ -47,7 +47,7 @@ export const MessageList = ({ messages, onRegenerate }: MessageListProps) => {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center space-y-2">
-          <p className="text-white/40 text-sm">Send a message to start the conversation</p>
+          <p className="text-text-tertiary text-sm">Send a message to start the conversation</p>
         </div>
       </div>
     );

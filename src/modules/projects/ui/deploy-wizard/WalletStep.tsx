@@ -22,7 +22,7 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
           <Wallet className="h-5 w-5" />
           Connect Wallet
         </CardTitle>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-text-secondary">
           Connect your wallet to deploy your smart contract
         </p>
       </CardHeader>
@@ -33,7 +33,7 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
               <CheckCircle2 className="h-5 w-5 text-green-400" />
               <div>
                 <p className="text-sm font-medium text-white">Wallet Connected</p>
-                <p className="text-xs text-white/60 font-mono">
+                <p className="text-xs text-text-secondary font-mono">
                   {address?.slice(0, 6)}...{address?.slice(-4)}
                 </p>
               </div>
@@ -44,7 +44,7 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
                 <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5" />
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-white">Ready to Deploy</p>
-                  <p className="text-xs text-white/60">
+                  <p className="text-xs text-text-secondary">
                     Your wallet is connected and ready for contract deployment. 
                     Make sure you have enough ETH for gas fees.
                   </p>
@@ -71,8 +71,8 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
         ) : (
           <div className="space-y-4">
             <div className="text-center py-8">
-              <Wallet className="h-12 w-12 text-white/40 mx-auto mb-4" />
-              <p className="text-white/60 mb-6">
+              <Wallet className="h-12 w-12 text-text-tertiary mx-auto mb-4" />
+              <p className="text-text-secondary mb-6">
                 Connect your wallet to continue with deployment
               </p>
               <ConnectButton />

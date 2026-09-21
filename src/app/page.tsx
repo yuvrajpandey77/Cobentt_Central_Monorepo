@@ -178,7 +178,7 @@ const PageContent = () => {
                                                     "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 inline-flex items-center gap-1.5",
                                                     projectCategory === cat
                                                         ? "bg-white/80 text-black shadow-lg"
-                                                        : "text-white/40 hover:text-white/70 hover:bg-white/10",
+                                                        : "text-text-tertiary hover:text-text-secondary hover:bg-white/10",
                                                 )}
                                             >
                                                 <Icon className="h-4 w-4" />
@@ -266,19 +266,19 @@ const PageContent = () => {
                                             ))}
               </div>
                                     ) : hasNextPage ? (
-                                        <p className="text-white/40 text-sm">Scroll down to load more projects</p>
+                                        <p className="text-text-tertiary text-sm">Scroll down to load more projects</p>
                                     ) : (
-                                        <p className="text-white/40 text-sm">You&apos;ve reached the end!</p>
+                                        <p className="text-text-tertiary text-sm">You&apos;ve reached the end!</p>
                                     )}
             </div>
                             </>
                         ) : (
                             <div className="text-center py-12">
-                                <Code2 className="w-16 h-16 text-white/40 mx-auto mb-4" />
+                                <Code2 className="w-16 h-16 text-text-tertiary mx-auto mb-4" />
                                 <h3 className="text-xl font-semibold text-white/80 mb-2">
                                     No {projectType === "webapp" ? "web apps" : "smart contracts"} yet
               </h3>
-                                <p className="text-white/60">
+                                <p className="text-text-secondary">
                                     Be the first to create a {projectType === "webapp" ? "web app" : "smart contract"} and share it with the community!
                                 </p>
             </div>

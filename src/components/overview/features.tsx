@@ -121,7 +121,7 @@ export function TheWorkspace() {
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4"
           >
             The Workspace
           </motion.span>
@@ -138,7 +138,7 @@ export function TheWorkspace() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-4 text-base lg:text-lg text-white/40 max-w-2xl mx-auto"
+            className="mt-4 text-base lg:text-lg text-text-tertiary max-w-2xl mx-auto"
           >
             Meridian orchestrates every capability &mdash; context, models, agents, and tools &mdash; into a single intelligent workspace.
           </motion.p>
@@ -179,13 +179,13 @@ export function TheWorkspace() {
                     exit="exit"
                     transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                   >
-                    <span className="text-[10px] font-mono text-white/20 tracking-wider">
+                    <span className="text-[10px] font-mono text-text-disabled tracking-wider">
                       {(activeIndex + 1).toString().padStart(2, "0")}
                     </span>
                     <h3 className="text-xl lg:text-2xl font-bold text-white mt-1 mb-3">
                       {active.title}
                     </h3>
-                    <p className="text-sm lg:text-base text-white/40 leading-relaxed max-w-md">
+                    <p className="text-sm lg:text-base text-text-tertiary leading-relaxed max-w-md">
                       {active.desc}
                     </p>
                   </motion.div>
@@ -213,7 +213,7 @@ export function TheWorkspace() {
                     onClick={next}
                     className="ml-4 p-1 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 transition-colors"
                   >
-                    <ArrowRight className="w-3.5 h-3.5 text-white/30" />
+                    <ArrowRight className="w-3.5 h-3.5 text-text-muted" />
                   </button>
                 </div>
               </div>
@@ -228,8 +228,8 @@ export function TheWorkspace() {
                 onClick={() => goTo(i)}
                 className={`text-[9px] px-2.5 py-1 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] transition-all duration-300 ${
                   i === activeIndex
-                    ? "bg-white/15 text-white/70"
-                    : "text-white/25 hover:text-white/50 hover:bg-white/5"
+                    ? "bg-white/15 text-text-secondary"
+                    : "text-text-disabled hover:text-text-tertiary hover:bg-white/5"
                 }`}
               >
                 {c.title}

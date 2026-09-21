@@ -50,7 +50,7 @@ export default function InteractiveNavLink({ href, children, className, activeCl
       )}
     >
       {children}
-      {pending && <Loader2 className="h-3.5 w-3.5 animate-spin text-white/70" />}
+      {pending && <Loader2 className="h-3.5 w-3.5 animate-spin text-text-secondary" />}
     </Link>
   );
 }

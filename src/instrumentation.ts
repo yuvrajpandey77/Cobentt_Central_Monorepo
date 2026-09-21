@@ -19,8 +19,8 @@ export async function register() {
 
     if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
       console.warn(
-        "[boot] UPSTASH_REDIS_REST_URL/TOKEN not set — rate limiting is DISABLED (fail-open). " +
-          "Money/spend paths run fail-closed, everything else is unthrottled."
+        "[boot] UPSTASH_REDIS_REST_URL/TOKEN not set — using single-instance in-memory rate limits. " +
+          "Money/spend paths run fail-closed. Set Upstash for shared limits across instances."
       );
     }
     if (process.env.BYOK_ALLOW_SERVER_FALLBACK === "true") {

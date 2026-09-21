@@ -83,13 +83,13 @@ export function FeedbackWidget() {
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <span className="text-xs font-semibold text-white flex items-center gap-2">
-                <MessageSquareHeart className="w-3.5 h-3.5 text-white/60" />
+                <MessageSquareHeart className="w-3.5 h-3.5 text-text-secondary" />
                 Rate your experience
               </span>
               <button
                 type="button"
                 onClick={reset}
-                className="p-1 text-white/40 hover:text-white transition-colors"
+                className="p-1 text-text-tertiary hover:text-white transition-colors"
                 aria-label="Close feedback"
               >
                 <X className="w-4 h-4" />
@@ -100,13 +100,13 @@ export function FeedbackWidget() {
               <div className="px-5 py-8 text-center">
                 <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-3" />
                 <p className="text-sm font-semibold text-white mb-1">Thanks for the feedback</p>
-                <p className="text-xs text-white/40 mb-5">
+                <p className="text-xs text-text-tertiary mb-5">
                   It goes straight to the team and shapes what we build next.
                 </p>
                 <button
                   type="button"
                   onClick={reset}
-                  className="text-xs text-white/50 hover:text-white underline underline-offset-2 transition-colors"
+                  className="text-xs text-text-tertiary hover:text-white underline underline-offset-2 transition-colors"
                 >
                   Close
                 </button>
@@ -130,7 +130,7 @@ export function FeedbackWidget() {
                         className={`w-6 h-6 transition-colors ${
                           star <= (hover || rating)
                             ? "text-yellow-400 fill-yellow-400"
-                            : "text-white/20"
+                            : "text-text-disabled"
                         }`}
                       />
                     </button>
@@ -144,14 +144,14 @@ export function FeedbackWidget() {
                   minLength={3}
                   rows={3}
                   placeholder="What worked? What didn't?"
-                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-white/30 focus:border-white/30 focus:outline-none resize-none"
+                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-text-muted focus:border-white/30 focus:outline-none resize-none"
                 />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email (optional, for follow-up)"
-                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-white/30 focus:border-white/30 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-text-muted focus:border-white/30 focus:outline-none"
                 />
 
                 {error && (
@@ -173,9 +173,9 @@ export function FeedbackWidget() {
                     "Send feedback"
                   )}
                 </button>
-                <p className="text-[10px] text-white/30 text-center">
+                <p className="text-[10px] text-text-muted text-center">
                   Need help instead?{" "}
-                  <a href="/overview/contact" className="text-white/50 hover:text-white underline underline-offset-2">
+                  <a href="/overview/contact" className="text-text-tertiary hover:text-white underline underline-offset-2">
                     Contact support
                   </a>
                 </p>

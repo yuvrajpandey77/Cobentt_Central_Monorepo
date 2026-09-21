@@ -258,7 +258,7 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                                     minRows={1}
                                     maxRows={6}
                                     placeholder="Hello there. Let's move forward. What's the vision?"
-                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white/60 placeholder:text-[#666] cursor-text"
+                                    className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-text-secondary placeholder:text-text-muted cursor-text"
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
                                             e.preventDefault();
@@ -339,7 +339,7 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                                         >
                                             <div className="flex-1">
                                                 <div className="text-sm font-medium leading-tight">Auto</div>
-                                                <div className="text-[11px] text-white/60 leading-snug">Recommended default for this workspace</div>
+                                                <div className="text-[11px] text-text-secondary leading-snug">Recommended default for this workspace</div>
                                             </div>
                                             {selectedModel === "" && <Check className="h-4 w-4 shrink-0 text-white/80" />}
                                         </button>
@@ -355,7 +355,7 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                                             >
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-sm font-medium leading-tight truncate">{m.label}</div>
-                                                    <div className="text-[11px] text-white/60 leading-snug truncate">{m.provider} · {Math.round(m.context / 1000)}K context</div>
+                                                    <div className="text-[11px] text-text-secondary leading-snug truncate">{m.provider} · {Math.round(m.context / 1000)}K context</div>
                                                 </div>
                                                 {selectedModel === m.id && <Check className="h-4 w-4 shrink-0 text-white/80" />}
                                             </button>

@@ -80,11 +80,11 @@ function MeridianFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mo
       <div className="w-[170px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[40px] rounded-tr-[12px] rounded-br-[40px] rounded-bl-[12px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-7 h-7 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] bg-white/10 flex items-center justify-center">
-            <Cpu className="w-3.5 h-3.5 text-white/70" />
+            <Cpu className="w-3.5 h-3.5 text-text-secondary" />
           </div>
           <div>
             <p className="text-[11px] font-semibold text-white tracking-tight">Meridian</p>
-            <p className="text-[7px] text-white/40 leading-none">Built by Cogerphere</p>
+            <p className="text-[7px] text-text-tertiary leading-none">Built by Cogerphere</p>
           </div>
         </div>
         <div className="flex items-center gap-1 mb-1.5">
@@ -96,7 +96,7 @@ function MeridianFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mo
             />
           </div>
         </div>
-        <span className="text-[8px] text-white/30 bg-white/5 px-1.5 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">
+        <span className="text-[8px] text-text-muted bg-white/5 px-1.5 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">
           Local SLM
         </span>
       </div>
@@ -117,21 +117,21 @@ function ContextFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mou
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat3" className="left-[5%] top-[68%] z-10">
       <div className="w-[180px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[40px] rounded-tr-[12px] rounded-br-[40px] rounded-bl-[12px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-1.5 mb-2.5">
-          <Database className="w-3 h-3 text-white/50" />
-          <span className="text-[9px] font-medium text-white/60">Context</span>
+          <Database className="w-3 h-3 text-text-tertiary" />
+          <span className="text-[9px] font-medium text-text-secondary">Context</span>
         </div>
         <div className="space-y-1">
           {items.map((item) => (
             <div key={item.label} className="flex items-center gap-2 px-1.5 py-1">
-              <item.icon className="w-2.5 h-2.5 text-white/30" />
-              <span className="text-[8px] text-white/40">{item.label}</span>
+              <item.icon className="w-2.5 h-2.5 text-text-muted" />
+              <span className="text-[8px] text-text-tertiary">{item.label}</span>
               <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/10" />
             </div>
           ))}
         </div>
         <div className="mt-2 pt-2 border-t border-white/5 flex items-center gap-1">
           <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent" />
-          <span className="text-[7px] text-white/20">6 sources active</span>
+          <span className="text-[7px] text-text-disabled">6 sources active</span>
         </div>
       </div>
     </FloatCard>
@@ -144,20 +144,20 @@ function CodeEditorFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; 
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat4" className="right-[3%] top-[6%] z-10">
       <div className="w-[180px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[12px] rounded-tr-[40px] rounded-br-[12px] rounded-bl-[40px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-1.5 mb-2">
-          <Code2 className="w-3 h-3 text-white/50" />
-          <span className="text-[7px] text-white/30 font-mono">data-table.tsx</span>
+          <Code2 className="w-3 h-3 text-text-tertiary" />
+          <span className="text-[7px] text-text-muted font-mono">data-table.tsx</span>
           <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/15 animate-pulse" />
         </div>
         <div className="bg-black/40 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] p-2 font-mono text-[7px] leading-relaxed">
-          <div><span className="text-white/20">import</span><span className="text-white/30">{' {'}</span><span className="text-white/40">useState</span><span className="text-white/30">{'}'} from </span><span className="text-white/30">&quot;react&quot;</span></div>
-          <div><span className="text-white/20">interface</span><span className="text-white/40"> DataTable</span><span className="text-white/30">&lt;T&gt; {'{'}</span></div>
-          <div className="pl-2"><span className="text-white/30">data: T[]</span></div>
-          <div className="pl-2"><span className="text-white/30">columns: Column&lt;T&gt;[]</span></div>
-          <div className="pl-2"><span className="text-white/30">pageSize</span><span className="text-white/20">?</span><span className="text-white/30">: number</span></div>
-          <div><span className="text-white/30">{'}'}</span></div>
+          <div><span className="text-text-disabled">import</span><span className="text-text-muted">{' {'}</span><span className="text-text-tertiary">useState</span><span className="text-text-muted">{'}'} from </span><span className="text-text-muted">&quot;react&quot;</span></div>
+          <div><span className="text-text-disabled">interface</span><span className="text-text-tertiary"> DataTable</span><span className="text-text-muted">&lt;T&gt; {'{'}</span></div>
+          <div className="pl-2"><span className="text-text-muted">data: T[]</span></div>
+          <div className="pl-2"><span className="text-text-muted">columns: Column&lt;T&gt;[]</span></div>
+          <div className="pl-2"><span className="text-text-muted">pageSize</span><span className="text-text-disabled">?</span><span className="text-text-muted">: number</span></div>
+          <div><span className="text-text-muted">{'}'}</span></div>
           <div className="flex items-center gap-1 mt-1.5 pt-1 border-t border-white/5">
             <span className="w-1.5 h-3 bg-white/30" style={{ animation: "cursorBlink 1s step-end infinite" }} />
-            <span className="text-white/20">|</span>
+            <span className="text-text-disabled">|</span>
           </div>
         </div>
       </div>
@@ -171,23 +171,23 @@ function ResearchFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mo
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat1" className="right-[1%] top-[30%] z-10">
       <div className="w-[175px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[40px] rounded-tr-[12px] rounded-br-[40px] rounded-bl-[12px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-1.5 mb-2">
-          <BookOpen className="w-3 h-3 text-white/50" />
-          <span className="text-[8px] text-white/30 font-medium">Research</span>
+          <BookOpen className="w-3 h-3 text-text-tertiary" />
+          <span className="text-[8px] text-text-muted font-medium">Research</span>
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 bg-white/5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] px-1.5 py-1">
-            <FileText className="w-2.5 h-2.5 text-white/30" />
-            <span className="text-[7px] text-white/40 flex-1 truncate">Attention Is All You Need</span>
+            <FileText className="w-2.5 h-2.5 text-text-muted" />
+            <span className="text-[7px] text-text-tertiary flex-1 truncate">Attention Is All You Need</span>
           </div>
           <div className="flex items-center gap-1.5 bg-white/5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] px-1.5 py-1">
-            <FileText className="w-2.5 h-2.5 text-white/30" />
-            <span className="text-[7px] text-white/40 flex-1 truncate">GPT-4 Technical Report</span>
+            <FileText className="w-2.5 h-2.5 text-text-muted" />
+            <span className="text-[7px] text-text-tertiary flex-1 truncate">GPT-4 Technical Report</span>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-white/5">
-          <span className="text-[7px] text-white/20">12 sources</span>
-          <span className="text-[7px] text-white/20">·</span>
-          <span className="text-[7px] text-white/20">34 citations</span>
+          <span className="text-[7px] text-text-disabled">12 sources</span>
+          <span className="text-[7px] text-text-disabled">·</span>
+          <span className="text-[7px] text-text-disabled">34 citations</span>
         </div>
       </div>
     </FloatCard>
@@ -208,21 +208,21 @@ function ModelRouterFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>;
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat2" className="right-[4%] top-[55%] z-10">
       <div className="w-[175px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[12px] rounded-tr-[40px] rounded-br-[12px] rounded-bl-[40px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-1.5 mb-2.5">
-          <Route className="w-3 h-3 text-white/50" />
-          <span className="text-[8px] text-white/30 font-medium">Model Router</span>
+          <Route className="w-3 h-3 text-text-tertiary" />
+          <span className="text-[8px] text-text-muted font-medium">Model Router</span>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-[6px] text-white/40 font-bold">P</span>
+              <span className="text-[6px] text-text-tertiary font-bold">P</span>
             </div>
             <div className="h-px flex-1 bg-white/10" />
             <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-              <BrainCircuit className="w-2 h-2 text-white/60" />
+              <BrainCircuit className="w-2 h-2 text-text-secondary" />
             </div>
             <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-white/5" />
             <div className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0" style={{ animation: "neuralPulse 2.2s ease-in-out infinite" }}>
-              <span className="text-[5px] text-white/50 font-bold">{models[active].slice(0, 2)}</span>
+              <span className="text-[5px] text-text-tertiary font-bold">{models[active].slice(0, 2)}</span>
             </div>
           </div>
           <div className="flex flex-wrap gap-1">
@@ -231,8 +231,8 @@ function ModelRouterFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>;
                 key={m}
                 className={`text-[6px] px-1.5 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] transition-all duration-500 ${
                   i === active
-                    ? "bg-white/20 text-white/70"
-                    : "bg-white/5 text-white/25"
+                    ? "bg-white/20 text-text-secondary"
+                    : "bg-white/5 text-text-disabled"
                 }`}
               >
                 {m}
@@ -258,8 +258,8 @@ function AgentExecFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; m
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat3" className="right-[2%] top-[78%] z-10">
       <div className="w-[180px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[40px] rounded-tr-[12px] rounded-br-[40px] rounded-bl-[12px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-1.5 mb-2">
-          <Bot className="w-3 h-3 text-white/50" />
-          <span className="text-[8px] text-white/30 font-medium">Agent Execution</span>
+          <Bot className="w-3 h-3 text-text-tertiary" />
+          <span className="text-[8px] text-text-muted font-medium">Agent Execution</span>
         </div>
         <div className="space-y-1.5">
           {steps.map((s) => (
@@ -273,7 +273,7 @@ function AgentExecFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; m
                     : "bg-white/5"
                 }`}
               >
-                {s.status === "done" && <Check className="w-1.5 h-1.5 text-white/50" />}
+                {s.status === "done" && <Check className="w-1.5 h-1.5 text-text-tertiary" />}
                 {s.status === "running" && (
                   <div className="w-1 h-1 rounded-full bg-white/60" style={{ animation: "neuralPulse 1s ease-in-out infinite" }} />
                 )}
@@ -281,15 +281,15 @@ function AgentExecFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; m
               <span
                 className={`text-[8px] ${
                   s.status === "done"
-                    ? "text-white/50"
+                    ? "text-text-tertiary"
                     : s.status === "running"
-                    ? "text-white/70"
-                    : "text-white/20"
+                    ? "text-text-secondary"
+                    : "text-text-disabled"
                 }`}
               >
                 {s.label}
               </span>
-              <span className="ml-auto text-[6px] text-white/20 font-mono">
+              <span className="ml-auto text-[6px] text-text-disabled font-mono">
                 {s.status === "done" ? "✓" : s.status === "running" ? "..." : ""}
               </span>
             </div>
@@ -327,22 +327,22 @@ function Sidebar() {
       <div className="px-3 pt-3 pb-2 space-y-2.5">
         <div className="flex items-center gap-2 px-2">
           <div className="w-6 h-6 rounded-tr-[5px] rounded-bl-[5px] rounded-tl-[3px] rounded-br-[3px] bg-white/15 flex items-center justify-center">
-            <User className="w-3 h-3 text-white/60" />
+            <User className="w-3 h-3 text-text-secondary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-medium text-white/60 truncate">Alex Chen</p>
-            <p className="text-[7px] text-white/20 truncate">Pro plan</p>
+            <p className="text-[10px] font-medium text-text-secondary truncate">Alex Chen</p>
+            <p className="text-[7px] text-text-disabled truncate">Pro plan</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] cursor-pointer">
-          <span className="text-[9px] text-white/50 flex-1 truncate">Cobentt Workspace</span>
-          <ChevronDown className="w-2.5 h-2.5 text-white/30" />
+          <span className="text-[9px] text-text-tertiary flex-1 truncate">Cobentt Workspace</span>
+          <ChevronDown className="w-2.5 h-2.5 text-text-muted" />
         </div>
 
         <a
           href="#"
-          className="flex items-center gap-2 px-2 py-1.5 bg-white/10 text-white/60 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] text-[9px] font-medium hover:bg-white/15 transition-colors"
+          className="flex items-center gap-2 px-2 py-1.5 bg-white/10 text-text-secondary rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] text-[9px] font-medium hover:bg-white/15 transition-colors"
         >
           <Plus className="w-2.5 h-2.5" />
           New Chat
@@ -354,7 +354,7 @@ function Sidebar() {
           <div
             key={item.label}
             className={`flex items-center gap-2 px-2 py-1.5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] cursor-pointer transition-colors ${
-              item.active ? "bg-white/10 text-white/70" : "text-white/30 hover:text-white/50 hover:bg-white/5"
+              item.active ? "bg-white/10 text-text-secondary" : "text-text-muted hover:text-text-tertiary hover:bg-white/5"
             }`}
           >
             <item.icon className="w-3 h-3 flex-shrink-0" />
@@ -364,11 +364,11 @@ function Sidebar() {
       </div>
 
       <div className="px-3 py-2 border-t border-white/[0.04] space-y-0.5">
-        <div className="flex items-center gap-2 px-2 py-1.5 text-white/30 hover:text-white/50 hover:bg-white/5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] cursor-pointer transition-colors">
+        <div className="flex items-center gap-2 px-2 py-1.5 text-text-muted hover:text-text-tertiary hover:bg-white/5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] cursor-pointer transition-colors">
           <Search className="w-3 h-3" />
           <span className="text-[9px]">Search</span>
         </div>
-        <div className="flex items-center gap-2 px-2 py-1.5 text-white/30 hover:text-white/50 hover:bg-white/5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] cursor-pointer transition-colors">
+        <div className="flex items-center gap-2 px-2 py-1.5 text-text-muted hover:text-text-tertiary hover:bg-white/5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] cursor-pointer transition-colors">
           <Settings className="w-3 h-3" />
           <span className="text-[9px]">Settings</span>
         </div>
@@ -385,28 +385,28 @@ function PromptBar() {
     <div className="flex items-center gap-1.5 mx-3 mb-2.5 mt-auto">
       <div className="flex items-center gap-1.5 flex-1 bg-white/5 border border-white/10 rounded-tl-[14px] rounded-tr-[6px] rounded-br-[14px] rounded-bl-[6px] px-2.5 py-2 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.07]">
         <button className="w-5 h-5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 flex items-center justify-center flex-shrink-0 transition-colors">
-          <Plus className="w-2.5 h-2.5 text-white/40" />
+          <Plus className="w-2.5 h-2.5 text-text-tertiary" />
         </button>
 
         <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/10 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] cursor-pointer flex-shrink-0">
-          <BrainCircuit className="w-2.5 h-2.5 text-white/40" />
-          <span className="text-[8px] text-white/50">GPT-4o</span>
-          <ChevronDown className="w-2 h-2 text-white/30" />
+          <BrainCircuit className="w-2.5 h-2.5 text-text-tertiary" />
+          <span className="text-[8px] text-text-tertiary">GPT-4o</span>
+          <ChevronDown className="w-2 h-2 text-text-muted" />
         </div>
 
         <input
           type="text"
           placeholder="Message Cobentt..."
-          className="flex-1 bg-transparent text-[10px] text-white/60 placeholder:text-white/20 outline-none min-w-0"
+          className="flex-1 bg-transparent text-[10px] text-text-secondary placeholder:text-text-disabled outline-none min-w-0"
           readOnly
         />
 
         <button className="w-5 h-5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 flex items-center justify-center flex-shrink-0 transition-colors">
-          <Mic className="w-2.5 h-2.5 text-white/40" />
+          <Mic className="w-2.5 h-2.5 text-text-tertiary" />
         </button>
 
         <button className="w-5 h-5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] bg-white/20 hover:bg-white/30 flex items-center justify-center flex-shrink-0 transition-colors">
-          <Send className="w-2.5 h-2.5 text-white/70" />
+          <Send className="w-2.5 h-2.5 text-text-secondary" />
         </button>
       </div>
     </div>
@@ -442,19 +442,19 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
           <div className="flex-1 flex items-center justify-center">
             <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] max-w-[240px]">
               <div className="w-3 h-3 rounded-full bg-white/10 flex items-center justify-center">
-                <span className="text-[5px] font-bold text-white/40">C</span>
+                <span className="text-[5px] font-bold text-text-tertiary">C</span>
               </div>
-              <span className="text-[8px] text-white/30 truncate">cobentt.app/workspace</span>
+              <span className="text-[8px] text-text-muted truncate">cobentt.app/workspace</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-[8px] text-white/20">
+          <div className="flex items-center gap-2 text-[8px] text-text-disabled">
             <span>Chat</span>
-            <span className="text-white/10">·</span>
-            <span className="text-white/40">Models</span>
-            <span className="text-white/10">·</span>
+            <span className="text-text-disabled">·</span>
+            <span className="text-text-tertiary">Models</span>
+            <span className="text-text-disabled">·</span>
             <span>Code</span>
-            <span className="text-white/10">·</span>
-            <span className="text-white/30">Agents</span>
+            <span className="text-text-disabled">·</span>
+            <span className="text-text-muted">Agents</span>
           </div>
         </div>
 
@@ -466,15 +466,15 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
           <div className="flex-1 flex flex-col bg-black/15 min-w-0">
             {/* Chat header */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.04]">
-              <span className="text-[11px] font-medium text-white/60">Chat</span>
+              <span className="text-[11px] font-medium text-text-secondary">Chat</span>
               <div className="flex items-center gap-1 ml-2">
-                <span className="text-[8px] px-1.5 py-0.5 bg-white/15 text-white/60 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">GPT-4o</span>
-                <span className="text-[8px] px-1.5 py-0.5 bg-white/5 text-white/30 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">Claude 4</span>
-                <span className="text-[8px] px-1.5 py-0.5 bg-white/5 text-white/20 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">Gemini</span>
+                <span className="text-[8px] px-1.5 py-0.5 bg-white/15 text-text-secondary rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">GPT-4o</span>
+                <span className="text-[8px] px-1.5 py-0.5 bg-white/5 text-text-muted rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">Claude 4</span>
+                <span className="text-[8px] px-1.5 py-0.5 bg-white/5 text-text-disabled rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">Gemini</span>
               </div>
               <div className="ml-auto flex items-center gap-2">
-                <span className="text-[8px] text-white/20">
-                  <BrainCircuit className="w-3 h-3 inline text-white/30" /> Meridian
+                <span className="text-[8px] text-text-disabled">
+                  <BrainCircuit className="w-3 h-3 inline text-text-muted" /> Meridian
                 </span>
               </div>
             </div>
@@ -484,10 +484,10 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
               {/* User message */}
               <div className="flex items-start gap-2.5 max-w-[80%]">
                 <div className="w-6 h-6 rounded-tr-[5px] rounded-bl-[5px] rounded-tl-[3px] rounded-br-[3px] bg-white/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <User className="w-3 h-3 text-white/50" />
+                  <User className="w-3 h-3 text-text-tertiary" />
                 </div>
                 <div className="bg-white/5 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] px-3 py-2.5">
-                  <p className="text-[10px] text-white/60 leading-relaxed">
+                  <p className="text-[10px] text-text-secondary leading-relaxed">
                     Build a React data table with sorting, filtering, and pagination.
                   </p>
                 </div>
@@ -500,41 +500,41 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="bg-white/5 rounded-tl-[12px] rounded-br-[12px] rounded-tr-[8px] rounded-bl-[8px] px-3 py-2.5">
-                    <p className="text-[10px] text-white/50 leading-relaxed mb-2">
+                    <p className="text-[10px] text-text-tertiary leading-relaxed mb-2">
                       Here is a production-ready data table component with sorting, filtering, and pagination built with React and TypeScript.
                     </p>
 
                     {/* Code preview */}
                     <div className="bg-black/50 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] p-2.5 font-mono text-[8px] leading-relaxed overflow-x-auto">
-                      <div><span className="text-white/25">import</span><span className="text-white/35"> React, {'{'}useState, useMemo{'}'} </span><span className="text-white/25">from</span><span className="text-white/35"> &apos;react&apos;</span></div>
-                      <div><span className="text-white/25">interface</span><span className="text-white/45"> Column</span><span className="text-white/35">&lt;T&gt; {'{'}</span></div>
-                      <div className="pl-2"><span className="text-white/35">key: keyof T</span></div>
-                      <div className="pl-2"><span className="text-white/35">header: string</span></div>
-                      <div className="pl-2"><span className="text-white/35">sortable</span><span className="text-white/20">?</span><span className="text-white/35">: boolean</span></div>
-                      <div className="pl-2"><span className="text-white/35">render</span><span className="text-white/20">?</span><span className="text-white/35">: (item: T) =&gt; ReactNode</span></div>
-                      <div><span className="text-white/35">{'}'}</span></div>
-                      <div><span className="text-white/25">export function</span><span className="text-white/45"> DataTable</span><span className="text-white/35">&lt;T&gt;(props: DataTableProps&lt;T&gt;) {'{'}</span></div>
-                      <div className="pl-3"><span className="text-white/30">const [sortKey, setSortKey] = useState&lt;keyof T | null&gt;(null)</span></div>
-                      <div className="pl-3"><span className="text-white/30">const [sortDir, setSortDir] = useState&lt;&apos;asc&apos; | &apos;desc&apos;&gt;(&apos;asc&apos;)</span></div>
-                      <div className="pl-3"><span className="text-white/30">const [filter, setFilter] = useState(&apos;&apos;)</span></div>
-                      <div className="pl-3"><span className="text-white/30">const [page, setPage] = useState(1)</span></div>
-                      <div className="mt-1"><span className="text-white/30">const filtered = useMemo(() =&gt;</span></div>
-                      <div className="pl-3"><span className="text-white/30">data.filter(row =&gt; /* filter logic */), [data, filter])</span></div>
-                      <div><span className="text-white/30">const sorted = useMemo(() =&gt; /* sort */, [filtered, sortKey, sortDir])</span></div>
-                      <div><span className="text-white/30">const paginated = useMemo(() =&gt; /* paginate */, [sorted, page])</span></div>
-                      <div className="mt-1"><span className="text-white/30">return (/* table */)</span></div>
-                      <div><span className="text-white/35">{'}'}</span></div>
+                      <div><span className="text-text-disabled">import</span><span className="text-text-muted"> React, {'{'}useState, useMemo{'}'} </span><span className="text-text-disabled">from</span><span className="text-text-muted"> &apos;react&apos;</span></div>
+                      <div><span className="text-text-disabled">interface</span><span className="text-text-tertiary"> Column</span><span className="text-text-muted">&lt;T&gt; {'{'}</span></div>
+                      <div className="pl-2"><span className="text-text-muted">key: keyof T</span></div>
+                      <div className="pl-2"><span className="text-text-muted">header: string</span></div>
+                      <div className="pl-2"><span className="text-text-muted">sortable</span><span className="text-text-disabled">?</span><span className="text-text-muted">: boolean</span></div>
+                      <div className="pl-2"><span className="text-text-muted">render</span><span className="text-text-disabled">?</span><span className="text-text-muted">: (item: T) =&gt; ReactNode</span></div>
+                      <div><span className="text-text-muted">{'}'}</span></div>
+                      <div><span className="text-text-disabled">export function</span><span className="text-text-tertiary"> DataTable</span><span className="text-text-muted">&lt;T&gt;(props: DataTableProps&lt;T&gt;) {'{'}</span></div>
+                      <div className="pl-3"><span className="text-text-muted">const [sortKey, setSortKey] = useState&lt;keyof T | null&gt;(null)</span></div>
+                      <div className="pl-3"><span className="text-text-muted">const [sortDir, setSortDir] = useState&lt;&apos;asc&apos; | &apos;desc&apos;&gt;(&apos;asc&apos;)</span></div>
+                      <div className="pl-3"><span className="text-text-muted">const [filter, setFilter] = useState(&apos;&apos;)</span></div>
+                      <div className="pl-3"><span className="text-text-muted">const [page, setPage] = useState(1)</span></div>
+                      <div className="mt-1"><span className="text-text-muted">const filtered = useMemo(() =&gt;</span></div>
+                      <div className="pl-3"><span className="text-text-muted">data.filter(row =&gt; /* filter logic */), [data, filter])</span></div>
+                      <div><span className="text-text-muted">const sorted = useMemo(() =&gt; /* sort */, [filtered, sortKey, sortDir])</span></div>
+                      <div><span className="text-text-muted">const paginated = useMemo(() =&gt; /* paginate */, [sorted, page])</span></div>
+                      <div className="mt-1"><span className="text-text-muted">return (/* table */)</span></div>
+                      <div><span className="text-text-muted">{'}'}</span></div>
                     </div>
 
                     {/* Artifact badge */}
                     <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-white/5">
                       <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/10 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">
-                        <Code2 className="w-2 h-2 text-white/40" />
-                        <span className="text-[7px] text-white/40">data-table.tsx</span>
+                        <Code2 className="w-2 h-2 text-text-tertiary" />
+                        <span className="text-[7px] text-text-tertiary">data-table.tsx</span>
                       </div>
                       <div className="flex items-center gap-1 px-1.5 py-0.5 bg-white/5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">
-                        <Terminal className="w-2 h-2 text-white/30" />
-                        <span className="text-[7px] text-white/30">preview</span>
+                        <Terminal className="w-2 h-2 text-text-muted" />
+                        <span className="text-[7px] text-text-muted">preview</span>
                       </div>
                     </div>
                   </div>
@@ -542,21 +542,21 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
                   {/* Actions */}
                   <div className="flex items-center gap-1.5 mt-1.5 px-1">
                     <button className="p-1 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 transition-colors">
-                      <Heart className="w-2.5 h-2.5 text-white/25" />
+                      <Heart className="w-2.5 h-2.5 text-text-disabled" />
                     </button>
                     <button className="p-1 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 transition-colors">
-                      <MessageCircle className="w-2.5 h-2.5 text-white/25" />
+                      <MessageCircle className="w-2.5 h-2.5 text-text-disabled" />
                     </button>
                     <button className="p-1 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 transition-colors">
-                      <RefreshCw className="w-2.5 h-2.5 text-white/25" />
+                      <RefreshCw className="w-2.5 h-2.5 text-text-disabled" />
                     </button>
                     <button className="p-1 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] hover:bg-white/10 transition-colors">
-                      <Share2 className="w-2.5 h-2.5 text-white/25" />
+                      <Share2 className="w-2.5 h-2.5 text-text-disabled" />
                     </button>
                     <div className="ml-auto flex items-center gap-1">
-                      <span className="text-[7px] text-white/20">3.2s</span>
-                      <span className="text-white/10">·</span>
-                      <span className="text-[7px] text-white/20">412 tokens</span>
+                      <span className="text-[7px] text-text-disabled">3.2s</span>
+                      <span className="text-text-disabled">·</span>
+                      <span className="text-[7px] text-text-disabled">412 tokens</span>
                     </div>
                   </div>
                 </div>
@@ -635,8 +635,8 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="mb-8 lg:mb-10"
             >
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
-                <Cpu className="w-3 h-3 text-white/40" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+                <Cpu className="w-3 h-3 text-text-tertiary" />
                 Built by{" "}
                 <a
                   href="https://cogerphere.com"
@@ -675,14 +675,14 @@ export function Hero() {
               </Link>
               <a
                 href="/overview/docs"
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/50 hover:text-white transition-all duration-300"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-text-tertiary hover:text-white transition-all duration-300"
               >
                 <Globe className="w-3.5 h-3.5" />
                 Documentation
               </a>
               <a
                 href="#"
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white/50 hover:text-white border border-white/10 hover:border-white/20 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] transition-all duration-300"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-text-tertiary hover:text-white border border-white/10 hover:border-white/20 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] transition-all duration-300"
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 Download App

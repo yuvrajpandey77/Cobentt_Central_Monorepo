@@ -14,7 +14,7 @@ export default function SmartContractPage() {
           <h1 className="text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white">
             Create a smart contract
           </h1>
-          <p className="text-sm text-white/50">Describe the contract you want to build</p>
+          <p className="text-sm text-text-tertiary">Describe the contract you want to build</p>
         </div>
         <ModePills />
       </div>

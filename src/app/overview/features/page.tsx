@@ -77,14 +77,14 @@ export default function FeaturesPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             Features
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Everything Cobentt offers.{" "}
             <span className="text-white">Nothing more.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             A complete AI workspace with no feature bloat. Every tool has a purpose.
           </p>
         </div>
@@ -102,7 +102,7 @@ export default function FeaturesPage() {
                     <item.icon className="w-4.5 h-4.5 text-white" />
                   </div>
                   <h3 className="text-sm font-semibold text-white mb-1">{item.name}</h3>
-                  <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
+                  <p className="text-xs text-text-tertiary leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>

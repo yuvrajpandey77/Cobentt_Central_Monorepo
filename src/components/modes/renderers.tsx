@@ -545,7 +545,7 @@ export function DocumentBlockRenderer({
   const style = block.style;
   const heading = light ? "text-neutral-900" : "text-white";
   const body = light ? "text-neutral-700" : "text-white/80";
-  const sub = light ? "text-neutral-500" : "text-white/40";
+  const sub = light ? "text-neutral-500" : "text-text-tertiary";
   const border = light ? "border-neutral-200" : "border-white/10";
   const codeBg = light ? "bg-neutral-100" : "bg-neutral-900";
   const edit = (key: string) => (v: string) => editProp(onEdit, block, key, v);

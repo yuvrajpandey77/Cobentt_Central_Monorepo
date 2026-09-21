@@ -57,14 +57,14 @@ export default function AccountDeletionPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             Account Deletion
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Leaving?{" "}
             <span className="text-white">We understand.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             Here is exactly what happens when you delete your Cobentt account — no hidden processes, no surprises.
           </p>
         </div>
@@ -83,15 +83,15 @@ export default function AccountDeletionPage() {
                   <step.icon className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1">{step.title}</h3>
-                <p className="text-xs text-white/40 leading-relaxed">{step.content}</p>
+                <p className="text-xs text-text-tertiary leading-relaxed">{step.content}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-6 p-5 bg-white/[0.02] border border-white/10 rounded-tr-[14px] rounded-bl-[14px] rounded-tl-[8px] rounded-br-[8px] text-center">
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-text-tertiary">
               To initiate deletion, go to{" "}
-              <span className="text-white/70 font-mono text-xs bg-white/5 px-1.5 py-0.5 rounded">Settings → Account → Delete Account</span>
+              <span className="text-text-secondary font-mono text-xs bg-white/5 px-1.5 py-0.5 rounded">Settings → Account → Delete Account</span>
             </p>
           </div>
         </div>
@@ -106,11 +106,11 @@ export default function AccountDeletionPage() {
                 key={item.q}
                 className="group border border-white/10 bg-bg-card rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] overflow-hidden"
               >
-                <summary className="px-5 py-3.5 text-sm font-medium text-white/70 cursor-pointer hover:text-white transition-colors list-none flex items-center justify-between">
+                <summary className="px-5 py-3.5 text-sm font-medium text-text-secondary cursor-pointer hover:text-white transition-colors list-none flex items-center justify-between">
                   {item.q}
-                  <ArrowRight className="w-3 h-3 text-white/30 rotate-90 group-open:rotate-[-90deg] transition-transform shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-text-muted rotate-90 group-open:rotate-[-90deg] transition-transform shrink-0" />
                 </summary>
-                <div className="px-5 pb-4 text-sm text-white/40 leading-relaxed">
+                <div className="px-5 pb-4 text-sm text-text-tertiary leading-relaxed">
                   {item.a}
                 </div>
               </details>
@@ -118,10 +118,10 @@ export default function AccountDeletionPage() {
           </div>
 
           <div className="mt-10 text-center">
-            <div className="inline-flex items-center gap-2 text-sm text-white/40">
+            <div className="inline-flex items-center gap-2 text-sm text-text-tertiary">
               <Mail className="w-3.5 h-3.5" />
               Need help?{" "}
-              <a href="mailto:support@cogerphere.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
+              <a href="mailto:support@cogerphere.com" className="text-text-tertiary hover:text-white transition-colors underline underline-offset-2">
                 support@cogerphere.com
               </a>
             </div>

@@ -41,7 +41,7 @@ export const ModelSelector = ({ currentModel, onChange }: ModelSelectorProps) =>
         onClick={() => setOpen(!open)}
         className={cn(
           "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-200",
-          "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/60 hover:text-white/80"
+          "bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-text-secondary hover:text-white/80"
         )}
       >
         {current && (
@@ -62,7 +62,7 @@ export const ModelSelector = ({ currentModel, onChange }: ModelSelectorProps) =>
               if (tierModels.length === 0) return null;
               return (
                 <div key={tier}>
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-[10px] font-medium text-white/40 uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 px-2 py-1.5 text-[10px] font-medium text-text-tertiary uppercase tracking-wider">
                     {tierIcons[tier]}
                     {TIER_LABELS[tier]}
                   </div>
@@ -78,11 +78,11 @@ export const ModelSelector = ({ currentModel, onChange }: ModelSelectorProps) =>
                         "w-full text-left px-2.5 py-2 rounded-lg text-xs transition-all duration-150",
                         model.id === currentModel
                           ? "bg-primary/20 text-white border border-primary/30"
-                          : "text-white/70 hover:bg-white/10 hover:text-white border border-transparent"
+                          : "text-text-secondary hover:bg-white/10 hover:text-white border border-transparent"
                       )}
                     >
                       <div className="font-medium">{model.label}</div>
-                      <div className="text-[10px] text-white/40 mt-0.5">
+                      <div className="text-[10px] text-text-tertiary mt-0.5">
                         {model.description} &middot; {Math.round(model.context / 1000)}K context
                       </div>
                     </button>

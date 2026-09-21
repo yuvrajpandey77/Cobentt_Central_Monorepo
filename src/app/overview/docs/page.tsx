@@ -39,12 +39,12 @@ function CodeSnippet({ code, language }: { code: string; language: string }) {
   return (
     <div className="relative group">
       <div className="flex items-center justify-between px-4 py-2 bg-white/5 border border-white/10 border-b-0 rounded-tl-[8px] rounded-tr-[8px]">
-        <span className="text-[11px] font-medium text-white/40 font-mono uppercase tracking-wider">
+        <span className="text-[11px] font-medium text-text-tertiary font-mono uppercase tracking-wider">
           {language}
         </span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-text-muted hover:text-text-secondary transition-colors"
         >
           {copied ? (
             <>
@@ -122,7 +122,7 @@ export default function TechnicalDocumentationPage() {
       {/* ── Hero ── */}
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-12 lg:mb-16 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             <BookOpen className="w-3 h-3" />
             Documentation
           </span>
@@ -130,7 +130,7 @@ export default function TechnicalDocumentationPage() {
             Getting started with{" "}
             <span className="text-white">Product Name</span>
           </h1>
-          <p className="mt-3 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-3 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             Last updated March 30, 2026
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function TechnicalDocumentationPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-white/50" />
+                      <Sparkles className="w-4 h-4 text-text-tertiary" />
                       <span className="text-sm font-semibold text-white/80">
                         AI Assistance
                       </span>
@@ -157,14 +157,14 @@ export default function TechnicalDocumentationPage() {
                         onClick={() =>
                           navigator.clipboard.writeText(AI_PROMPT)
                         }
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-white/50 hover:text-white/80 transition-colors rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] hover:bg-white/5"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-text-tertiary hover:text-white/80 transition-colors rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] hover:bg-white/5"
                       >
                         <Clipboard className="w-3.5 h-3.5" />
                         Copy prompt
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm text-white/50 leading-relaxed">
+                  <p className="text-sm text-text-tertiary leading-relaxed">
                     {AI_PROMPT}
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export default function TechnicalDocumentationPage() {
                 <h2 className="text-xl font-bold text-white mb-4">
                   Prerequisites
                 </h2>
-                <ul className="space-y-2 text-sm text-white/60">
+                <ul className="space-y-2 text-sm text-text-secondary">
                   <li className="flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-white/30 shrink-0" />
                     Node.js 18+
@@ -198,14 +198,14 @@ export default function TechnicalDocumentationPage() {
                 <h2 className="text-xl font-bold text-white mb-3">
                   Install the package
                 </h2>
-                <p className="text-sm text-white/50 mb-4 leading-relaxed">
+                <p className="text-sm text-text-tertiary mb-4 leading-relaxed">
                   Every project starts with installing the core package. This
                   gives you access to all components, tokens, and utilities.
                 </p>
 
                 <div className="flex flex-col gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-white/70 mb-2">
+                    <p className="text-sm font-semibold text-text-secondary mb-2">
                       Step 1: Install the core package
                     </p>
                     <CodeSnippet
@@ -215,10 +215,10 @@ export default function TechnicalDocumentationPage() {
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-white/70 mb-2">
+                    <p className="text-sm font-semibold text-text-secondary mb-2">
                       Step 2: Import the precompiled styles
                     </p>
-                    <p className="text-sm text-white/40 mb-2 leading-relaxed">
+                    <p className="text-sm text-text-tertiary mb-2 leading-relaxed">
                       Astryx ships precompiled CSS, so there is no build plugin
                       to configure. Import the reset and component stylesheets
                       once at your app entry point.
@@ -231,7 +231,7 @@ import '@astryxdesign/core/astryx.css';`}
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-white/70 mb-2">
+                    <p className="text-sm font-semibold text-text-secondary mb-2">
                       Step 3: Import your first component
                     </p>
                     <CodeSnippet
@@ -253,7 +253,7 @@ export default function App() {
                 <h2 className="text-xl font-bold text-white mb-3">
                   Configure theming
                 </h2>
-                <p className="text-sm text-white/50 mb-4 leading-relaxed">
+                <p className="text-sm text-text-tertiary mb-4 leading-relaxed">
                   Astryx ships with a default theme that works out of the box.
                   To customize colors, typography, and spacing, wrap your app in
                   a theme provider.
@@ -270,7 +270,7 @@ export default function App({ children }) {
 }`}
                   language="tsx"
                 />
-                <p className="text-sm text-white/40 mt-3 leading-relaxed">
+                <p className="text-sm text-text-tertiary mt-3 leading-relaxed">
                   See the theming guide for the full list of customizable
                   tokens.
                 </p>
@@ -283,7 +283,7 @@ export default function App({ children }) {
                 <h2 className="text-xl font-bold text-white mb-4">
                   Next steps
                 </h2>
-                <ul className="space-y-2 text-sm text-white/60">
+                <ul className="space-y-2 text-sm text-text-secondary">
                   <li className="flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-white/30 shrink-0" />
                     Fundamental concepts — How theming, layout, and composition
@@ -315,7 +315,7 @@ export default function App({ children }) {
           {!isMobile && (
             <aside className="w-56 shrink-0" style={{ position: "sticky", top: 120, alignSelf: "start" }}>
               <nav role="complementary" aria-label="On this page">
-                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">
                   On this page
                 </h3>
                 <ul className="flex flex-col gap-1">
@@ -326,7 +326,7 @@ export default function App({ children }) {
                         className={`text-left text-sm w-full px-3 py-1.5 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[4px] rounded-br-[4px] transition-colors ${
                           activeId === section.id
                             ? "bg-white/10 text-white font-medium"
-                            : "text-white/40 hover:text-white/70 hover:bg-white/5"
+                            : "text-text-tertiary hover:text-text-secondary hover:bg-white/5"
                         }`}
                       >
                         {section.label}
@@ -345,7 +345,7 @@ export default function App({ children }) {
             <select
               value={activeId}
               onChange={(e) => scrollToId(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm bg-bg-card border border-white/10 text-white/70 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] appearance-none cursor-pointer"
+              className="w-full px-3 py-2.5 text-sm bg-bg-card border border-white/10 text-text-secondary rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] appearance-none cursor-pointer"
               style={{
                 backgroundImage:
                   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",

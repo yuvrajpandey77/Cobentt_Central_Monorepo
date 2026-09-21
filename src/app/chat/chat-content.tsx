@@ -128,7 +128,7 @@ export function ChatContent() {
         <aside className="w-[280px] border-r border-[var(--color-cb-border)] flex flex-col" />
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="w-5 h-5 border-2 border-[var(--color-cb-border-strong)] border-t-[var(--color-cb-text-muted)] rounded-full animate-spin" />
-          <p className="text-xs text-[var(--color-cb-text-dim)] mt-4">Loading workspace...</p>
+          <p className="text-xs text-text-tertiary mt-4">Loading workspace...</p>
         </div>
       </div>
     );

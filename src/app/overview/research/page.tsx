@@ -41,7 +41,7 @@ export default function ResearchPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             <BookOpen className="w-3 h-3" />
             Research
           </span>
@@ -49,7 +49,7 @@ export default function ResearchPage() {
             From source.{" "}
             <span className="text-white">To citation.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             A complete AI-powered research pipeline — from collecting sources to exporting a fully cited paper.
           </p>
         </div>
@@ -61,14 +61,14 @@ export default function ResearchPage() {
               {pipelineSteps.map((step) => (
                 <div key={step.step} className="relative flex items-start gap-4 group">
                   <div className="relative z-10 w-[46px] h-[46px] flex items-center justify-center bg-bg-card border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] group-hover:border-white/30 transition-colors flex-shrink-0">
-                    <step.icon className="w-4 h-4 text-white/50" />
+                    <step.icon className="w-4 h-4 text-text-tertiary" />
                   </div>
                   <div className="flex-1 min-w-0 pt-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-white/20 font-mono">{step.step}</span>
+                      <span className="text-[10px] text-text-disabled font-mono">{step.step}</span>
                       <h3 className="text-sm font-semibold text-white/80">{step.title}</h3>
                     </div>
-                    <p className="text-xs text-white/40 mt-1 leading-relaxed">{step.desc}</p>
+                    <p className="text-xs text-text-tertiary mt-1 leading-relaxed">{step.desc}</p>
                   </div>
                 </div>
               ))}
@@ -85,14 +85,14 @@ export default function ResearchPage() {
                 className="p-5 bg-bg-card border border-white/5 rounded-tl-[20px] rounded-tr-[8px] rounded-br-[20px] rounded-bl-[8px] hover:border-white/20 transition-colors"
               >
                 <h3 className="text-sm font-semibold text-white mb-1.5">{useCase.title}</h3>
-                <p className="text-xs text-white/40 leading-relaxed">{useCase.desc}</p>
+                <p className="text-xs text-text-tertiary leading-relaxed">{useCase.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         <div className="max-w-3xl mx-auto text-center pb-20 lg:pb-28">
-          <p className="text-base lg:text-lg text-white/40 mb-6">
+          <p className="text-base lg:text-lg text-text-tertiary mb-6">
             Ready to accelerate your research?
           </p>
           <Link

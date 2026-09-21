@@ -44,7 +44,7 @@ export const ChatComposer = ({ onSend, isPending, conversationId, currentModel, 
             }}
             minRows={1}
             maxRows={6}
-            className="w-full resize-none border-none outline-none bg-transparent px-4 py-3 text-sm text-white/60 placeholder:text-white/30"
+            className="w-full resize-none border-none outline-none bg-transparent px-4 py-3 text-sm text-text-secondary placeholder:text-text-muted"
             placeholder="Type a message..."
           />
           <div className="px-3 py-2 flex items-center justify-between border-t border-white/10">
@@ -55,7 +55,7 @@ export const ChatComposer = ({ onSend, isPending, conversationId, currentModel, 
                   onChange={onModelChange}
                 />
               )}
-              <div className="text-[10px] text-white/30">
+              <div className="text-[10px] text-text-muted">
                 {value.length > 0 && `${value.length} chars`}
               </div>
             </div>

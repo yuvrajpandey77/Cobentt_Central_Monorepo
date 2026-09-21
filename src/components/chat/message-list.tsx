@@ -59,7 +59,7 @@ function renderMarkdown(content: string) {
         parts.push(
           <div key={`code-${i}`} className="my-3 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[12px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] overflow-hidden">
             {codeLang && (
-              <div className="px-3 py-1.5 text-[10px] font-mono text-[var(--color-cb-text-dim)] border-b border-[var(--color-cb-border)] bg-[var(--color-cb-bg)]/50">{codeLang}</div>
+              <div className="px-3 py-1.5 text-[10px] font-mono text-text-tertiary border-b border-[var(--color-cb-border)] bg-[var(--color-cb-bg)]/50">{codeLang}</div>
             )}
             <pre className="p-4 overflow-x-auto text-[13px] leading-[1.7] font-mono text-[var(--color-cb-assistant-text)]"><code>{codeLines.join("\n")}</code></pre>
           </div>
@@ -106,7 +106,7 @@ function renderMarkdown(content: string) {
     parts.push(
       <div key="code-final" className="my-3 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[12px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] overflow-hidden">
         {codeLang && (
-          <div className="px-3 py-1.5 text-[10px] font-mono text-[var(--color-cb-text-dim)] border-b border-[var(--color-cb-border)] bg-[var(--color-cb-bg)]/50">{codeLang}</div>
+          <div className="px-3 py-1.5 text-[10px] font-mono text-text-tertiary border-b border-[var(--color-cb-border)] bg-[var(--color-cb-bg)]/50">{codeLang}</div>
         )}
         <pre className="p-4 overflow-x-auto text-[13px] leading-[1.7] font-mono text-[var(--color-cb-assistant-text)]"><code>{codeLines.join("\n")}</code></pre>
       </div>
@@ -183,15 +183,15 @@ function AssistantActions({
   return (
     <>
       <div className="flex items-center gap-0.5">
-        <button onClick={handleCopy} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title={copied ? "Copied" : "Copy"}>
+        <button onClick={handleCopy} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-text-tertiary hover:text-text-secondary transition-all" title={copied ? "Copied" : "Copy"}>
           {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
         {onRegenerate && (
-          <button onClick={onRegenerate} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Regenerate">
+          <button onClick={onRegenerate} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-text-tertiary hover:text-text-secondary transition-all" title="Regenerate">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         )}
-        <button onClick={() => setShareOpen(true)} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Share">
+        <button onClick={() => setShareOpen(true)} className="w-7 h-7 flex items-center justify-center rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] hover:bg-[var(--color-cb-card)] text-text-tertiary hover:text-text-secondary transition-all" title="Share">
           <Share2 className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -245,7 +245,7 @@ export function MessageList({
                 </div>
                 {!readOnly && (
                   <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => editMessage?.(msg.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-colors" title="Edit message">
+                    <button onClick={() => editMessage?.(msg.id)} className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-tertiary hover:text-text-secondary transition-colors" title="Edit message">
                       <Pencil className="w-3 h-3" /> Edit
                     </button>
                   </div>
@@ -264,7 +264,7 @@ export function MessageList({
                     {msg.sources.map((s) => (
                       <button key={s.index} className="flex items-center gap-1 px-2 py-1 rounded-tr-[6px] rounded-bl-[6px] rounded-tl-[3px] rounded-br-[3px] bg-[var(--color-cb-accent-muted)] hover:bg-[var(--color-cb-border)] transition-colors">
                         <span className="text-[10px] font-semibold text-[var(--color-cb-text-muted)]">{s.index}</span>
-                        <span className="text-[10px] text-[var(--color-cb-text-dim)]">{s.title}</span>
+                        <span className="text-[10px] text-text-tertiary">{s.title}</span>
                       </button>
                     ))}
                   </div>
@@ -278,7 +278,7 @@ export function MessageList({
                       onRegenerate={prevUser && onRegenerate ? () => onRegenerate(prevUser.id) : undefined}
                     />
                     {msg.thinkingTime != null && msg.thinkingTime > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] text-[var(--color-cb-text-dim)]">
+                      <div className="flex items-center gap-1 text-[10px] text-text-tertiary">
                         <Clock className="w-3 h-3" />
                         <span>Thought for {msg.thinkingTime.toFixed(1)}s</span>
                       </div>

@@ -94,7 +94,7 @@ export default function FeaturesPage() {
           <h1 className="text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight">
             Everything you need to build amazing apps
           </h1>
-          <p className="text-2xl text-white/70 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-2xl text-text-secondary max-w-4xl mx-auto leading-relaxed">
             Cobentt provides all the tools and features you need to create, deploy, and scale your applications with AI-powered development.
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function FeaturesPage() {
                   </div>
                   <h3 className="text-2xl font-bold break-words text-white">{feature.title}</h3>
                 </div>
-                <p className="text-white/70 leading-relaxed text-lg flex-1 break-words">{feature.description}</p>
+                <p className="text-text-secondary leading-relaxed text-lg flex-1 break-words">{feature.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -121,7 +121,7 @@ export default function FeaturesPage() {
           <h2 className="text-4xl font-bold mb-6 text-white">
             Ready to experience these features?
           </h2>
-          <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto">
+          <p className="text-xl text-text-secondary mb-10 max-w-2xl mx-auto">
             Start building with Cobentt today and see the difference AI can make.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">

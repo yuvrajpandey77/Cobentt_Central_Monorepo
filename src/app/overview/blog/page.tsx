@@ -42,7 +42,7 @@ export default function BlogPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             <BookOpen className="w-3 h-3" />
             Blog
           </span>
@@ -50,7 +50,7 @@ export default function BlogPage() {
             Thoughts on{" "}
             <span className="text-white">building.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             Stories, insights, and deep dives from the Cobentt team.
           </p>
         </div>
@@ -62,18 +62,18 @@ export default function BlogPage() {
               className="p-5 lg:p-6 bg-bg-card border border-white/5 rounded-tr-[14px] rounded-bl-[14px] rounded-tl-[8px] rounded-br-[8px] hover:border-white/10 transition-colors group cursor-pointer"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">
+                <span className="text-[10px] font-medium text-text-muted bg-white/5 px-2 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px]">
                   {post.tag}
                 </span>
-                <span className="text-[10px] text-white/20 flex items-center gap-1">
+                <span className="text-[10px] text-text-disabled flex items-center gap-1">
                   <Clock className="w-2.5 h-2.5" />
                   {post.date}
                 </span>
-                <span className="text-[10px] text-white/20">{post.readTime}</span>
+                <span className="text-[10px] text-text-disabled">{post.readTime}</span>
               </div>
               <h2 className="text-base font-semibold text-white mb-1 group-hover:text-white/80 transition-colors">{post.title}</h2>
-              <p className="text-sm text-white/40 leading-relaxed">{post.excerpt}</p>
-              <div className="mt-3 flex items-center gap-1 text-[11px] text-white/30 group-hover:text-white/50 transition-colors">
+              <p className="text-sm text-text-tertiary leading-relaxed">{post.excerpt}</p>
+              <div className="mt-3 flex items-center gap-1 text-[11px] text-text-muted group-hover:text-text-tertiary transition-colors">
                 Read more <ArrowRight className="w-3 h-3" />
               </div>
             </div>

@@ -44,14 +44,14 @@ export default function LicensesPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             Licenses
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Built on the shoulders of{" "}
             <span className="text-white">open source.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             We stand on the work of thousands of open-source contributors. Here are the licenses that make Cobentt possible.
           </p>
         </div>
@@ -68,11 +68,11 @@ export default function LicensesPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-2">
                       <h3 className="text-sm font-semibold text-white">{item.name}</h3>
-                      <span className="text-[10px] font-medium text-white/30 bg-white/5 px-2 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] shrink-0">
+                      <span className="text-[10px] font-medium text-text-muted bg-white/5 px-2 py-0.5 rounded-tr-[4px] rounded-bl-[4px] rounded-tl-[3px] rounded-br-[3px] shrink-0">
                         {item.license}
                       </span>
                     </div>
-                    <p className="text-xs text-white/40 leading-relaxed">{item.note}</p>
+                    <p className="text-xs text-text-tertiary leading-relaxed">{item.note}</p>
                   </div>
                 ))}
               </div>

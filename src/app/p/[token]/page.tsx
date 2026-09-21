@@ -110,9 +110,9 @@ export default function SharedChatPage({ params }: { params: Promise<{ token: st
     return (
       <div className="h-dvh flex items-center justify-center bg-[var(--color-cb-bg)] px-6">
         <div className="text-center max-w-sm">
-          <Lock className="w-8 h-8 mx-auto text-[var(--color-cb-text-dim)]" />
+          <Lock className="w-8 h-8 mx-auto text-text-tertiary" />
           <h1 className="mt-3 text-sm font-semibold text-[var(--color-cb-text-bright)]">This shared chat isn&apos;t available</h1>
-          <p className="mt-1 text-xs text-[var(--color-cb-text-dim)]">
+          <p className="mt-1 text-xs text-text-tertiary">
             The link may be wrong, or sharing was turned off.
           </p>
         </div>
@@ -130,7 +130,7 @@ export default function SharedChatPage({ params }: { params: Promise<{ token: st
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex items-center justify-between px-4 h-12 bg-[var(--color-cb-bg)] border-b border-[var(--color-cb-border)]">
           <div className="flex items-center gap-2 min-w-0">
-            <Lock className="w-3.5 h-3.5 text-[var(--color-cb-text-dim)] flex-shrink-0" />
+            <Lock className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
             <span className="text-[11px] text-[var(--color-cb-text-muted)] truncate">
               Shared chat · view only
             </span>
@@ -171,7 +171,7 @@ export default function SharedChatPage({ params }: { params: Promise<{ token: st
               readOnly
             />
             {messages.length === 0 && (
-              <p className="text-xs text-[var(--color-cb-text-dim)] text-center py-10">No messages to show.</p>
+              <p className="text-xs text-text-tertiary text-center py-10">No messages to show.</p>
             )}
           </div>
         </div>

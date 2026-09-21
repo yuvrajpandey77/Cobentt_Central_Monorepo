@@ -230,7 +230,7 @@ export function ContractInteraction({
         <Card className="border-white/15 bg-black/40 backdrop-blur-xl">
           <CardContent className="space-y-4 p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-[0.2em] text-white/40">Contract</span>
+              <span className="text-xs uppercase tracking-[0.2em] text-text-tertiary">Contract</span>
               <Badge className="bg-blue-500/20 text-blue-200 border-blue-500/30">
                 <Shield className="mr-1 h-3.5 w-3.5" />
                 {contractABI.length} ABI entries
@@ -239,7 +239,7 @@ export function ContractInteraction({
 
             <div className="space-y-3">
               <div className="space-y-2">
-                <p className="text-xs font-medium text-white/50">Contract Address</p>
+                <p className="text-xs font-medium text-text-tertiary">Contract Address</p>
                 <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                   <code className="flex-1 truncate font-mono text-sm text-white/80">
                   {contractAddress}
@@ -248,7 +248,7 @@ export function ContractInteraction({
                     size="icon"
                   variant="ghost"
                   onClick={() => copyToClipboard(contractAddress)}
-                  className="h-8 w-8 text-white/60 hover:text-black hover:bg-white/20"
+                  className="h-8 w-8 text-text-secondary hover:text-black hover:bg-white/20"
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
@@ -256,7 +256,7 @@ export function ContractInteraction({
                   size="icon"
                   variant="ghost"
                   onClick={() => window.open(`${explorerUrl}/address/${contractAddress}`, '_blank')}
-                  className="h-8 w-8 text-white/60 hover:text-black hover:bg-white/20"
+                  className="h-8 w-8 text-text-secondary hover:text-black hover:bg-white/20"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Button>
@@ -347,7 +347,7 @@ export function ContractInteraction({
         <Card className="border-white/15 bg-black/40 backdrop-blur-xl">
           <CardContent className="space-y-4 p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-[0.2em] text-white/40">Wallet</span>
+              <span className="text-xs uppercase tracking-[0.2em] text-text-tertiary">Wallet</span>
               <Badge className={`${isConnected ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-200 border-yellow-500/30'}`}>
                 <Wallet className="mr-1 h-3.5 w-3.5" />
                 {isConnected ? 'Connected' : 'Not Connected'}
@@ -361,7 +361,7 @@ export function ContractInteraction({
                     <CheckCircle2 className="h-4 w-4 text-emerald-200" />
                     <div className="flex-1">
                       <p className="text-xs font-semibold text-white">Wallet Connected</p>
-                      <p className="text-[10px] font-mono text-white/70">
+                      <p className="text-[10px] font-mono text-text-secondary">
                         {userAddress?.slice(0, 6)}...{userAddress?.slice(-4)}
                       </p>
                     </div>
@@ -372,7 +372,7 @@ export function ContractInteraction({
                   size="sm"
                   variant="outline"
                   onClick={() => disconnect()}
-                  className="w-full border-white/20 text-white/70 hover:bg-white/20 hover:text-black text-xs"
+                  className="w-full border-white/20 text-text-secondary hover:bg-white/20 hover:text-black text-xs"
                 >
                   <LogOut className="mr-2 h-3.5 w-3.5" />
                   Disconnect
@@ -385,7 +385,7 @@ export function ContractInteraction({
                     <AlertCircle className="h-4 w-4 text-yellow-200" />
                     <div className="flex-1">
                       <p className="text-xs font-semibold text-white">Wallet Required</p>
-                      <p className="text-[10px] text-white/70">
+                      <p className="text-[10px] text-text-secondary">
                         Connect wallet to execute write functions
                       </p>
                     </div>
@@ -404,7 +404,7 @@ export function ContractInteraction({
           <Card className="border-white/15 bg-black/40 backdrop-blur-xl">
             <CardContent className="space-y-4 p-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.2em] text-white/40">Activity</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-text-tertiary">Activity</span>
                 <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-500/30">
                   <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                   Deployed
@@ -413,27 +413,27 @@ export function ContractInteraction({
 
               <div className="space-y-3">
                 <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">Build Job</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary">Build Job</p>
                   <p className="mt-1 text-sm font-mono text-white/80">
                     {buildJob.id.slice(0, 8)}…{buildJob.id.slice(-4)}
                   </p>
-                  <p className="text-xs text-white/50">{buildJob.status}</p>
+                  <p className="text-xs text-text-tertiary">{buildJob.status}</p>
                 </div>
 
                 {buildJob.transactionHash && getExplorerUrl && (
                   <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs uppercase tracking-[0.2em] text-white/40">Transaction</span>
+                      <span className="text-xs uppercase tracking-[0.2em] text-text-tertiary">Transaction</span>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => window.open(`${explorerUrl}/tx/${buildJob.transactionHash}`, '_blank')}
-                        className="h-6 w-6 p-0 text-white/60 hover:text-black hover:bg-white/20"
+                        className="h-6 w-6 p-0 text-text-secondary hover:text-black hover:bg-white/20"
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <code className="block truncate rounded border border-white/10 bg-black/40 px-2 py-1 font-mono text-xs text-white/70">
+                    <code className="block truncate rounded border border-white/10 bg-black/40 px-2 py-1 font-mono text-xs text-text-secondary">
                       {buildJob.transactionHash.slice(0, 10)}…{buildJob.transactionHash.slice(-6)}
                     </code>
                   </div>
@@ -445,7 +445,7 @@ export function ContractInteraction({
                       <CheckCircle2 className="h-4 w-4 text-emerald-200" />
                       <div>
                         <h3 className="text-xs font-semibold text-white">Verified</h3>
-                        <p className="text-[10px] text-white/70">Source verified on explorer</p>
+                        <p className="text-[10px] text-text-secondary">Source verified on explorer</p>
                       </div>
                     </div>
                   </div>
@@ -463,14 +463,14 @@ export function ContractInteraction({
               <TabsList className="grid w-full grid-cols-2 bg-transparent p-1">
                 <TabsTrigger 
                   value="read" 
-                  className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 text-sm"
+                  className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary text-sm"
                 >
                   <Eye className="mr-2 h-3.5 w-3.5" />
                   Read ({readFunctions.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="write" 
-                  className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60 text-sm"
+                  className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-text-secondary text-sm"
                 >
                   <Send className="mr-2 h-3.5 w-3.5" />
                   Write ({writeFunctions.length})
@@ -508,7 +508,7 @@ export function ContractInteraction({
                   <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 px-6 py-8 text-center">
                     <Wallet className="h-12 w-12 text-yellow-200 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-white mb-2">Wallet Connection Required</h3>
-                    <p className="text-sm text-white/70 mb-6">
+                    <p className="text-sm text-text-secondary mb-6">
                       Connect your wallet to execute state-changing functions and interact with the contract.
                     </p>
                     <ConnectButton />
@@ -516,7 +516,7 @@ export function ContractInteraction({
                   
                   {writeFunctions.length > 0 && (
                     <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                      <p className="text-xs text-white/50">
+                      <p className="text-xs text-text-tertiary">
                         {writeFunctions.length} write function{writeFunctions.length !== 1 ? 's' : ''} available after wallet connection
                       </p>
                     </div>
@@ -618,12 +618,12 @@ function FunctionCard({
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2">
             <span className="text-sm font-semibold text-white">{func.name}</span>
-            <Badge className="bg-white/10 text-white/70" variant="outline">
+            <Badge className="bg-white/10 text-text-secondary" variant="outline">
               {func.stateMutability.toUpperCase()}
             </Badge>
           </div>
           {(func.inputs ?? []).length > 0 && (
-            <p className="text-xs font-mono text-white/40">
+            <p className="text-xs font-mono text-text-tertiary">
               {(func.inputs ?? [])
                 .map((input) => `${input.name && input.name.length > 0 ? input.name : 'param'}: ${input.type}`)
                 .join(' • ')}
@@ -644,9 +644,9 @@ function FunctionCard({
             const label = input.name && input.name.length > 0 ? input.name : `Argument ${index + 1}`;
             return (
               <div key={`${func.name ?? 'fn'}-${key}`} className="space-y-1.5">
-                <Label className="text-xs font-medium text-white/60">
+                <Label className="text-xs font-medium text-text-secondary">
                   {label}
-                  <span className="ml-2 font-mono text-[11px] text-white/40">{input.type}</span>
+                  <span className="ml-2 font-mono text-[11px] text-text-tertiary">{input.type}</span>
                 </Label>
                 <Input
                   value={args[key] ?? ''}
@@ -657,7 +657,7 @@ function FunctionCard({
                     }))
                   }
                   placeholder={`Enter ${input.type}`}
-                  className="h-9 border-white/10 bg-white/5 text-sm text-white placeholder:text-white/30 focus:border-blue-400/40 focus:ring-blue-400/10"
+                  className="h-9 border-white/10 bg-white/5 text-sm text-white placeholder:text-text-muted focus:border-blue-400/40 focus:ring-blue-400/10"
                 />
               </div>
             );
@@ -689,7 +689,7 @@ function FunctionCard({
         )}
       </Button>
 
-        <span className="text-xs font-mono text-white/30">
+        <span className="text-xs font-mono text-text-muted">
           {isReadOnly ? 'No transaction cost' : 'Requires wallet confirmation'}
         </span>
       </div>
@@ -709,7 +709,7 @@ function FunctionCard({
 function StatPill({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-white/40">
+      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-text-tertiary">
         {icon}
         {label}
       </div>
@@ -720,7 +720,7 @@ function StatPill({ icon, label, value }: { icon: ReactNode; label: string; valu
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 py-12 text-center text-sm text-white/50">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 py-12 text-center text-sm text-text-tertiary">
       {message}
     </div>
   );

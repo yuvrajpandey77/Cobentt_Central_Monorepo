@@ -72,7 +72,7 @@ export function TokenCounter({ projectId, variant = "inline", collapsed }: Token
       <div className="px-3 py-2 border-t border-white/10">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center gap-2 text-xs text-white/60 hover:text-white/80 transition-colors"
+          className="w-full flex items-center gap-2 text-xs text-text-secondary hover:text-white/80 transition-colors"
         >
           <Zap className="h-3.5 w-3.5 shrink-0" />
           <span className="font-medium">{tokensUsed.toLocaleString()} / {tokensLimit.toLocaleString()}</span>
@@ -86,24 +86,24 @@ export function TokenCounter({ projectId, variant = "inline", collapsed }: Token
           {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </button>
         {expanded && (
-          <div className="mt-2 space-y-1.5 text-xs text-white/50 pl-5">
+          <div className="mt-2 space-y-1.5 text-xs text-text-tertiary pl-5">
             <div className="flex justify-between">
               <span>Daily used</span>
-              <span className="font-medium text-white/70">{tokensUsed.toLocaleString()}</span>
+              <span className="font-medium text-text-secondary">{tokensUsed.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span>Remaining</span>
-              <span className="font-medium text-white/70">{tokensRemaining.toLocaleString()}</span>
+              <span className="font-medium text-text-secondary">{tokensRemaining.toLocaleString()}</span>
             </div>
             {projectId && projectTotals && (
               <div className="flex justify-between">
                 <span>Project today</span>
-                <span className="font-medium text-white/70">{projectTotals.totalTokensProjectToday.toLocaleString()}</span>
+                <span className="font-medium text-text-secondary">{projectTotals.totalTokensProjectToday.toLocaleString()}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Plan</span>
-              <span className="font-medium text-white/70">{quotaStatus.plan}</span>
+              <span className="font-medium text-text-secondary">{quotaStatus.plan}</span>
             </div>
             {percentUsed >= 90 && quotaStatus.plan === "FREE" && (
               <div className="flex items-center gap-1 text-amber-400 pt-1">
@@ -122,12 +122,12 @@ export function TokenCounter({ projectId, variant = "inline", collapsed }: Token
       <div className="border rounded-lg px-4 py-2.5 bg-black/40 border-white/10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Zap className="h-4 w-4 text-white/60" />
+            <Zap className="h-4 w-4 text-text-secondary" />
             <div className="flex items-center gap-2 text-sm">
               <span className="text-white/80 font-medium">{tokensUsed.toLocaleString()}</span>
-              <span className="text-white/40">/</span>
-              <span className="text-white/60">{tokensLimit.toLocaleString()}</span>
-              <span className="text-white/30 text-xs">tokens</span>
+              <span className="text-text-tertiary">/</span>
+              <span className="text-text-secondary">{tokensLimit.toLocaleString()}</span>
+              <span className="text-text-muted text-xs">tokens</span>
             </div>
           </div>
           <div className="flex items-center gap-3 flex-1 max-w-[200px]">
@@ -143,29 +143,29 @@ export function TokenCounter({ projectId, variant = "inline", collapsed }: Token
           </div>
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-white/40 hover:text-white/60 transition-colors"
+            className="text-text-tertiary hover:text-text-secondary transition-colors"
           >
             {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
         </div>
         {expanded && (
-          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-white/60">
+          <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-text-secondary">
             <div>
-              <div className="text-white/40">Daily Used</div>
+              <div className="text-text-tertiary">Daily Used</div>
               <div className="font-medium text-white/80">{tokensUsed.toLocaleString()}</div>
             </div>
             <div>
-              <div className="text-white/40">Remaining</div>
+              <div className="text-text-tertiary">Remaining</div>
               <div className="font-medium text-white/80">{tokensRemaining.toLocaleString()}</div>
             </div>
             {projectId && projectTotals && (
               <div>
-                <div className="text-white/40">Project Today</div>
+                <div className="text-text-tertiary">Project Today</div>
                 <div className="font-medium text-white/80">{projectTotals.totalTokensProjectToday.toLocaleString()}</div>
               </div>
             )}
             <div>
-              <div className="text-white/40">Plan</div>
+              <div className="text-text-tertiary">Plan</div>
               <div className="font-medium text-white/80">{quotaStatus.plan}</div>
             </div>
             {quotaStatus.warnings && quotaStatus.warnings.length > 0 && (

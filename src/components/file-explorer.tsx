@@ -48,12 +48,12 @@ const FileBreadcrumb = ({ filepath }: FileBreadcrumbProps) => {
                                     {segment}
                                 </BreadcrumbPage>
                             ) : (
-                                <span className="text-white/60 text-xs">
+                                <span className="text-text-secondary text-xs">
                                     {segment}
                                 </span>
                             )}
                         </BreadcrumbItem>
-                        {!isLast && <BreadcrumbSeparator className="text-white/40" />}
+                        {!isLast && <BreadcrumbSeparator className="text-text-tertiary" />}
                     </Fragment>
                 )
             })
@@ -64,14 +64,14 @@ const FileBreadcrumb = ({ filepath }: FileBreadcrumbProps) => {
             return (
                 <>
                     <BreadcrumbItem>
-                        <span className="text-white/60 text-xs">
+                        <span className="text-text-secondary text-xs">
                             {firstSegment}
                         </span>
-                        <BreadcrumbSeparator className="text-white/40" />
+                        <BreadcrumbSeparator className="text-text-tertiary" />
                         <BreadcrumbItem>
-                            <BreadcrumbEllipsis className="text-white/40" />
+                            <BreadcrumbEllipsis className="text-text-tertiary" />
                         </BreadcrumbItem>
-                        <BreadcrumbSeparator className="text-white/40" />
+                        <BreadcrumbSeparator className="text-text-tertiary" />
                         <BreadcrumbItem>
                             <BreadcrumbPage className="font-medium text-sm text-white truncate max-w-[150px]">
                                 {lastSegment}
@@ -135,7 +135,7 @@ const CompactTree = ({ item, selectedValue, onSelect, parentPath, level }: Compa
         return (
             <div 
                 className={`flex items-center py-1 px-2 cursor-pointer hover:bg-white/20 rounded text-xs ${
-                    isSelected ? 'bg-white/10 text-white' : 'text-white/70 hover:text-black'
+                    isSelected ? 'bg-white/10 text-white' : 'text-text-secondary hover:text-black'
                 }`}
                 style={{ paddingLeft: `${8 + level * 12}px` }}
                 onClick={() => onSelect?.(currentPath)}
@@ -150,7 +150,7 @@ const CompactTree = ({ item, selectedValue, onSelect, parentPath, level }: Compa
     return (
         <div>
             <div 
-                className="flex items-center py-1 px-2 cursor-pointer hover:bg-white/20 rounded text-xs text-white/70 hover:text-black"
+                className="flex items-center py-1 px-2 cursor-pointer hover:bg-white/20 rounded text-xs text-text-secondary hover:text-black"
                 style={{ paddingLeft: `${8 + level * 12}px` }}
                 onClick={() => setIsOpen(!isOpen)}
             >

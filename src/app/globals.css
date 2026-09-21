@@ -3,13 +3,26 @@
 
 :root {
   --background: #101314;
-  --foreground: #E8F1F6;
+  --foreground: #ECECEC;
 
   --color-bg-primary: #101314;
   --color-bg-secondary: #1a1d20;
   --color-bg-card: #24292D;
-  --color-text-primary: #E8F1F6;
-  --color-text-secondary: #96A0AB;
+  /* ── Semantic text hierarchy (ChatGPT-inspired dark scale) ──
+     strong: headings / active nav / high-priority UI
+     primary: body, chat content, labels, important values
+     secondary: descriptions, supporting info
+     tertiary: timestamps, metadata, captions
+     muted: placeholders, genuinely muted content
+     disabled: extremely low-priority / disabled text only
+     code: technical / monospace text */
+  --color-text-strong: #F5F5F5;
+  --color-text-primary: #ECECEC;
+  --color-text-secondary: #B4B4B4;
+  --color-text-tertiary: #8E8E8E;
+  --color-text-muted: #676767;
+  --color-text-disabled: #4A4A4A;
+  --color-text-code: #D1D5DB;
   --color-accent-secondary: #96A0AB;
   --color-accent-hover: #E8F1F6;
   --color-success: #b3c79a;
@@ -21,15 +34,15 @@
   --color-cb-card: #24292D;
   --color-cb-border: #E8F1F61A;
   --color-cb-border-strong: #495056;
-  --color-cb-text: #E8F1F6;
-  --color-cb-text-bright: #E8F1F6;
-  --color-cb-text-muted: #96A0AB;
+  --color-cb-text: #ECECEC;
+  --color-cb-text-bright: #F5F5F5;
+  --color-cb-text-muted: #B4B4B4;
   --color-cb-text-dim: #495056;
   --color-cb-accent: #a3c987;
   --color-cb-accent-muted: rgba(163,201,135,0.15);
   --color-cb-accent-glow: rgba(163,201,135,0.3);
   --color-cb-user-bubble: #24292D;
-  --color-cb-assistant-text: rgba(255, 255, 255, 0.6);
+  --color-cb-assistant-text: #ECECEC;
   --color-cb-input-bg: #1a1d20;
   --color-cb-input-focus: #101314;
   --color-cb-tab-bar: #101314;
@@ -62,17 +75,17 @@
 
   /* shadcn / Radix tokens (gothic dark) */
   --card: #1a1d20;
-  --card-foreground: #E8F1F6;
+  --card-foreground: #ECECEC;
   --popover: #24292D;
-  --popover-foreground: #E8F1F6;
+  --popover-foreground: #ECECEC;
   --primary: #a3c987;
   --primary-foreground: #101314;
   --secondary: #24292D;
-  --secondary-foreground: #E8F1F6;
+  --secondary-foreground: #ECECEC;
   --muted: #24292D;
-  --muted-foreground: #96A0AB;
+  --muted-foreground: #B4B4B4;
   --accent: #495056;
-  --accent-foreground: #E8F1F6;
+  --accent-foreground: #ECECEC;
   --destructive: #c6a6a2;
   --destructive-foreground: #101314;
   --border: #E8F1F61A;
@@ -84,11 +97,11 @@
   --chart-4: #dec074;
   --chart-5: #d97580;
   --sidebar: #1a1d20;
-  --sidebar-foreground: #E8F1F6;
+  --sidebar-foreground: #ECECEC;
   --sidebar-primary: #a3c987;
   --sidebar-primary-foreground: #101314;
   --sidebar-accent: #495056;
-  --sidebar-accent-foreground: #E8F1F6;
+  --sidebar-accent-foreground: #ECECEC;
   --sidebar-border: #495056;
   --sidebar-ring: #a3c987;
 
@@ -123,6 +136,13 @@
 
 /* ── Light Palette (Gothic is dark-only, light uses muted gothic tones) ── */
 .light {
+  --color-text-strong: #101314;
+  --color-text-primary: #24292D;
+  --color-text-secondary: #495056;
+  --color-text-tertiary: #6d7680;
+  --color-text-muted: #96A0AB;
+  --color-text-disabled: #b9c2cb;
+  --color-text-code: #24292D;
   --color-cb-bg: #E8F1F6;
   --color-cb-bg-elevated: #dce5ec;
   --color-cb-card: #d4dde4;
@@ -280,8 +300,13 @@
   --color-bg-primary: #101314;
   --color-bg-secondary: #1a1d20;
   --color-bg-card: #24292D;
-  --color-text-primary: #E8F1F6;
-  --color-text-secondary: #96A0AB;
+  --color-text-strong: var(--color-text-strong);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-text-code: var(--color-text-code);
   --color-accent-secondary: #96A0AB;
   --color-accent-hover: #E8F1F6;
   --color-success: #b3c79a;

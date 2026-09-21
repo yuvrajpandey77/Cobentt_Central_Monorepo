@@ -146,7 +146,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
           <CheckCircle2 className="h-5 w-5" />
           Deploy Contract
         </CardTitle>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-text-secondary">
           Deploy your smart contract to the blockchain
         </p>
       </CardHeader>
@@ -168,11 +168,11 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                 <p className="text-sm font-medium text-white">Contract Details</p>
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
-                    <p className="text-white/60">ABI Functions</p>
+                    <p className="text-text-secondary">ABI Functions</p>
                     <p className="text-white font-mono">{contractABI?.length || 0}</p>
                   </div>
                   <div>
-                    <p className="text-white/60">Bytecode Size</p>
+                    <p className="text-text-secondary">Bytecode Size</p>
                     <p className="text-white font-mono">
                       {contractBytecode ? `${Math.round(contractBytecode.length / 2)} bytes` : 'N/A'}
                     </p>
@@ -189,7 +189,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                     <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
                     <div>
                       <p className="text-sm font-medium text-white">Deploying Contract</p>
-                      <p className="text-xs text-white/60">Please confirm the transaction in your wallet</p>
+                      <p className="text-xs text-text-secondary">Please confirm the transaction in your wallet</p>
                     </div>
                   </div>
                 )}
@@ -199,7 +199,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                     <Loader2 className="h-5 w-5 text-yellow-400 animate-spin" />
                     <div>
                       <p className="text-sm font-medium text-white">Confirming Transaction</p>
-                      <p className="text-xs text-white/60">Waiting for blockchain confirmation...</p>
+                      <p className="text-xs text-text-secondary">Waiting for blockchain confirmation...</p>
                     </div>
                   </div>
                 )}
@@ -215,7 +215,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                         variant="ghost"
                         size="sm"
                         onClick={() => window.open(`https://etherscan.io/tx/${hash}`, '_blank')}
-                        className="text-white/60 hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
+                        className="text-text-secondary hover:text-black hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -231,7 +231,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                 <AlertCircle className="h-5 w-5 text-red-400" />
                 <div>
                   <p className="text-sm font-medium text-white">Deployment Failed</p>
-                  <p className="text-xs text-white/60">{error}</p>
+                  <p className="text-xs text-text-secondary">{error}</p>
                 </div>
               </div>
             )}
@@ -269,7 +269,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
               <CheckCircle2 className="h-5 w-5 text-green-400" />
               <div>
                 <p className="text-sm font-medium text-white">Contract Deployed Successfully!</p>
-                <p className="text-xs text-white/60">
+                <p className="text-xs text-text-secondary">
                   Your contract is now live on the blockchain
                 </p>
               </div>
@@ -286,7 +286,7 @@ export function DeployStep({ onNext, onBack, contractABI, contractBytecode, cons
                   variant="ghost"
                   size="sm"
                   onClick={() => window.open(`https://etherscan.io/address/${deployedAddress}`, '_blank')}
-                  className="text-white/60 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
+                  className="text-text-secondary hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>

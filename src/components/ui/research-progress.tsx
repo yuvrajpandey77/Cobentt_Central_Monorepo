@@ -26,7 +26,7 @@ export function ResearchProgress({ currentPhase, progress, running, runningText 
         <span className="text-xs font-medium text-white/80 truncate max-w-[120px]">
           {isActive ? displayPhase : "Processing..."}
         </span>
-        <span className="text-xs text-white/60 tabular-nums">
+        <span className="text-xs text-text-secondary tabular-nums">
           {displayProgress}%
         </span>
       </div>
@@ -62,7 +62,7 @@ export function ResearchProgress({ currentPhase, progress, running, runningText 
                   ? "text-violet-300 font-medium"
                   : isCompletedPhase
                     ? "text-green-300/70"
-                    : "text-white/40"
+                    : "text-text-tertiary"
               )}
               >
                 {phase}

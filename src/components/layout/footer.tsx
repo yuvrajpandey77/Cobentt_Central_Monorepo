@@ -21,7 +21,7 @@ export const Footer = () => {
               />
               <span className="text-2xl font-bold">COBENTT</span>
             </Link>
-            <p className="text-gray-400 text-sm max-w-xs mb-4">
+            <p className="text-text-secondary text-sm max-w-xs mb-4">
               Building intelligent systems where AI and Web3 evolve together.
             </p>
             <div className="flex items-center space-x-4">
@@ -29,7 +29,7 @@ export const Footer = () => {
                 href="https://github.com/COBENTT" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
+                className="text-text-secondary hover:text-white transition-colors duration-200"
               >
                 <Github className="w-5 h-5" />
               </a>
@@ -37,7 +37,7 @@ export const Footer = () => {
                 href="https://x.com/cobentt" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
+                className="text-text-secondary hover:text-white transition-colors duration-200"
               >
                 <Twitter className="w-5 h-5" />
               </a>
@@ -45,20 +45,20 @@ export const Footer = () => {
                 href="https://www.linkedin.com/company/cobentt" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors duration-200"
+                className="text-text-secondary hover:text-white transition-colors duration-200"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
             </div>
-            <p className="text-gray-500 text-xs max-w-xs mt-5">
-              by{' '}<a href="https://cogerphere.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Cogerphere</a>{' '}AI Labs
+            <p className="text-text-tertiary text-xs max-w-xs mt-5">
+              by{' '}<a href="https://cogerphere.com" target="_blank" rel="noopener noreferrer" className="text-text-secondary hover:text-white transition-colors">Cogerphere</a>{' '}AI Labs
             </p>
           </div>
 
           {/* Products */}
           <div>
-            <h3 className="font-semibold mb-4 text-gray-300">Products</h3>
-            <ul className="space-y-3 text-gray-400">
+            <h3 className="font-semibold mb-4 text-text-code">Products</h3>
+            <ul className="space-y-3 text-text-secondary">
               <li>
                 <Link href="/" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
                   <span>Cobentt</span>
@@ -94,8 +94,8 @@ export const Footer = () => {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold mb-4 text-gray-300">Resources</h3>
-            <ul className="space-y-3 text-gray-400">
+            <h3 className="font-semibold mb-4 text-text-code">Resources</h3>
+            <ul className="space-y-3 text-text-secondary">
               <li>
                 <Link href="/docs" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
                   <span>Documentation</span>
@@ -131,8 +131,8 @@ export const Footer = () => {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold mb-4 text-gray-300">Company</h3>
-            <ul className="space-y-3 text-gray-400">
+            <h3 className="font-semibold mb-4 text-text-code">Company</h3>
+            <ul className="space-y-3 text-text-secondary">
               <li>
                 <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
                   <span>About</span>
@@ -162,8 +162,8 @@ export const Footer = () => {
 
           {/* Legal */}
           <div>
-            <h3 className="font-semibold mb-4 text-gray-300">Legal</h3>
-            <ul className="space-y-3 text-gray-400">
+            <h3 className="font-semibold mb-4 text-text-code">Legal</h3>
+            <ul className="space-y-3 text-text-secondary">
               <li>
                 <Link href="/overview/privacy" className="hover:text-white transition-colors duration-200">
                   Privacy Policy
@@ -194,8 +194,8 @@ export const Footer = () => {
 
           {/* Connect */}
           <div>
-            <h3 className="font-semibold mb-4 text-gray-300">Connect</h3>
-            <ul className="space-y-3 text-gray-400">
+            <h3 className="font-semibold mb-4 text-text-code">Connect</h3>
+            <ul className="space-y-3 text-text-secondary">
               <li>
                 <Link href="/overview/contact" className="hover:text-white transition-colors duration-200">
                   Contact us
@@ -217,7 +217,7 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 py-10 mt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-text-secondary">
             <p>&copy; {new Date().getFullYear()} Cogerphere AI Labs. All rights reserved.</p>
           </div>
         </div>

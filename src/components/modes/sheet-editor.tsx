@@ -205,17 +205,17 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
           className="bg-transparent text-xs font-semibold text-white/80 outline-none focus:border-b focus:border-primary/40"
           onClick={(e) => e.stopPropagation()}
         />
-        <span className="text-[10px] text-white/30">{numCols} cols × {rows.length} rows</span>
+        <span className="text-[10px] text-text-muted">{numCols} cols × {rows.length} rows</span>
         <div className="flex-1" />
-        <button onClick={(e) => { e.stopPropagation(); addRow(); }} className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white px-2 py-1 rounded-md hover:bg-white/5" title="Add row">
+        <button onClick={(e) => { e.stopPropagation(); addRow(); }} className="flex items-center gap-1 text-[11px] text-text-tertiary hover:text-white px-2 py-1 rounded-md hover:bg-white/5" title="Add row">
           <Plus className="h-3 w-3" /> Row
         </button>
-        <button onClick={(e) => { e.stopPropagation(); addColumn(); }} className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white px-2 py-1 rounded-md hover:bg-white/5" title="Add column">
+        <button onClick={(e) => { e.stopPropagation(); addColumn(); }} className="flex items-center gap-1 text-[11px] text-text-tertiary hover:text-white px-2 py-1 rounded-md hover:bg-white/5" title="Add column">
           <Plus className="h-3 w-3" /> Col
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); setShowColMenu((v) => !v); }}
-          className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white px-2 py-1 rounded-md hover:bg-white/5"
+          className="flex items-center gap-1 text-[11px] text-text-tertiary hover:text-white px-2 py-1 rounded-md hover:bg-white/5"
           title="Manage columns"
         >
           <Trash2 className="h-3 w-3" /> Cols
@@ -224,7 +224,7 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
         <button
           onClick={(e) => { e.stopPropagation(); if (activeCell) setCell(activeCell[0], activeCell[1], null); }}
           disabled={!activeCell}
-          className="flex items-center gap-1 text-[11px] text-white/50 hover:text-white disabled:opacity-30 px-2 py-1 rounded-md hover:bg-white/5"
+          className="flex items-center gap-1 text-[11px] text-text-tertiary hover:text-white disabled:opacity-30 px-2 py-1 rounded-md hover:bg-white/5"
           title="Clear active cell"
         >
           <Type className="h-3 w-3" /> Clear
@@ -234,11 +234,11 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
       {/* Column manager */}
       {showColMenu && (
         <div className="px-3 py-2 border-b border-white/10 bg-black/40 backdrop-blur-sm">
-          <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium mb-2">Columns</p>
+          <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium mb-2">Columns</p>
           <div className="flex flex-col gap-1.5">
             {columns.map((col, c) => (
               <div key={col.key + c} className="flex items-center gap-2">
-                <span className="font-mono text-[10px] text-white/30 w-5">{colLetter(c)}</span>
+                <span className="font-mono text-[10px] text-text-muted w-5">{colLetter(c)}</span>
                 <input
                   value={col.header}
                   onChange={(e) => setColumnHeader(c, e.target.value)}
@@ -249,16 +249,16 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
                   value={col.type || "text"}
                   onChange={(e) => setColumnType(c, e.target.value)}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-neutral-800 border border-white/10 rounded text-[10px] text-white/60 outline-none px-1 py-1"
+                  className="bg-neutral-800 border border-white/10 rounded text-[10px] text-text-secondary outline-none px-1 py-1"
                   title="Column type"
                 >
                   <option value="text">Text</option>
                   <option value="number">Number</option>
                 </select>
-                <button onClick={(e) => { e.stopPropagation(); clearColumn(c); }} className="text-white/30 hover:text-white p-1" title="Clear column">
+                <button onClick={(e) => { e.stopPropagation(); clearColumn(c); }} className="text-text-muted hover:text-white p-1" title="Clear column">
                   <Type className="h-3 w-3" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); removeColumn(c); }} className="text-white/30 hover:text-red-400 p-1" title="Delete column">
+                <button onClick={(e) => { e.stopPropagation(); removeColumn(c); }} className="text-text-muted hover:text-red-400 p-1" title="Delete column">
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
@@ -270,7 +270,7 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
       {/* Formula bar */}
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/10 bg-white/[0.02]">
         <Sigma className="h-3 w-3 text-cyan-400/70" />
-        <span className="font-mono text-[10px] text-white/40 w-8 text-right">{activeCell ? colLetter(activeCell[0]) + (activeCell[1] + 1) : ""}</span>
+        <span className="font-mono text-[10px] text-text-tertiary w-8 text-right">{activeCell ? colLetter(activeCell[0]) + (activeCell[1] + 1) : ""}</span>
         <input
           value={formulaDraft !== "" ? formulaDraft : String(activeRaw ?? "")}
           onChange={(e) => setFormulaDraft(e.target.value)}
@@ -282,10 +282,10 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
             }
           }}
           placeholder={activeCell ? "Enter value or formula (e.g. =SUM(A1:A5))" : "Select a cell"}
-          className="flex-1 bg-transparent outline-none font-mono text-[11px] text-white/80 placeholder:text-white/25"
+          className="flex-1 bg-transparent outline-none font-mono text-[11px] text-white/80 placeholder:text-text-disabled"
           onClick={(e) => e.stopPropagation()}
         />
-        {activeCell && <span className="text-[10px] text-white/40 whitespace-nowrap">= {activeDisplay}</span>}
+        {activeCell && <span className="text-[10px] text-text-tertiary whitespace-nowrap">= {activeDisplay}</span>}
       </div>
 
       {/* Grid */}
@@ -340,10 +340,10 @@ export function SheetEditor({ block, selected, onSelect, onChange }: SheetEditor
         />
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10 text-[10px] text-white/40">
+      <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10 text-[10px] text-text-tertiary">
         <span className="font-mono">fx</span>
         <span>Formulas supported: =SUM(A1:B2), =A1*2, =AVG(...)</span>
-        {activeCell && <span className="ml-auto text-white/50">Active: <b className="text-cyan-300">{activeDisplay}</b></span>}
+        {activeCell && <span className="ml-auto text-text-tertiary">Active: <b className="text-cyan-300">{activeDisplay}</b></span>}
       </div>
     </div>
   );

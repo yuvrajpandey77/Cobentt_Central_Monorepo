@@ -27,13 +27,13 @@ export default function OverviewPage() {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <Bot className="w-4 h-4 text-white/50" />
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">AI Agents</span>
+                  <Bot className="w-4 h-4 text-text-tertiary" />
+                  <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">AI Agents</span>
                 </div>
                 <h3 className="text-2xl lg:text-3xl font-bold text-white">
                   Autonomous agents. Intelligent workflows.
                 </h3>
-                <p className="text-sm text-white/40 mt-1 max-w-lg">
+                <p className="text-sm text-text-tertiary mt-1 max-w-lg">
                   Deploy agents that plan, reason, call tools, and execute complex tasks autonomously.
                 </p>
               </div>
@@ -55,12 +55,12 @@ export default function OverviewPage() {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Plans & Pricing</span>
+                  <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">Plans & Pricing</span>
                 </div>
                 <h3 className="text-2xl lg:text-3xl font-bold text-white">
                   Start free. Scale as you grow.
                 </h3>
-                <p className="text-sm text-white/40 mt-1 max-w-lg">
+                <p className="text-sm text-text-tertiary mt-1 max-w-lg">
                   Cobentt is available in multiple plans for individuals, teams, and enterprises.
                 </p>
               </div>

@@ -39,14 +39,14 @@ export function ContextEngine() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="space-y-6"
           >
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
               The Context Engine
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.05]">
               Everything connected.{" "}
               <span className="text-white">Nothing forgotten.</span>
             </h2>
-            <p className="text-base lg:text-lg text-white/40 leading-relaxed max-w-lg">
+            <p className="text-base lg:text-lg text-text-tertiary leading-relaxed max-w-lg">
               Meridian maintains a persistent knowledge graph that connects every project, chat, document, file, and research source. Context doesn&apos;t reset when you switch conversations.
             </p>
             <div className="space-y-2">
@@ -57,7 +57,7 @@ export function ContextEngine() {
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-2.5 text-sm">
                   <span className="text-white font-semibold w-20">{item.stat}</span>
-                  <span className="text-white/40">{item.label}</span>
+                  <span className="text-text-tertiary">{item.label}</span>
                 </div>
               ))}
             </div>
@@ -81,13 +81,13 @@ export function ContextEngine() {
                       : "rounded-tl-[6px] rounded-tr-[14px] rounded-br-[6px] rounded-bl-[14px]"
                   }`}
                 >
-                  <source.icon className="w-4 h-4 text-white/50" />
-                  <span className="text-[9px] text-white/30 text-center leading-tight">{source.label}</span>
+                  <source.icon className="w-4 h-4 text-text-tertiary" />
+                  <span className="text-[9px] text-text-muted text-center leading-tight">{source.label}</span>
                 </motion.div>
               ))}
               <div className="col-span-4 mt-2 p-3 bg-bg-card border border-white/10 rounded-tr-[16px] rounded-bl-[16px] rounded-tl-[10px] rounded-br-[10px] text-center">
-                <span className="text-xs text-white/60 font-medium">Unified Context</span>
-                <p className="text-[9px] text-white/30 mt-0.5">Every source feeds into a single persistent knowledge graph</p>
+                <span className="text-xs text-text-secondary font-medium">Unified Context</span>
+                <p className="text-[9px] text-text-muted mt-0.5">Every source feeds into a single persistent knowledge graph</p>
               </div>
             </div>
           </motion.div>

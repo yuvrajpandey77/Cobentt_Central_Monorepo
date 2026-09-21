@@ -446,7 +446,7 @@ forge test
   if (!project) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+        <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -501,7 +501,7 @@ forge test
               <h1 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white">
                 {project?.tokenName || project?.name}
               </h1>
-              <p className="text-white/60 text-sm">
+              <p className="text-text-secondary text-sm">
                 {project?.contractType} • {project?.blockchain} {project?.network}
               </p>
             </div>
@@ -516,24 +516,24 @@ forge test
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-white/60">Blockchain</p>
+                    <p className="text-xs text-text-secondary">Blockchain</p>
                     <p className="text-white font-medium text-sm">{project?.blockchain}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-white/60">Contract Type</p>
+                    <p className="text-xs text-text-secondary">Contract Type</p>
                     <p className="text-white font-medium text-sm">{project?.contractType}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-white/60">Token Symbol</p>
+                    <p className="text-xs text-text-secondary">Token Symbol</p>
                     <p className="text-white font-medium text-sm">{project?.tokenSymbol}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-white/60">Network</p>
+                    <p className="text-xs text-text-secondary">Network</p>
                     <p className="text-white font-medium text-sm capitalize">{project?.network?.toLowerCase()}</p>
                   </div>
                   {project?.tokenSupply && (
                     <div className="col-span-2">
-                      <p className="text-xs text-white/60">Total Supply</p>
+                      <p className="text-xs text-text-secondary">Total Supply</p>
                       <p className="text-white font-medium text-sm">{project.tokenSupply}</p>
                     </div>
                   )}
@@ -541,10 +541,10 @@ forge test
 
                 {project?.features && project.features.length > 0 && (
                   <div>
-                    <p className="text-xs text-white/60 mb-2">Features</p>
+                    <p className="text-xs text-text-secondary mb-2">Features</p>
                     <div className="flex flex-wrap gap-1">
                       {project.features.map((feature: string) => (
-                        <Badge key={feature} variant="outline" className="border-white/20 text-white/70 text-xs">
+                        <Badge key={feature} variant="outline" className="border-white/20 text-text-secondary text-xs">
                           {feature}
                         </Badge>
                       ))}
@@ -650,7 +650,7 @@ forge test
                 <Progress value={buildStatus?.progress || 0} className="h-2" />
                 
                 {buildStatus?.currentStep && (
-                  <p className="text-xs text-white/70 flex items-center gap-2">
+                  <p className="text-xs text-text-secondary flex items-center gap-2">
                     {isRunning && <Loader2 className="h-3 w-3 animate-spin" />}
                     {buildStatus.currentStep}
                   </p>
@@ -700,19 +700,19 @@ forge test
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-white/60">Contract Name</p>
+                      <p className="text-xs text-text-secondary">Contract Name</p>
                       <p className="text-white font-medium text-sm">{buildStatus.artifacts.contractName || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60">Contract Type</p>
+                      <p className="text-xs text-text-secondary">Contract Type</p>
                       <p className="text-white font-medium text-sm">{buildStatus.artifacts.contractType || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60">ABI Functions</p>
+                      <p className="text-xs text-text-secondary">ABI Functions</p>
                       <p className="text-white font-medium text-sm">{buildStatus.artifacts.abi?.length || 0}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60">Bytecode Length</p>
+                      <p className="text-xs text-text-secondary">Bytecode Length</p>
                       <p className="text-white font-medium text-sm">{buildStatus.artifacts.bytecode?.length || 0} chars</p>
                     </div>
                   </div>
@@ -720,7 +720,7 @@ forge test
                   {showArtifacts && (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs text-white/60 mb-2">ABI Preview</p>
+                        <p className="text-xs text-text-secondary mb-2">ABI Preview</p>
                         <div className="bg-black/30 rounded p-2 max-h-32 overflow-y-auto thin-scrollbar">
                           <pre className="text-xs text-green-400 font-mono">
                             {JSON.stringify(buildStatus.artifacts.abi?.slice(0, 3), null, 2)}
@@ -730,7 +730,7 @@ forge test
                       </div>
                       
                       <div>
-                        <p className="text-xs text-white/60 mb-2">Bytecode Preview</p>
+                        <p className="text-xs text-text-secondary mb-2">Bytecode Preview</p>
                         <div className="bg-black/30 rounded p-2 max-h-20 overflow-y-auto thin-scrollbar">
                           <pre className="text-xs text-blue-400 font-mono">
                             {buildStatus.artifacts.bytecode?.substring(0, 100)}
@@ -879,8 +879,8 @@ forge test
                   {isLoadingFiles ? (
                     <div className="h-full flex items-center justify-center bg-black/20">
                       <div className="text-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-white/60 mx-auto mb-2" />
-                        <p className="text-white/60 text-sm">Loading files from E2B sandbox...</p>
+                        <Loader2 className="h-8 w-8 animate-spin text-text-secondary mx-auto mb-2" />
+                        <p className="text-text-secondary text-sm">Loading files from E2B sandbox...</p>
                       </div>
                     </div>
                   ) : (
@@ -913,7 +913,7 @@ forge test
                           </div>
                         ))
                       ) : (
-                        <div className="text-white/40">Waiting for logs...</div>
+                        <div className="text-text-tertiary">Waiting for logs...</div>
                       )}
                     </div>
                   </div>
@@ -942,7 +942,7 @@ function BuildStep({ title, completed, active }: { title: string; completed: boo
           <div className="h-2 w-2 rounded-full bg-white/40" />
         )}
       </div>
-      <span className={`text-sm ${completed || active ? 'text-white font-medium' : 'text-white/50'}`}>
+      <span className={`text-sm ${completed || active ? 'text-white font-medium' : 'text-text-tertiary'}`}>
         {title}
       </span>
     </div>

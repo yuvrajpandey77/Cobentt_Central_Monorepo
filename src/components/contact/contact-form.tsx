@@ -15,7 +15,7 @@ interface ContactFormProps {
 }
 
 const inputClass =
-  "w-full px-4 py-3 bg-white/5 border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] text-sm text-white placeholder-white/30 focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all";
+  "w-full px-4 py-3 bg-white/5 border border-white/10 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] text-sm text-white placeholder-text-muted focus:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/10 transition-all";
 
 export function ContactForm({ initialTopic = "general", compact = false }: ContactFormProps) {
   const [name, setName] = useState("");
@@ -59,13 +59,13 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
       <div className="p-8 text-center">
         <CheckCircle2 className="w-10 h-10 text-green-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-white mb-2">Message sent</h3>
-        <p className="text-sm text-white/40 max-w-md mx-auto">
+        <p className="text-sm text-text-tertiary max-w-md mx-auto">
           Thanks {name ? name.split(" ")[0] : "there"} — our team will get back to
-          you at <span className="text-white/70">{email}</span>. For urgent
+          you at <span className="text-text-secondary">{email}</span>. For urgent
           issues, email us directly at{" "}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-white/70 hover:text-white underline underline-offset-2"
+            className="text-text-secondary hover:text-white underline underline-offset-2"
           >
             {SUPPORT_EMAIL}
           </a>
@@ -78,7 +78,7 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
             setMessage("");
             setRating(0);
           }}
-          className="mt-6 text-xs text-white/40 hover:text-white transition-colors underline underline-offset-2"
+          className="mt-6 text-xs text-text-tertiary hover:text-white transition-colors underline underline-offset-2"
         >
           Send another message
         </button>
@@ -90,7 +90,7 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="contact-name" className="block text-xs font-medium text-white/50 mb-1.5">
+          <label htmlFor="contact-name" className="block text-xs font-medium text-text-tertiary mb-1.5">
             Name *
           </label>
           <input
@@ -105,7 +105,7 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
           />
         </div>
         <div>
-          <label htmlFor="contact-email" className="block text-xs font-medium text-white/50 mb-1.5">
+          <label htmlFor="contact-email" className="block text-xs font-medium text-text-tertiary mb-1.5">
             Email *
           </label>
           <input
@@ -123,7 +123,7 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="contact-topic" className="block text-xs font-medium text-white/50 mb-1.5">
+          <label htmlFor="contact-topic" className="block text-xs font-medium text-text-tertiary mb-1.5">
             Topic *
           </label>
           <select
@@ -141,8 +141,8 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
         </div>
         {!compact && (
           <div>
-            <label htmlFor="contact-company" className="block text-xs font-medium text-white/50 mb-1.5">
-              Company <span className="text-white/30">(optional)</span>
+            <label htmlFor="contact-company" className="block text-xs font-medium text-text-tertiary mb-1.5">
+              Company <span className="text-text-muted">(optional)</span>
             </label>
             <input
               id="contact-company"
@@ -158,8 +158,8 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
       </div>
 
       <div>
-        <span className="block text-xs font-medium text-white/50 mb-1.5">
-          How would you rate Cobentt so far? <span className="text-white/30">(optional)</span>
+        <span className="block text-xs font-medium text-text-tertiary mb-1.5">
+          How would you rate Cobentt so far? <span className="text-text-muted">(optional)</span>
         </span>
         <div className="flex items-center gap-1" role="radiogroup" aria-label="Rating">
           {[1, 2, 3, 4, 5].map((star) => (
@@ -178,19 +178,19 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
                 className={`w-5 h-5 transition-colors ${
                   star <= (hoverRating || rating)
                     ? "text-yellow-400 fill-yellow-400"
-                    : "text-white/20"
+                    : "text-text-disabled"
                 }`}
               />
             </button>
           ))}
           {rating > 0 && (
-            <span className="ml-2 text-xs text-white/40">{rating}/5</span>
+            <span className="ml-2 text-xs text-text-tertiary">{rating}/5</span>
           )}
         </div>
       </div>
 
       <div>
-        <label htmlFor="contact-message" className="block text-xs font-medium text-white/50 mb-1.5">
+        <label htmlFor="contact-message" className="block text-xs font-medium text-text-tertiary mb-1.5">
           Message *
         </label>
         <textarea
@@ -232,11 +232,11 @@ export function ContactForm({ initialTopic = "general", compact = false }: Conta
           </>
         )}
       </button>
-      <p className="text-[11px] text-white/30 text-center">
+      <p className="text-[11px] text-text-muted text-center">
         Prefer email? Write to{" "}
         <a
           href={`mailto:${SUPPORT_EMAIL}`}
-          className="text-white/50 hover:text-white underline underline-offset-2"
+          className="text-text-tertiary hover:text-white underline underline-offset-2"
         >
           {SUPPORT_EMAIL}
         </a>
