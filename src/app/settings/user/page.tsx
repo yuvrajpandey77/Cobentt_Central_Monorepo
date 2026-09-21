@@ -180,11 +180,11 @@ export default function UserInfoPage() {
             30-Day Usage
           </div>
           <div className="space-y-1">
-            {analytics.dailyUsage.slice(-14).map((day: DailyUsageItem, i: number) => (
-              <div key={i} className="flex items-center gap-2 text-xs">
-                <span className="w-20 text-muted-foreground shrink-0">
-                  {new Date(day.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                </span>
+              {analytics.dailyUsage.slice(-14).map((day: DailyUsageItem, i: number) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <span className="w-20 text-muted-foreground shrink-0" suppressHydrationWarning>
+                    {new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
                 <div className="flex-1 h-4 bg-white/5 rounded-full overflow-hidden">
                   <div
                     className={cn("h-full rounded-full", getBarColor((day.totalTokens / maxDailyTokens) * 100))}
@@ -274,8 +274,8 @@ export default function UserInfoPage() {
                   )}
                 </div>
                 <div className="text-right">
-                  <div className="font-semibold">{r.totalTokens.toLocaleString?.() ?? r.totalTokens} tokens</div>
-                  <div className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleString()}</div>
+                  <div className="font-semibold">{r.totalTokens.toLocaleString?.("en-US") ?? r.totalTokens} tokens</div>
+                  <div className="text-xs text-muted-foreground" suppressHydrationWarning>{new Date(r.createdAt).toLocaleString("en-US")}</div>
                 </div>
               </div>
             ))}

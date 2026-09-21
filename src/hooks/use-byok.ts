@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { fetchJson } from "@/lib/safe-fetch-json";
 
 export interface ByokKeyMeta {
   id: string;
@@ -24,9 +25,8 @@ export function useByok() {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/byok/status", { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
+      const { ok, data } = await fetchJson<ByokStatus>("/api/byok/status", { cache: "no-store" });
+      if (!ok || !data) return;
       setStatus({ hasKey: !!data.hasKey, providers: data.providers ?? [], keys: data.keys ?? [] });
     } catch {
       // Gate stays closed on network failure — harness will surface BYOK_REQUIRED.

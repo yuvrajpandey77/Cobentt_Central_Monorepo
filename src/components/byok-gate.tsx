@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { DEFAULT_MODEL, getModelById, UNIQUE_MODELS } from "@/lib/models";
 import { toast } from "sonner";
 import { useByok } from "@/hooks/use-byok";
+import { fetchJson } from "@/lib/safe-fetch-json";
 
 const PROVIDERS = [
   { id: "openrouter", label: "OpenRouter (recommended)", placeholder: "sk-or-v1-..." },
@@ -62,18 +63,17 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
     setTestResult(null);
     setTestMsg("");
     try {
-      const res = await fetch("/api/byok/test", {
+      const { data } = await fetchJson<{ ok: boolean; error?: string }>(`/api/byok/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, apiKey: apiKey.trim(), model }),
       });
-      const data = await res.json();
-      if (data.ok) {
+      if (data?.ok) {
         setTestResult("ok");
         setTestMsg(`Connected — ${selectedModel?.label ?? model} responded.`);
       } else {
         setTestResult("fail");
-        setTestMsg(data.error || "Test failed");
+        setTestMsg(data?.error || "Test failed. Check your connection and retry.");
       }
     } catch {
       setTestResult("fail");
@@ -94,13 +94,12 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/api-keys", {
+      const { ok, data } = await fetchJson<{ error?: string }>(`/api/settings/api-keys`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, name: name.trim(), apiKey: apiKey.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save key");
+      if (!ok) throw new Error(data?.error || "Failed to save key");
       // Key material leaves memory immediately.
       setApiKey("");
       toast.success("Key saved — AI is ready");

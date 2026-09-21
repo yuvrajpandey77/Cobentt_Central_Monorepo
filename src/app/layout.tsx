@@ -38,20 +38,23 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Providers MUST live inside <body>. Wrapping <html> with client providers
+  // breaks document structure and causes React hydration error #418 (text/
+  // markup mismatch between server and client) in production builds.
   return (
-    <ClerkProvider> 
-    <TRPCReactProvider>  
     <html lang="en" suppressHydrationWarning className="dark">
       <body
         className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} antialiased`}
       >
-        <GlobalQueryProgress />
-        <Toaster />
-        {children}
-        <Analytics />
+        <ClerkProvider>
+          <TRPCReactProvider>
+            <GlobalQueryProgress />
+            <Toaster />
+            {children}
+            <Analytics />
+          </TRPCReactProvider>
+        </ClerkProvider>
       </body>
     </html>
-    </TRPCReactProvider>
-    </ClerkProvider>
   );
 }

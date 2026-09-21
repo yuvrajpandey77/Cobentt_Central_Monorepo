@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_MODEL, UNIQUE_MODELS } from "@/lib/models";
+import { fetchJson } from "@/lib/safe-fetch-json";
 
 interface ApiKeyEntry {
   id: string;
@@ -57,9 +58,8 @@ export default function ApiKeysPage() {
 
   const fetchKeys = useCallback(async () => {
     try {
-      const res = await fetch("/api/settings/api-keys");
-      if (!res.ok) throw new Error("Failed to fetch keys");
-      const data = await res.json();
+      const { ok, data } = await fetchJson<{ keys: ApiKeyEntry[] }>("/api/settings/api-keys");
+      if (!ok || !data) throw new Error("Failed to fetch keys");
       setKeys(data.keys);
     } catch {
       toast.error("Failed to load API keys");
@@ -75,20 +75,19 @@ export default function ApiKeysPage() {
   const testSavedKey = async (id: string) => {
     setTests((p) => ({ ...p, [id]: { state: "testing" } }));
     try {
-      const res = await fetch("/api/byok/test", {
+      const { data } = await fetchJson<{ ok: boolean; error?: string }>(`/api/byok/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyId: id, model: testModel }),
       });
-      const data = await res.json();
       setTests((p) => ({
         ...p,
-        [id]: data.ok
+        [id]: data?.ok
           ? { state: "ok", msg: `Works with ${testModel}` }
-          : { state: "fail", msg: data.error || "Test failed" },
+          : { state: "fail", msg: data?.error || "Test failed. Check your connection and retry." },
       }));
     } catch {
-      setTests((p) => ({ ...p, [id]: { state: "fail", msg: "Test failed. Retry." } }));
+      setTests((p) => ({ ...p, [id]: { state: "fail", msg: "Test failed. Check your connection and retry." } }));
     }
   };
 
@@ -100,19 +99,18 @@ export default function ApiKeysPage() {
     setPreSaveTesting(true);
     setPreSaveTest({ state: "testing" });
     try {
-      const res = await fetch("/api/byok/test", {
+      const { data } = await fetchJson<{ ok: boolean; error?: string }>(`/api/byok/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: selectedProvider, apiKey: keyValue.trim(), model: testModel }),
       });
-      const data = await res.json();
       setPreSaveTest(
-        data.ok
+        data?.ok
           ? { state: "ok", msg: `Connected — ${testModel} responded.` }
-          : { state: "fail", msg: data.error || "Test failed" }
+          : { state: "fail", msg: data?.error || "Test failed. Check your connection and retry." }
       );
     } catch {
-      setPreSaveTest({ state: "fail", msg: "Test failed. Retry." });
+      setPreSaveTest({ state: "fail", msg: "Test failed. Check your connection and retry." });
     } finally {
       setPreSaveTesting(false);
     }
@@ -129,7 +127,7 @@ export default function ApiKeysPage() {
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/settings/api-keys", {
+      const { ok, data } = await fetchJson<{ key: ApiKeyEntry; error?: string }>(`/api/settings/api-keys`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,8 +136,7 @@ export default function ApiKeysPage() {
           apiKey: keyValue.trim(),
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add key");
+      if (!ok || !data?.key) throw new Error(data?.error || "Failed to add key");
       setKeys((prev) => [data.key, ...prev]);
       setKeyValue("");
       setKeyName("");
@@ -160,13 +157,12 @@ export default function ApiKeysPage() {
     }
     setRotating(true);
     try {
-      const res = await fetch(`/api/settings/api-keys/${id}`, {
+      const { ok, data } = await fetchJson<{ key: ApiKeyEntry; error?: string }>(`/api/settings/api-keys/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyId: id, apiKey: rotateValue.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update key");
+      if (!ok || !data?.key) throw new Error(data?.error || "Failed to update key");
       setKeys((prev) => prev.map((k) => (k.id === id ? data.key : k)));
       setRotatingId(null);
       setRotateValue("");
@@ -182,12 +178,12 @@ export default function ApiKeysPage() {
   const handleDeleteKey = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/settings/api-keys/${id}`, {
+      const { ok, error } = await fetchJson(`/api/settings/api-keys/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ keyId: id }),
       });
-      if (!res.ok) throw new Error("Failed to delete key");
+      if (!ok) throw new Error(error || "Failed to delete key");
       setKeys((prev) => prev.filter((k) => k.id !== id));
       toast.success("API key removed");
     } catch {
@@ -281,9 +277,9 @@ export default function ApiKeysPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" suppressHydrationWarning>
                       {key.lastUsedAt
-                        ? `Last used ${new Date(key.lastUsedAt).toLocaleDateString()}`
+                        ? `Last used ${new Date(key.lastUsedAt).toLocaleDateString("en-US")}`
                         : "Never used"}
                     </Badge>
                     <Button
