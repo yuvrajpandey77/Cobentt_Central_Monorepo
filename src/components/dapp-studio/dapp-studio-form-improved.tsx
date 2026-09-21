@@ -153,7 +153,7 @@ const contracts = [
     description: "Bring your own ABI / requirements",
     icon: Code2,
     highlights: ["Custom modules", "Scaffold ready", "Generator hooks"],
-    color: "text-gray-400",
+    color: "text-text-secondary",
   },
 ];
 
@@ -192,7 +192,7 @@ const StepProgress = ({ current }: { current: number }) => {
                   "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300",
                   index <= current 
                     ? "bg-white text-black shadow-lg border border-white/20" 
-                    : "bg-white/10 text-white/50 border border-white/20",
+                    : "bg-white/10 text-text-tertiary border border-white/20",
                 )}
               >
                 {index < current ? (
@@ -202,14 +202,14 @@ const StepProgress = ({ current }: { current: number }) => {
                 )}
               </div>
               <div className="mt-1 text-center">
-                <p className={cn("text-xs font-medium", index <= current ? "text-white" : "text-white/60")}>
+                <p className={cn("text-xs font-medium", index <= current ? "text-white" : "text-text-secondary")}>
                   {step.title}
                 </p>
-                <p className="text-xs text-white/50">{step.description}</p>
+                <p className="text-xs text-text-tertiary">{step.description}</p>
               </div>
             </div>
             {index < STEP_ENTRIES.length - 1 && (
-              <ChevronRight className="h-3 w-3 text-white/30 mx-1" />
+              <ChevronRight className="h-3 w-3 text-text-muted mx-1" />
             )}
           </div>
         ))}
@@ -304,7 +304,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                               <chain.icon className={cn("h-5 w-5", isActive ? "text-gray-700" : chain.color)} />
                               <div className="space-y-1">
                                 <p className={cn("font-medium text-xs", isActive ? "text-black" : "text-white")}>{chain.label}</p>
-                                <p className={cn("text-xs leading-tight", isActive ? "text-gray-600" : "text-white/60")}>{chain.description}</p>
+                                <p className={cn("text-xs leading-tight", isActive ? "text-gray-600" : "text-text-secondary")}>{chain.description}</p>
                               </div>
                             </CardContent>
                           </Card>
@@ -345,10 +345,10 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                               <contract.icon className={cn("h-5 w-5", isActive ? "text-gray-700" : contract.color)} />
                               <div className="space-y-1">
                                 <p className={cn("font-medium text-xs", isActive ? "text-black" : "text-white")}>{contract.label}</p>
-                                <p className={cn("text-xs leading-tight", isActive ? "text-gray-600" : "text-white/60")}>{contract.description}</p>
+                                <p className={cn("text-xs leading-tight", isActive ? "text-gray-600" : "text-text-secondary")}>{contract.description}</p>
                                 <div className="flex flex-wrap gap-1 justify-center">
                                   {contract.highlights.slice(0, 1).map((item) => (
-                                    <Badge key={item} variant="secondary" className={cn("text-xs px-1 py-0", isActive ? "bg-gray-100 text-gray-600" : "bg-white/10 text-white/70")}>
+                                    <Badge key={item} variant="secondary" className={cn("text-xs px-1 py-0", isActive ? "bg-gray-100 text-gray-600" : "bg-white/10 text-text-secondary")}>
                                       {item}
                                     </Badge>
                                   ))}
@@ -370,7 +370,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
       case 1:
         return (
           <div className="flex flex-col justify-center h-full min-h-[400px] space-y-6">
-            <div className="flex items-center justify-center gap-2 text-sm text-white/60">
+            <div className="flex items-center justify-center gap-2 text-sm text-text-secondary">
               <Sparkles className="h-4 w-4 text-sky-300" />
               {hasAISuggestions 
                 ? "AI has pre-filled these values. Review and customize as needed."
@@ -391,10 +391,10 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       <Input 
                         {...field} 
                         placeholder="e.g., My Awesome Token" 
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-blue-500/50" 
+                        className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary focus:ring-2 focus:ring-blue-500/50" 
                       />
                     </FormControl>
-                    <FormDescription className="text-white/50 text-xs">
+                    <FormDescription className="text-text-tertiary text-xs">
                       The full name of your token (e.g., &quot;Ethereum&quot;)
                     </FormDescription>
                     <FormMessage />
@@ -414,10 +414,10 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       <Input 
                         {...field} 
                         placeholder="e.g., TKN" 
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-blue-500/50" 
+                        className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary focus:ring-2 focus:ring-blue-500/50" 
                       />
                     </FormControl>
-                    <FormDescription className="text-white/50 text-xs">
+                    <FormDescription className="text-text-tertiary text-xs">
                       Short ticker symbol (e.g., &quot;ETH&quot;, usually 3-5 characters)
                     </FormDescription>
                     <FormMessage />
@@ -437,10 +437,10 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       <Input 
                         {...field} 
                         placeholder="e.g., 1000000" 
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-blue-500/50" 
+                        className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary focus:ring-2 focus:ring-blue-500/50" 
                       />
                     </FormControl>
-                    <FormDescription className="text-white/50 text-xs">
+                    <FormDescription className="text-text-tertiary text-xs">
                       Maximum number of tokens that will exist
                     </FormDescription>
                     <FormMessage />
@@ -460,10 +460,10 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       <Input 
                         {...field} 
                         placeholder="18 (standard)" 
-                        className="border-white/20 bg-white/10 text-white placeholder:text-white/40 focus:ring-2 focus:ring-blue-500/50" 
+                        className="border-white/20 bg-white/10 text-white placeholder:text-text-tertiary focus:ring-2 focus:ring-blue-500/50" 
                       />
                     </FormControl>
-                    <FormDescription className="text-white/50 text-xs">
+                    <FormDescription className="text-text-tertiary text-xs">
                       Divisibility (18 is standard, 0 for NFTs)
                     </FormDescription>
                     <FormMessage />
@@ -490,7 +490,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                         <SelectItem value="mainnet" className="focus:bg-white/10">Mainnet</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription className="text-white/50 text-xs">
+                    <FormDescription className="text-text-tertiary text-xs">
                       Choose the network for deployment
                     </FormDescription>
                     <FormMessage />
@@ -505,7 +505,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                   <FormItem className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 p-4">
                     <div className="space-y-1">
                       <FormLabel className="text-white text-sm">Auto-verify on Etherscan</FormLabel>
-                      <FormDescription className="text-white/60 text-xs">
+                      <FormDescription className="text-text-secondary text-xs">
                         Automatically verify contract after deployment
                       </FormDescription>
                     </div>
@@ -526,7 +526,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
       case 2:
         return (
           <div className="flex flex-col justify-center h-full min-h-[400px] space-y-6">
-            <div className="flex items-center justify-center gap-2 text-sm text-white/60">
+            <div className="flex items-center justify-center gap-2 text-sm text-text-secondary">
               <Sparkles className="h-4 w-4 text-sky-300" />
               Attach optional modules. Your template will include audited patterns for each module you enable.
             </div>
@@ -558,7 +558,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                             </FormControl>
                             <div className="space-y-1 text-white">
                               <FormLabel className="font-medium cursor-pointer text-sm">{feature.label}</FormLabel>
-                              <FormDescription className="text-white/60 text-xs">{feature.description}</FormDescription>
+                              <FormDescription className="text-text-secondary text-xs">{feature.description}</FormDescription>
                             </div>
                           </FormItem>
                         )}
@@ -577,7 +577,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                   <div className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 p-4 w-full max-w-md">
                     <div className="space-y-1">
                       <FormLabel className="text-white text-sm">Generate test suite</FormLabel>
-                      <FormDescription className="text-white/60 text-xs">
+                      <FormDescription className="text-text-secondary text-xs">
                         Create Foundry tests for your contract
                       </FormDescription>
                     </div>
@@ -609,34 +609,34 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                 <CardContent className="p-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-white/60 mb-1">Blockchain</p>
+                      <p className="text-xs text-text-secondary mb-1">Blockchain</p>
                       <p className="text-white font-medium capitalize">{form.watch("blockchain")}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60 mb-1">Contract Type</p>
+                      <p className="text-xs text-text-secondary mb-1">Contract Type</p>
                       <p className="text-white font-medium uppercase">{form.watch("contractType")}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60 mb-1">Token Name</p>
+                      <p className="text-xs text-text-secondary mb-1">Token Name</p>
                       <p className="text-white font-medium">{form.watch("tokenName")}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60 mb-1">Symbol</p>
+                      <p className="text-xs text-text-secondary mb-1">Symbol</p>
                       <p className="text-white font-medium">{form.watch("tokenSymbol")}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60 mb-1">Total Supply</p>
+                      <p className="text-xs text-text-secondary mb-1">Total Supply</p>
                       <p className="text-white font-medium">{form.watch("tokenSupply")}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60 mb-1">Network</p>
+                      <p className="text-xs text-text-secondary mb-1">Network</p>
                       <p className="text-white font-medium capitalize">{form.watch("network")}</p>
                     </div>
                   </div>
 
                   {form.watch("features")?.length > 0 && (
                     <div className="mt-4 pt-4 border-t border-white/10">
-                      <p className="text-xs text-white/60 mb-2">Enabled Features</p>
+                      <p className="text-xs text-text-secondary mb-2">Enabled Features</p>
                       <div className="flex flex-wrap gap-2">
                         {form.watch("features").map((feature) => (
                           <Badge key={feature} className="bg-white/10 text-white border-white/20 text-xs">
@@ -664,7 +664,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                     {/* Complexity Level */}
                     {form.watch("complexity") && (
                       <div className="mb-4">
-                        <p className="text-xs text-white/60 mb-2">Complexity Level</p>
+                        <p className="text-xs text-text-secondary mb-2">Complexity Level</p>
                         <Badge 
                           variant="outline" 
                           className={`${
@@ -683,7 +683,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                     {/* AI Reasoning */}
                     {form.watch("reasoning") && (
                       <div className="mb-4">
-                        <p className="text-xs text-white/60 mb-2">AI Reasoning</p>
+                        <p className="text-xs text-text-secondary mb-2">AI Reasoning</p>
                         <p className="text-white/80 text-sm">{form.watch("reasoning")}</p>
                       </div>
                     )}
@@ -691,7 +691,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                     {/* Gas Optimizations */}
                     {form.watch("gasOptimizations")?.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-xs text-white/60 mb-2">Gas Optimizations</p>
+                        <p className="text-xs text-text-secondary mb-2">Gas Optimizations</p>
                         <div className="space-y-2">
                           {form.watch("gasOptimizations").map((optimization, index) => (
                             <div key={index} className="flex items-start gap-2">
@@ -706,7 +706,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                     {/* Security Recommendations */}
                     {form.watch("securityRecommendations")?.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-xs text-white/60 mb-2">Security Recommendations</p>
+                        <p className="text-xs text-text-secondary mb-2">Security Recommendations</p>
                         <div className="space-y-2">
                           {form.watch("securityRecommendations").map((recommendation, index) => (
                             <div key={index} className="flex items-start gap-2">
@@ -721,7 +721,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                     {/* Custom Requirements */}
                     {form.watch("aiConfiguration")?.customRequirements && (
                       <div className="mb-4">
-                        <p className="text-xs text-white/60 mb-2">Custom Requirements Detected</p>
+                        <p className="text-xs text-text-secondary mb-2">Custom Requirements Detected</p>
                         <div className="space-y-2">
                           {Object.entries(form.watch("aiConfiguration").customRequirements).map(([key, value]: [string, unknown]) => {
                             if (value && typeof value === 'object' && Object.keys(value).length > 0) {
@@ -732,7 +732,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                                     <p className="text-white/80 text-sm font-medium capitalize">
                                       {key.replace(/([A-Z])/g, ' $1').trim()}
                                     </p>
-                                    <p className="text-white/60 text-xs">
+                                    <p className="text-text-secondary text-xs">
                                       {Object.entries(value).map(([k, v]) => `${k}: ${v}`).join(', ')}
                                     </p>
                                   </div>
@@ -750,10 +750,10 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
 
               {/* Next Steps */}
               <div className="text-center space-y-2">
-                <p className="text-sm text-white/70">
+                <p className="text-sm text-text-secondary">
                   Ready to generate your smart contract?
                 </p>
-                <p className="text-xs text-white/50">
+                <p className="text-xs text-text-tertiary">
                   Click the generate button to create your contract template and proceed to deployment.
                 </p>
               </div>
@@ -793,7 +793,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                     <Sparkles className="h-4 w-4 text-amber-300" />
                     <div className="flex-1">
                       <p className="text-xs font-medium text-white">AI Configuration Applied</p>
-                      <p className="text-xs text-white/60 mt-1">
+                      <p className="text-xs text-text-secondary mt-1">
                         Pre-filled with smart defaults. Review and customize below.
                       </p>
                     </div>
@@ -802,7 +802,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                         variant="ghost"
                         size="sm"
                         onClick={onReset}
-                        className="text-white/70 hover:text-black hover:bg-white/20 text-xs px-2 py-1 h-6"
+                        className="text-text-secondary hover:text-black hover:bg-white/20 text-xs px-2 py-1 h-6"
                       >
                         Start Over
                       </Button>
@@ -838,7 +838,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
               {/* Navigation Buttons - Positioned on the right side with proper spacing */}
               <div className="absolute -right-20 top-1/2 transform -translate-y-1/2 flex flex-col justify-center items-center gap-6 lg:flex hidden">
                 <div className="flex flex-col items-center gap-4">
-                  <span className="text-sm text-white/60">Step {step + 1} of {totalSteps}</span>
+                  <span className="text-sm text-text-secondary">Step {step + 1} of {totalSteps}</span>
                   
                   {step === totalSteps - 1 ? (
                     <Button
@@ -873,7 +873,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
               {/* Mobile Navigation - Below form on small screens */}
               <div className="flex flex-row justify-center items-center gap-6 w-full mt-8 lg:hidden">
                 <div className="flex flex-col items-center gap-4">
-                  <span className="text-sm text-white/60">Step {step + 1} of {totalSteps}</span>
+                  <span className="text-sm text-text-secondary">Step {step + 1} of {totalSteps}</span>
                   
                   {step === totalSteps - 1 ? (
                     <Button

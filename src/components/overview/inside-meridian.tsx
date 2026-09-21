@@ -26,7 +26,7 @@ export function InsideMeridian() {
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4"
           >
             Inside Meridian
           </motion.span>
@@ -43,7 +43,7 @@ export function InsideMeridian() {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mt-4 text-base lg:text-lg text-white/40 max-w-2xl mx-auto"
+            className="mt-4 text-base lg:text-lg text-text-tertiary max-w-2xl mx-auto"
           >
             Meridian is a small language model that runs locally on your machine. It orchestrates frontier models, manages context, and keeps everything connected   without sending your data to the cloud.
           </motion.p>

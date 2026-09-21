@@ -56,7 +56,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, showCopyButto
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="h-7 w-7 rounded-lg border border-white/10 bg-black/40 hover:bg-white/10 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none backdrop-blur-sm">
-                  <MoreHorizontal className="h-3.5 w-3.5 text-white/70" />
+                  <MoreHorizontal className="h-3.5 w-3.5 text-text-secondary" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="bottom" className="w-40">
@@ -162,7 +162,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, showCopyButto
                 variant="ghost"
                 onClick={() => onCopy(project.id)}
                 disabled={isCopying}
-                className="w-full h-9 text-sm font-medium text-white/60 hover:text-blue-300 hover:bg-blue-500/10 border border-transparent hover:border-blue-400/30 transition-all duration-200 ease-out rounded-lg"
+                className="w-full h-9 text-sm font-medium text-text-secondary hover:text-blue-300 hover:bg-blue-500/10 border border-transparent hover:border-blue-400/30 transition-all duration-200 ease-out rounded-lg"
               >
                 {isCopying ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -187,7 +187,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, showCopyButto
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="h-7 w-7 rounded-lg border border-white/10 bg-black/40 hover:bg-white/10 flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none backdrop-blur-sm">
-                <MoreHorizontal className="h-3.5 w-3.5 text-white/70" />
+                <MoreHorizontal className="h-3.5 w-3.5 text-text-secondary" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="bottom" className="w-40">

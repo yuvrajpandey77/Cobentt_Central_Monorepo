@@ -56,8 +56,8 @@ function DeployPageWrapper() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-white/60 mx-auto mb-4" />
-          <p className="text-white/60">Loading...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-text-secondary mx-auto mb-4" />
+          <p className="text-text-secondary">Loading...</p>
         </div>
       </div>
     );
@@ -168,7 +168,7 @@ function DeployPageContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+        <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
       </div>
     );
   }
@@ -177,7 +177,7 @@ function DeployPageContent() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white/60">Project not found</p>
+          <p className="text-text-secondary">Project not found</p>
         </div>
       </div>
     );
@@ -234,7 +234,7 @@ function DeployPageContent() {
               <h1 className="text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white">
                 Deploy Contract
               </h1>
-              <p className="text-white/60 text-sm">
+              <p className="text-text-secondary text-sm">
                 {project?.contractType} • {project?.blockchain} {project?.network}
               </p>
             </div>
@@ -249,29 +249,29 @@ function DeployPageContent() {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-white/60">Contract Name</p>
+                    <p className="text-xs text-text-secondary">Contract Name</p>
                     <p className="text-white font-medium text-sm">{project?.tokenName || project?.name}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-white/60">Contract Type</p>
+                    <p className="text-xs text-text-secondary">Contract Type</p>
                     <p className="text-white font-medium text-sm">{project?.contractType}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-white/60">Blockchain</p>
+                    <p className="text-xs text-text-secondary">Blockchain</p>
                     <p className="text-white font-medium text-sm">{project?.blockchain}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-white/60">Network</p>
+                    <p className="text-xs text-text-secondary">Network</p>
                     <p className="text-white font-medium text-sm capitalize">{project?.network?.toLowerCase()}</p>
                   </div>
                 </div>
 
                 {project?.features && project.features.length > 0 && (
                   <div>
-                    <p className="text-xs text-white/60 mb-2">Features</p>
+                    <p className="text-xs text-text-secondary mb-2">Features</p>
                     <div className="flex flex-wrap gap-1">
                       {project.features.map((feature: string) => (
-                        <Badge key={feature} variant="outline" className="border-white/20 text-white/70 text-xs">
+                        <Badge key={feature} variant="outline" className="border-white/20 text-text-secondary text-xs">
                           {feature}
                         </Badge>
                       ))}
@@ -293,7 +293,7 @@ function DeployPageContent() {
                 
                 <Progress value={progressPercentage} className="h-2" />
                 
-                <p className="text-xs text-white/70">
+                <p className="text-xs text-text-secondary">
                   Step {currentStep + 1} of {DEPLOY_STEPS.length}: {DEPLOY_STEPS[currentStep]?.title}
                 </p>
 
@@ -312,14 +312,14 @@ function DeployPageContent() {
                           ) : index === currentStep ? (
                             <Loader2 className="h-5 w-5 text-white animate-spin" />
                           ) : (
-                            <IconComponent className="h-4 w-4 text-white/40" />
+                            <IconComponent className="h-4 w-4 text-text-tertiary" />
                           )}
                         </div>
                         <div className="flex-1">
-                          <span className={`text-sm ${index <= currentStep ? 'text-white font-medium' : 'text-white/50'}`}>
+                          <span className={`text-sm ${index <= currentStep ? 'text-white font-medium' : 'text-text-tertiary'}`}>
                             {step.title}
                           </span>
-                          <p className="text-xs text-white/50">{step.description}</p>
+                          <p className="text-xs text-text-tertiary">{step.description}</p>
                         </div>
                       </div>
                     );
@@ -336,19 +336,19 @@ function DeployPageContent() {
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-xs text-white/60">Contract Name</p>
+                      <p className="text-xs text-text-secondary">Contract Name</p>
                       <p className="text-white font-medium text-sm">{contractArtifacts.contractName || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60">Contract Type</p>
+                      <p className="text-xs text-text-secondary">Contract Type</p>
                       <p className="text-white font-medium text-sm">{contractArtifacts.contractType || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60">ABI Functions</p>
+                      <p className="text-xs text-text-secondary">ABI Functions</p>
                       <p className="text-white font-medium text-sm">{contractArtifacts.abi?.length || 0}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/60">Bytecode Length</p>
+                      <p className="text-xs text-text-secondary">Bytecode Length</p>
                       <p className="text-white font-medium text-sm">{contractArtifacts.bytecode?.length || 0} chars</p>
                     </div>
                   </div>
@@ -373,7 +373,7 @@ function DeployPageContent() {
                   <h2 className="text-xl font-semibold text-white">
                     {DEPLOY_STEPS[currentStep]?.title}
                   </h2>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-text-secondary text-sm">
                     {DEPLOY_STEPS[currentStep]?.description}
                   </p>
                 </div>
@@ -432,7 +432,7 @@ function DeployPageContent() {
                         <CheckCircle2 className="h-5 w-5 text-green-400" />
                         Contract Deployed Successfully
                       </CardTitle>
-                      <p className="text-sm text-white/60">
+                      <p className="text-sm text-text-secondary">
                         Your contract has been successfully deployed and verified on the blockchain
                       </p>
                     </CardHeader>
@@ -442,7 +442,7 @@ function DeployPageContent() {
                           <CheckCircle2 className="h-5 w-5 text-green-400" />
                           <div>
                             <p className="text-sm font-medium text-white">Deployment Complete!</p>
-                            <p className="text-xs text-white/60">
+                            <p className="text-xs text-text-secondary">
                               Your contract is now live and verified on the blockchain
                             </p>
                           </div>

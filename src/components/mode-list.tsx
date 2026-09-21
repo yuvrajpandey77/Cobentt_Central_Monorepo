@@ -38,7 +38,7 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-white">{title}</h1>
-              <p className="text-sm text-white/50">{description}</p>
+              <p className="text-sm text-text-tertiary">{description}</p>
             </div>
           </div>
           <div className="flex justify-center sm:justify-end">
@@ -63,8 +63,8 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <FolderOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
-            <p className="text-sm text-white/60">Failed to load {title.toLowerCase()}. Please try again.</p>
+            <FolderOpen className="w-10 h-10 text-text-disabled mx-auto mb-3" />
+            <p className="text-sm text-text-secondary">Failed to load {title.toLowerCase()}. Please try again.</p>
           </div>
         ) : !items || items.length === 0 ? (
           <div className="text-center py-16 space-y-4">
@@ -73,7 +73,7 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white/80">No {title.toLowerCase()} yet</h3>
-              <p className="text-sm text-white/50 mt-1">Create your first one from the home page.</p>
+              <p className="text-sm text-text-tertiary mt-1">Create your first one from the home page.</p>
             </div>
             <Button
               onClick={() => router.push("/")}
@@ -86,7 +86,7 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
           </div>
         ) : (
           <>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-text-tertiary">
               {items.length} {items.length === 1 ? "item" : "items"}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -100,15 +100,15 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
                           <div className={`flex-shrink-0 w-9 h-9 ${iconBg} rounded-lg flex items-center justify-center`}>
                             <div className={`${iconColor} scale-75`}>{icon}</div>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0 mt-0.5" />
+                          <ArrowRight className="w-4 h-4 text-text-disabled group-hover:text-text-secondary transition-colors flex-shrink-0 mt-0.5" />
                         </div>
                         <h3 className="text-sm font-semibold text-white line-clamp-1 mb-2">
                           {item.title || "Untitled"}
                         </h3>
-                        <p className="text-xs text-white/50 line-clamp-2 mb-4 flex-1">
+                        <p className="text-xs text-text-tertiary line-clamp-2 mb-4 flex-1">
                           {preview}
                         </p>
-                        <div className="flex items-center gap-3 text-[10px] text-white/40">
+                        <div className="flex items-center gap-3 text-[10px] text-text-tertiary">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
@@ -134,7 +134,7 @@ export function ModeList({ mode, routePrefix, icon, iconBg, iconColor, title, de
 export function ModeListSkeleton() {
   return (
     <div className="flex justify-center items-center py-16">
-      <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+      <Loader2 className="w-5 h-5 animate-spin text-text-tertiary" />
     </div>
   );
 }

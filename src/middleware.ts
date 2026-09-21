@@ -12,6 +12,8 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 const isPublicRoute = createRouteMatcher([
     "/",
     "/overview(.*)",
+    "/contact(.*)",
+    "/docs(.*)",
     "/sign-in(.*)",
     "/sign-up(.*)",
     // Shared chat links are public, but data is token-gated server-side

@@ -69,17 +69,17 @@ export function MeridianSection() {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="space-y-6"
           >
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px]">
               The Intelligence Layer
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.05]">
               Meet{" "}
               <span className="text-white">Meridian.</span>
             </h2>
-            <p className="text-lg lg:text-xl text-white/60 font-medium">
+            <p className="text-lg lg:text-xl text-text-secondary font-medium">
               The intelligence behind Cobentt.
             </p>
-            <p className="text-base lg:text-lg text-white/40 leading-relaxed max-w-lg">
+            <p className="text-base lg:text-lg text-text-tertiary leading-relaxed max-w-lg">
               Meridian is a purpose-built orchestration engine. It plans every request, retrieves context, routes to the optimal model, and verifies every response   before you see a result.
             </p>
             <div className="grid grid-cols-2 gap-3 max-w-sm">
@@ -90,8 +90,8 @@ export function MeridianSection() {
                 { label: "Verifies", desc: "Validates before responding" },
               ].map((item) => (
                 <div key={item.label} className="p-3 bg-bg-card border border-white/5 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]">
-                  <p className="text-xs font-semibold text-white/70">{item.label}</p>
-                  <p className="text-[9px] text-white/30 mt-0.5">{item.desc}</p>
+                  <p className="text-xs font-semibold text-text-secondary">{item.label}</p>
+                  <p className="text-[9px] text-text-muted mt-0.5">{item.desc}</p>
                 </div>
               ))}
             </div>

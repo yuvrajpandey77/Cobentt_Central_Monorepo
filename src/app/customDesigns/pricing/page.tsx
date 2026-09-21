@@ -98,7 +98,7 @@ export default function PricingPage() {
           <h1 className="text-6xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-200 to-white drop-shadow-lg leading-tight">
             Pricing
           </h1>
-          <p className="text-2xl text-white/70 mb-12">Start for free. Upgrade as you go.</p>
+          <p className="text-2xl text-text-secondary mb-12">Start for free. Upgrade as you go.</p>
           
           {/* Toggle */}
           <div className="flex justify-center mb-8">
@@ -108,7 +108,7 @@ export default function PricingPage() {
                 className={`px-8 py-3 rounded-lg transition-all font-medium ${
                   !isYearly 
                     ? 'bg-white text-black' 
-                    : 'text-white/70 hover:text-white'
+                    : 'text-text-secondary hover:text-white'
                 }`}
               >
                 Monthly
@@ -118,7 +118,7 @@ export default function PricingPage() {
                 className={`px-8 py-3 rounded-lg transition-all font-medium ${
                   isYearly 
                     ? 'bg-white text-black' 
-                    : 'text-white/70 hover:text-white'
+                    : 'text-text-secondary hover:text-white'
                 }`}
               >
                 Yearly
@@ -146,12 +146,12 @@ export default function PricingPage() {
                     {plan.price}
                   </div>
                   {plan.description && (
-                    <div className="text-sm text-white/70 whitespace-pre-line">
+                    <div className="text-sm text-text-secondary whitespace-pre-line">
                       {plan.description}
                     </div>
                   )}
                   {plan.customDescription && (
-                    <p className="text-sm text-white/70 mt-3 leading-relaxed">
+                    <p className="text-sm text-text-secondary mt-3 leading-relaxed">
                       {plan.customDescription}
                     </p>
                   )}
@@ -171,10 +171,10 @@ export default function PricingPage() {
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start">
                       <Check className="h-5 w-5 text-green-400 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-white/70 leading-relaxed break-words">
+                      <span className="text-sm text-text-secondary leading-relaxed break-words">
                         {feature}
                         {feature.includes("roll over") && (
-                          <Info className="h-3 w-3 inline ml-1 text-white/70" />
+                          <Info className="h-3 w-3 inline ml-1 text-text-secondary" />
                         )}
                       </span>
                     </li>

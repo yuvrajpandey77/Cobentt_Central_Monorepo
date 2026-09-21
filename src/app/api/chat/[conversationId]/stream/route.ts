@@ -7,6 +7,9 @@ import { estimateTokens } from "@/lib/token-estimator";
 import { logUserAuditEvent } from "@/lib/user-audit";
 import { runAIPipeline, recordAITokens } from "@/lib/ai/pipeline";
 import { resolveByokCredential, ByokError } from "@/lib/byok";
+import { routeIntent } from "@/lib/intent/router";
+import { runWebSearchPipeline } from "@/lib/intent/web-search";
+import { recordRouting } from "@/lib/intent/telemetry";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -54,6 +57,7 @@ export async function POST(
     throw err;
   }
   const sources = Array.isArray(reqSources) ? reqSources : [];
+  const clientAskedWeb = sources.length > 0;
 
   const history = await prisma.message.findMany({
     where: { conversationId },
@@ -61,6 +65,48 @@ export async function POST(
     take: 6,
     select: { role: true, content: true },
   });
+
+  // --- Intent Router (server-side, authoritative for web enrichment) ---
+  // Client classification drives UX (cards); the server re-routes for execution
+  // so web enrichment works even if the client router was skipped/offline.
+  // Explicit client toggle ALWAYS wins: sources=[...] ⇒ web allowed.
+  let webEvidenceContext = "";
+  let webEvidenceSources: Array<{ index: number; title: string; url?: string }> = [];
+  let webFailedNote = "";
+  try {
+    const routed = routeIntent({
+      message: sanitizedMessage,
+      history: history.slice(0, -1).map((m) => ({
+        role: m.role.toLowerCase() === "assistant" ? ("assistant" as const) : ("user" as const),
+        content: m.content.slice(0, 1000),
+      })),
+      explicitSelection: clientAskedWeb ? "web_search" : null,
+      hasAttachments: Array.isArray(attachmentIds) && attachmentIds.length > 0,
+    });
+    recordRouting({
+      message: sanitizedMessage,
+      result: routed,
+      explicitSelection: clientAskedWeb ? "web_search" : null,
+      autoRouted: routed.action === "auto",
+    });
+    // Explicit "no web" is honored inside the router (action === "chat" with
+    // requires_web false); explicit client toggle forces web via selection.
+    const shouldEnrichWeb = clientAskedWeb || (routed.requires_web && routed.action !== "chat");
+    if (shouldEnrichWeb) {
+      const historyText = history.map((m) => m.content).join(" ").slice(-1500);
+      const search = await runWebSearchPipeline(sanitizedMessage, historyText);
+      if (!search.failed) {
+        webEvidenceContext = search.answerContext;
+        webEvidenceSources = search.results.slice(0, 6).map((r, i) => ({ index: i + 1, title: r.title, url: r.url }));
+      } else {
+        // Graceful fallback: never fabricate current facts.
+        webFailedNote =
+          "Note: live web retrieval failed for this request, so the answer below is from existing knowledge only and may be out of date. ";
+      }
+    }
+  } catch (err) {
+    console.warn("[chat/stream] intent routing failed, continuing as chat:", err);
+  }
 
   // The current user message is persisted before streaming, so the last
   // history entry is this same message. Drop it to avoid feeding the model
@@ -132,9 +178,15 @@ export async function POST(
           }
         }
 
-        const userContent = attachmentContext
-          ? `The user attached one or more files. Use their content as source material for the question below.\n\nAttached files:\n${attachmentContext}\n\nUser question:\n${sanitizedMessage}`
-          : sanitizedMessage;
+        const userContent = [
+          attachmentContext
+            ? `The user attached one or more files. Use their content as source material for the question below.\n\nAttached files:\n${attachmentContext}`
+            : "",
+          // Intent router: web evidence is ground truth for current facts.
+          webEvidenceContext ? `Current web research (authoritative sources first):\n${webEvidenceContext}` : "",
+          webFailedNote ? `${webFailedNote}Do not present uncertain current facts as verified.` : "",
+          `User question:\n${sanitizedMessage}`,
+        ].filter(Boolean).join("\n\n");
 
         const messages: ChatMessage[] = [
           { role: "system", content: systemPrompt },
@@ -237,13 +289,15 @@ export async function POST(
           durationMs: Date.now() - start,
         });
 
+        // Router-enriched sources take precedence; fall back to client flags.
+        const finalSources = webEvidenceSources.length > 0 ? webEvidenceSources : sources.length > 0 ? sources : undefined;
         await prisma.message.update({
           where: { id: assistantMessage.id },
           data: {
-            content: fullContent,
+            content: webFailedNote && fullContent ? `${webFailedNote}\n\n${fullContent}` : fullContent,
             status: "COMPLETE",
             thinking: fullThinking || undefined,
-            sources: sources.length > 0 ? sources : undefined,
+            sources: finalSources,
             tokenCount: promptTokens + completionTokens,
           },
         });
@@ -254,7 +308,7 @@ export async function POST(
               done: true,
               model,
               thinking: fullThinking || undefined,
-              sources: sources.length > 0 ? sources : undefined,
+              sources: finalSources,
               usage: { promptTokens, completionTokens },
             })}\n\n`
           )

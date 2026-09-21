@@ -43,7 +43,7 @@ export function PropertyEditor({ block, def, onChange }: PropertyEditorProps) {
         const value = block.props[prop.key] ?? def.defaultProps[prop.key] ?? "";
         return (
           <div key={prop.key} className="space-y-1.5">
-            <label className="text-xs font-medium text-white/60">{prop.label}</label>
+            <label className="text-xs font-medium text-text-secondary">{prop.label}</label>
             {prop.type === "textarea" && (
               <textarea
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:border-primary/40 min-h-[72px] resize-y"
@@ -112,10 +112,10 @@ export function PropertyEditor({ block, def, onChange }: PropertyEditorProps) {
                 {(Array.isArray(value) ? value : []).map((item: string, i: number) => (
                   <div key={i} className="flex items-center gap-1.5">
                     <div className="flex flex-col">
-                      <button type="button" disabled={i === 0} onClick={() => moveItem(prop.key, i, -1)} className="text-white/60 hover:text-white disabled:opacity-20 leading-none p-0.5 rounded hover:bg-white/10" title="Move up">
+                      <button type="button" disabled={i === 0} onClick={() => moveItem(prop.key, i, -1)} className="text-text-secondary hover:text-white disabled:opacity-20 leading-none p-0.5 rounded hover:bg-white/10" title="Move up">
                         <ChevronUp className="h-4 w-4" />
                       </button>
-                      <button type="button" disabled={i === (Array.isArray(value) ? value : []).length - 1} onClick={() => moveItem(prop.key, i, 1)} className="text-white/60 hover:text-white disabled:opacity-20 leading-none p-0.5 rounded hover:bg-white/10" title="Move down">
+                      <button type="button" disabled={i === (Array.isArray(value) ? value : []).length - 1} onClick={() => moveItem(prop.key, i, 1)} className="text-text-secondary hover:text-white disabled:opacity-20 leading-none p-0.5 rounded hover:bg-white/10" title="Move down">
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </div>
@@ -134,7 +134,7 @@ export function PropertyEditor({ block, def, onChange }: PropertyEditorProps) {
                         const arr = (Array.isArray(value) ? value : []).filter((_: string, idx: number) => idx !== i);
                         update(prop.key, arr);
                       }}
-                      className="text-white/30 hover:text-red-400 text-xs px-1"
+                      className="text-text-muted hover:text-red-400 text-xs px-1"
                     >
                       ✕
                     </button>
@@ -158,7 +158,7 @@ export function PropertyEditor({ block, def, onChange }: PropertyEditorProps) {
         <button
           type="button"
           onClick={() => setStyleOpen(!styleOpen)}
-          className="flex w-full items-center justify-between px-1 py-2 text-xs font-medium text-white/70 hover:text-white transition-colors"
+          className="flex w-full items-center justify-between px-1 py-2 text-xs font-medium text-text-secondary hover:text-white transition-colors"
         >
           <span>Style & design</span>
           <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", styleOpen && "rotate-90")} />

@@ -110,7 +110,7 @@ export const ChatView = ({ conversationId }: ChatViewProps) => {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-white/60">Conversation not found</p>
+          <p className="text-text-secondary">Conversation not found</p>
           <Link href="/chat" className="text-primary hover:underline">Back to chats</Link>
         </div>
       </div>
@@ -122,7 +122,7 @@ export const ChatView = ({ conversationId }: ChatViewProps) => {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/chat" className="text-white/60 hover:text-white transition-colors">
+          <Link href="/chat" className="text-text-secondary hover:text-white transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-sm font-medium text-white/80 truncate max-w-md">
@@ -136,7 +136,7 @@ export const ChatView = ({ conversationId }: ChatViewProps) => {
           />
           <button
             onClick={() => deleteConversation.mutate({ id: conversationId })}
-            className="text-white/40 hover:text-red-400 transition-colors p-1"
+            className="text-text-tertiary hover:text-red-400 transition-colors p-1"
           >
             <Trash2 className="h-4 w-4" />
           </button>

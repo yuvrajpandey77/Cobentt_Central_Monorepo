@@ -68,7 +68,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https://img.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com",
               "font-src 'self' https://fonts.gstatic.com",
               "worker-src 'self' blob:",
-              "connect-src 'self' https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.com https://clerk-telemetry.com https://api.openai.com https://api.groq.com https://*.vercel.app https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
+              "connect-src 'self' https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.com https://clerk-telemetry.com https://api.openai.com https://api.groq.com https://api.web3forms.com https://*.vercel.app https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
               "frame-src 'self' https://js.clerk.com https://*.clerk.accounts.dev https://accounts.google.com https://vercel.live https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
               "object-src 'none'",
               "base-uri 'self'",
@@ -105,7 +105,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/customDesigns/support',
-        destination: '/overview/about',
+        destination: '/overview/contact',
         permanent: true,
       },
       {
@@ -126,11 +126,6 @@ const nextConfig: NextConfig = {
       {
         source: '/research',
         destination: '/overview/research',
-        permanent: true,
-      },
-      {
-        source: '/contact',
-        destination: '/overview/about',
         permanent: true,
       },
       {

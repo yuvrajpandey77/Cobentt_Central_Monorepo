@@ -81,7 +81,7 @@ export function ShareDialog({
           </div>
           <button
             onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-bright)] hover:bg-[var(--color-cb-border)] transition-colors flex-shrink-0"
+            className="w-7 h-7 flex items-center justify-center rounded-full text-text-tertiary hover:text-[var(--color-cb-text-bright)] hover:bg-[var(--color-cb-border)] transition-colors flex-shrink-0"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function ShareDialog({
             <Globe className="w-4 h-4 mt-0.5 text-[var(--color-cb-text-muted)]" />
             <span>
               <span className="block text-[12px] font-medium text-[var(--color-cb-text-bright)]">Anyone with the link</span>
-              <span className="block text-[11px] text-[var(--color-cb-text-dim)] mt-0.5">
+              <span className="block text-[11px] text-text-tertiary mt-0.5">
                 Anyone who gets the link can view this chat read-only.
               </span>
             </span>
@@ -120,7 +120,7 @@ export function ShareDialog({
             <Lock className="w-4 h-4 mt-0.5 text-[var(--color-cb-text-muted)]" />
             <span>
               <span className="block text-[12px] font-medium text-[var(--color-cb-text-bright)]">Only you</span>
-              <span className="block text-[11px] text-[var(--color-cb-text-dim)] mt-0.5">
+              <span className="block text-[11px] text-text-tertiary mt-0.5">
                 Private. Only the owner can view this conversation.
               </span>
             </span>
@@ -130,7 +130,7 @@ export function ShareDialog({
 
         {isShared && shareUrl && (
           <div className="mt-4">
-            <label className="text-[10px] uppercase tracking-wider text-[var(--color-cb-text-dim)]">Share link</label>
+            <label className="text-[10px] uppercase tracking-wider text-text-tertiary">Share link</label>
             <div className="mt-1.5 flex items-center gap-2">
               <input
                 readOnly

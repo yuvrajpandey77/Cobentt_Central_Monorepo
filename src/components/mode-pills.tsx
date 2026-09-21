@@ -27,7 +27,7 @@ export function ModePills() {
             "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
             mode === m.id
               ? "bg-primary/20 border-primary/40 text-white"
-              : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10 hover:text-white/70 hover:border-white/20"
+              : "bg-white/5 border-white/10 text-text-tertiary hover:bg-white/10 hover:text-text-secondary hover:border-white/20"
           )}
         >
           {iconMap[m.icon]}

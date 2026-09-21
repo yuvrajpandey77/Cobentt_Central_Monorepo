@@ -36,6 +36,42 @@ export interface RateLimitResult {
   reset: number;
 }
 
+// ---------------------------------------------------------------------------
+// In-memory fallback (single-instance only).
+// Used when Upstash Redis is not configured and the caller did not request
+// fail-closed. Previously this path returned success unconditionally, leaving
+// every endpoint unthrottled. Fixed-window per key with a bounded map.
+// Multi-instance deployments should still configure Upstash for shared limits.
+// ---------------------------------------------------------------------------
+const MEM_MAX_KEYS = 5000;
+const memBuckets = new Map<string, { count: number; reset: number }>();
+
+function checkMemoryLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+  const now = Date.now();
+  const bucket = memBuckets.get(key);
+  if (!bucket || bucket.reset <= now) {
+    if (memBuckets.size >= MEM_MAX_KEYS) {
+      // Evict expired buckets first; if still full, drop oldest.
+      for (const [k, v] of memBuckets) {
+        if (v.reset <= now) memBuckets.delete(k);
+        if (memBuckets.size < MEM_MAX_KEYS) break;
+      }
+      if (memBuckets.size >= MEM_MAX_KEYS) {
+        const oldest = memBuckets.keys().next();
+        if (!oldest.done) memBuckets.delete(oldest.value);
+      }
+    }
+    const reset = now + windowMs;
+    memBuckets.set(key, { count: 1, reset });
+    return { success: true, limit, remaining: limit - 1, reset };
+  }
+  if (bucket.count >= limit) {
+    return { success: false, limit, remaining: 0, reset: bucket.reset };
+  }
+  bucket.count += 1;
+  return { success: true, limit, remaining: limit - bucket.count, reset: bucket.reset };
+}
+
 export async function checkRateLimit(
   key: string,
   opts?: { requests?: number; window?: string; failClosed?: boolean }
@@ -56,7 +92,9 @@ export async function checkRateLimit(
       console.error(`[rate-limit] Redis not configured — rejecting ${key} (fail-closed)`);
       return denied;
     }
-    return { success: true, limit: 100, remaining: 100, reset: Date.now() + 60_000 };
+    // No Redis: enforce single-instance in-memory limits instead of
+    // disabling throttling entirely.
+    return checkMemoryLimit(key, limit, windowMs);
   }
 
   const prefix = key.split(":")[0];
@@ -67,7 +105,7 @@ export async function checkRateLimit(
       console.error(`[rate-limit] Limiter unavailable — rejecting ${key} (fail-closed)`);
       return denied;
     }
-    return { success: true, limit, remaining: limit, reset: Date.now() + windowMs };
+    return checkMemoryLimit(key, limit, windowMs);
   }
 
   const result = await limiter.limit(key);

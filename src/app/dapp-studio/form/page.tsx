@@ -271,7 +271,7 @@ const PageShell = () => {
                 <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
                   Configure Your Smart Contract
                 </h1>
-                <p className="mt-4 text-lg text-white/70">
+                <p className="mt-4 text-lg text-text-secondary">
                   AI has analyzed your description and pre-filled the configuration. Review and customize as needed.
                 </p>
               </motion.div>
@@ -290,8 +290,8 @@ const PageShell = () => {
                     transition={{ duration: 0.4 }}
                     className="flex flex-col items-center justify-center py-16"
                   >
-                    <Loader2 className="h-8 w-8 animate-spin text-white/60 mb-4" />
-                    <p className="text-white/60">Analyzing your smart contract requirements...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-text-secondary mb-4" />
+                    <p className="text-text-secondary">Analyzing your smart contract requirements...</p>
                   </motion.div>
                 ) : step === "form" && suggestedConfig ? (
                   <motion.div

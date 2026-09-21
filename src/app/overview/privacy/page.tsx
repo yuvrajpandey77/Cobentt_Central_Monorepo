@@ -24,7 +24,7 @@ const sections = [
   },
   {
     title: "Your Rights",
-    content: "You own your data. Period. You can export all your data at any time via Settings > Export. You can delete your account and all associated data instantly. You can opt out of analytics collection. You can request a copy of all data we hold about you. You can withdraw consent for any processing at any time. Contact us at cogerphereailabs@gmail.com for any data rights requests.",
+    content: "You own your data. Period. You can export all your data at any time via Settings > Export. You can delete your account and all associated data instantly. You can opt out of analytics collection. You can request a copy of all data we hold about you. You can withdraw consent for any processing at any time. Contact us at support@cogerphere.com for any data rights requests.",
   },
   {
     title: "Cookies",
@@ -41,14 +41,14 @@ export default function PrivacyPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             Privacy Policy
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Your data,{" "}
             <span className="text-white">your rules.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             We believe privacy is not a feature — it is a fundamental right. Here is exactly how we handle your data.
           </p>
         </div>
@@ -60,15 +60,15 @@ export default function PrivacyPage() {
               className="p-6 lg:p-8 bg-bg-card border border-white/5 rounded-tr-[16px] rounded-bl-[16px] rounded-tl-[10px] rounded-br-[10px] hover:border-white/10 transition-colors"
             >
               <h2 className="text-lg font-semibold text-white mb-3">{section.title}</h2>
-              <p className="text-sm text-white/40 leading-relaxed">{section.content}</p>
+              <p className="text-sm text-text-tertiary leading-relaxed">{section.content}</p>
             </div>
           ))}
 
           <div className="pt-6 text-center">
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-text-muted">
               Last updated: July 2026. If you have questions, email{" "}
-              <a href="mailto:cogerphereailabs@gmail.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
-                cogerphereailabs@gmail.com
+              <a href="mailto:support@cogerphere.com" className="text-text-tertiary hover:text-white transition-colors underline underline-offset-2">
+                support@cogerphere.com
               </a>
             </p>
           </div>

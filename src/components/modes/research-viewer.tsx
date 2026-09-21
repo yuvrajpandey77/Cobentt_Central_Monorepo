@@ -312,22 +312,22 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
       {/* Editor sidebar (left) */}
       <div className={cn("hidden md:flex flex-col w-64 flex-shrink-0 min-h-0 border-r border-white/10 bg-white/[0.02]", !sidebarOpen && "hidden")}>
         <div className="flex items-center gap-1 px-3 h-12 border-b border-white/10 flex-shrink-0">
-          <List className="h-3.5 w-3.5 text-white/40" />
-          <span className="text-xs font-medium text-white/70">Outline</span>
-          {current?.sections?.length ? <span className="text-white/25 text-xs ml-auto tabular-nums">{current.sections.length} sections</span> : null}
+          <List className="h-3.5 w-3.5 text-text-tertiary" />
+          <span className="text-xs font-medium text-text-secondary">Outline</span>
+          {current?.sections?.length ? <span className="text-text-disabled text-xs ml-auto tabular-nums">{current.sections.length} sections</span> : null}
         </div>
         <div className="flex-1 overflow-y-auto thin-scrollbar p-3 space-y-3">
           <div className="space-y-1.5">
-            <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Report</p>
-            <button onClick={() => { setSelectedSection(null); setStyleOpen(false); }} className={cn("w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors", selectedSection === null ? "bg-primary/15 border-primary/30 text-white" : "border-white/5 text-white/60 hover:bg-white/[0.04]")}>
+            <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1">Report</p>
+            <button onClick={() => { setSelectedSection(null); setStyleOpen(false); }} className={cn("w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors", selectedSection === null ? "bg-primary/15 border-primary/30 text-white" : "border-white/5 text-text-secondary hover:bg-white/[0.04]")}>
               Title & summary
             </button>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center px-1 pt-3">
-              <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Sections</p>
-              <button onClick={addSection} title="Add section" className="ml-auto text-white/40 hover:text-white p-0.5">
+              <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Sections</p>
+              <button onClick={addSection} title="Add section" className="ml-auto text-text-tertiary hover:text-white p-0.5">
                 <Plus className="h-3 w-3" />
               </button>
             </div>
@@ -337,22 +337,22 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                 onClick={() => { setSelectedSection(i); setStyleOpen(false); }}
                 className={cn(
                   "group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer border text-xs transition-colors",
-                  selectedSection === i ? "bg-primary/15 border-primary/30 text-white" : "border-white/5 text-white/60 hover:bg-white/[0.04]"
+                  selectedSection === i ? "bg-primary/15 border-primary/30 text-white" : "border-white/5 text-text-secondary hover:bg-white/[0.04]"
                 )}
               >
                 <span className="truncate min-w-0">
-                  <span className="text-white/25 mr-1">{i + 1}.</span>
+                  <span className="text-text-disabled mr-1">{i + 1}.</span>
                   {s.heading}
                 </span>
                 <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(i, -1); }} disabled={i === 0} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); moveSection(i, 1); }} disabled={i === current.sections.length - 1} className="p-0.5 text-white/40 hover:text-white disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(i); }} className="p-0.5 text-white/40 hover:text-white"><Copy className="h-3 w-3" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); removeSection(i); }} className="p-0.5 text-white/40 hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(i, -1); }} disabled={i === 0} className="p-0.5 text-text-tertiary hover:text-white disabled:opacity-30"><ChevronUp className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); moveSection(i, 1); }} disabled={i === current.sections.length - 1} className="p-0.5 text-text-tertiary hover:text-white disabled:opacity-30"><ChevronDown className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); duplicateSection(i); }} className="p-0.5 text-text-tertiary hover:text-white"><Copy className="h-3 w-3" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); removeSection(i); }} className="p-0.5 text-text-tertiary hover:text-red-400"><Trash2 className="h-3 w-3" /></button>
                 </span>
               </div>
             ))}
-            {!current?.sections?.length && <p className="text-xs text-white/30 px-1">No sections yet</p>}
+            {!current?.sections?.length && <p className="text-xs text-text-muted px-1">No sections yet</p>}
           </div>
         </div>
       </div>
@@ -360,7 +360,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex items-center justify-between px-4 h-12 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <button onClick={() => router.push("/deep-research")} className="text-white/50 hover:text-white transition-colors">
+            <button onClick={() => router.push("/deep-research")} className="text-text-tertiary hover:text-white transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
             <button
@@ -368,7 +368,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
               title={sidebarOpen ? "Hide editor panel" : "Show editor panel"}
               className={cn(
                 "hidden md:flex h-7 w-7 items-center justify-center rounded-lg border transition-colors",
-                sidebarOpen ? "text-white border-white/20 bg-primary/10" : "text-white/40 border-white/10 hover:text-white"
+                sidebarOpen ? "text-white border-white/20 bg-primary/10" : "text-text-tertiary border-white/10 hover:text-white"
               )}
             >
               <PanelLeft className="h-3.5 w-3.5" />
@@ -383,15 +383,15 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
               <button
                 onClick={() => setZoom((z) => Math.max(0.5, Math.round((z - 0.1) * 100) / 100))}
                 title="Zoom out"
-                className="h-7 w-7 flex items-center justify-center rounded-md text-white/40 hover:text-white/70 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-secondary transition-colors"
               >
                 <ZoomOut className="h-3.5 w-3.5" />
               </button>
-              <span className="text-[10px] text-white/50 w-10 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
+              <span className="text-[10px] text-text-tertiary w-10 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={() => setZoom((z) => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}
                 title="Zoom in"
-                className="h-7 w-7 flex items-center justify-center rounded-md text-white/40 hover:text-white/70 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-secondary transition-colors"
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
@@ -410,7 +410,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
               onClick={() => setChatOpen(!chatOpen)}
               className={cn(
                 "h-7 w-7 flex items-center justify-center rounded-lg border transition-colors",
-                chatOpen ? "bg-primary/20 border-primary/30 text-white" : "text-white/40 border-white/10"
+                chatOpen ? "bg-primary/20 border-primary/30 text-white" : "text-text-tertiary border-white/10"
               )}
               title="Toggle chat"
             >
@@ -432,8 +432,8 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
             {!hasReport && !running ? (
               <div className="text-center py-6 space-y-2">
                 <Search className="h-8 w-8 text-violet-400/60 mx-auto" />
-                <p className="text-sm text-white/60">Describe a topic to research</p>
-                <p className="text-xs text-white/30">Use the chat panel to start deep research</p>
+                <p className="text-sm text-text-secondary">Describe a topic to research</p>
+                <p className="text-xs text-text-muted">Use the chat panel to start deep research</p>
               </div>
             ) : running ? (
               <div className="py-4">
@@ -469,7 +469,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                     {current.title}
                   </h1>
                   {current.summary && (
-                    <p className={cn("mt-4 text-sm leading-relaxed", docLight ? "text-neutral-600" : "text-white/60")}>
+                    <p className={cn("mt-4 text-sm leading-relaxed", docLight ? "text-neutral-600" : "text-text-secondary")}>
                       {current.summary}
                     </p>
                   )}
@@ -489,7 +489,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                         )}
                         style={styleToAttr(section.style)}
                       >
-                        <span className={cn("text-xs font-mono", docLight ? "text-neutral-400" : "text-violet-400")}>
+                        <span className={cn("text-xs font-mono", docLight ? "text-text-secondary" : "text-violet-400")}>
                           {String(i + 1).padStart(2, "0")}
                         </span>
                         {section.heading}
@@ -508,8 +508,8 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                     </h2>
                     <ul className="space-y-2">
                       {current.sources.map((src, i) => (
-                        <li key={i} className={cn("flex items-start gap-2 text-xs", docLight ? "text-neutral-500" : "text-white/50")}>
-                          <ExternalLink className={cn("h-3 w-3 mt-0.5 flex-shrink-0", docLight ? "text-neutral-400" : "text-violet-400")} />
+                        <li key={i} className={cn("flex items-start gap-2 text-xs", docLight ? "text-neutral-500" : "text-text-tertiary")}>
+                          <ExternalLink className={cn("h-3 w-3 mt-0.5 flex-shrink-0", docLight ? "text-text-secondary" : "text-violet-400")} />
                           <span className="min-w-0">
                             {src.title}
                             {src.url && (
@@ -549,17 +549,17 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
       {sidebarOpen && selectedSection !== undefined && current && hasReport && (
         <div className="fixed right-4 top-16 bottom-16 z-50 hidden md:flex flex-col w-80 rounded-xl border border-white/10 bg-neutral-900/95 backdrop-blur shadow-2xl">
           <div className="flex items-center gap-2 px-3 h-10 border-b border-white/10 flex-shrink-0">
-            <span className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Editor</span>
+            <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Editor</span>
             <button
               onClick={() => setStyleOpen((o) => !o)}
               className={cn(
                 "ml-auto flex items-center gap-1 px-2 h-6 rounded-md text-[10px] border transition-colors",
-                styleOpen ? "bg-primary/20 border-primary/30 text-white" : "border-white/10 text-white/40 hover:text-white"
+                styleOpen ? "bg-primary/20 border-primary/30 text-white" : "border-white/10 text-text-tertiary hover:text-white"
               )}
             >
               <SlidersHorizontal className="h-3 w-3" /> Style
             </button>
-            <button onClick={() => setSelectedSection(null)} className="p-1 text-white/40 hover:text-white rounded-md">
+            <button onClick={() => setSelectedSection(null)} className="p-1 text-text-tertiary hover:text-white rounded-md">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -567,7 +567,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
             {selectedSection === null ? (
               <>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Title</label>
+                  <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Title</label>
                   <textarea
                     value={current.title}
                     onChange={(e) => updateTitle(e.target.value)}
@@ -576,7 +576,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Summary</label>
+                  <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Summary</label>
                   <textarea
                     value={current.summary ?? ""}
                     onChange={(e) => updateSummary(e.target.value)}
@@ -588,7 +588,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
             ) : (
               <>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Heading</label>
+                  <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Heading</label>
                   <textarea
                     value={current.sections[selectedSection]?.heading ?? ""}
                     onChange={(e) => updateSectionHeading(selectedSection, e.target.value)}
@@ -597,7 +597,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Content</label>
+                  <label className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Content</label>
                   <textarea
                     value={current.sections[selectedSection]?.content ?? ""}
                     onChange={(e) => updateSectionContent(selectedSection, e.target.value)}

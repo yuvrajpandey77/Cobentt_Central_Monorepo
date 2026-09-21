@@ -441,7 +441,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-white/40 text-sm">
+        <div className="flex items-center gap-3 text-text-tertiary text-sm">
           <Loader2 className="h-4 w-4 animate-spin" />
           Loading workspace...
         </div>
@@ -450,7 +450,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   }
 
   if (!def) {
-    return <div className="flex-1 flex items-center justify-center text-white/40 text-sm">Unknown mode</div>;
+    return <div className="flex-1 flex items-center justify-center text-text-tertiary text-sm">Unknown mode</div>;
   }
 
   const viewportWidth = viewport === "desktop" ? "max-w-4xl" : viewport === "tablet" ? "max-w-xl" : "max-w-[360px]";
@@ -466,7 +466,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               onClick={() => setActiveTab(tab)}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                activeTab === tab ? "bg-primary/20 text-white" : "text-white/50 hover:text-white/70"
+                activeTab === tab ? "bg-primary/20 text-white" : "text-text-tertiary hover:text-text-secondary"
               )}
             >
               {tab === "blocks" ? <Boxes className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -480,7 +480,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             <>
               {mode === "slides" && (
                 <div className="space-y-1.5">
-                  <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Theme</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1">Theme</p>
                   <div className="grid grid-cols-3 gap-1.5">
                     {SLIDE_THEMES.map((t) => (
                       <button
@@ -501,9 +501,9 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               )}
 
               <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Add Block</p>
+                <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1">Add Block</p>
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-text-muted" />
                   <input
                     value={blockSearch}
                     onChange={(e) => setBlockSearch(e.target.value)}
@@ -524,26 +524,26 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                         <span className="flex items-center justify-between w-full">
                           <span className="text-xs text-white/80 font-medium group-hover:text-white">+ {b.label}</span>
                           {used > 0 && (
-                            <span className="text-[10px] text-white/30 tabular-nums">{used} used</span>
+                            <span className="text-[10px] text-text-muted tabular-nums">{used} used</span>
                           )}
                         </span>
                       </button>
                     );
                   })}
                 {def.blockTypes.filter((b) => b.label.toLowerCase().includes(blockSearch.trim().toLowerCase())).length === 0 && (
-                  <p className="text-xs text-white/30 px-1">No blocks match “{blockSearch}”</p>
+                  <p className="text-xs text-text-muted px-1">No blocks match “{blockSearch}”</p>
                 )}
               </div>
 
               <div className="space-y-1.5">
-                <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1 pt-3">
+                <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1 pt-3">
                   Layers
                   {artifact.blocks.length > 0 && (
-                    <span className="text-white/20 ml-1 tabular-nums">{artifact.blocks.length}</span>
+                    <span className="text-text-disabled ml-1 tabular-nums">{artifact.blocks.length}</span>
                   )}
                 </p>
                 {artifact.blocks.length === 0 && (
-                  <p className="text-xs text-white/30 px-1">No blocks yet</p>
+                  <p className="text-xs text-text-muted px-1">No blocks yet</p>
                 )}
                 {artifact.blocks.map((b, i) => {
                   const typeDef = def.blockTypes.find((t) => t.type === b.type);
@@ -555,28 +555,28 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                         "group flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer border text-xs transition-colors",
                         selectedId === b.id
                           ? "bg-primary/15 border-primary/30 text-white"
-                          : "border-white/5 text-white/60 hover:bg-white/[0.04]"
+                          : "border-white/5 text-text-secondary hover:bg-white/[0.04]"
                       )}
                     >
                       <span className="flex items-center gap-2 min-w-0">
-                        <Layers className="h-3 w-3 text-white/30 flex-shrink-0" />
+                        <Layers className="h-3 w-3 text-text-muted flex-shrink-0" />
                         <span className="truncate">
                           {typeDef?.label ?? b.type}
-                          <span className="text-white/25"> · {i + 1}</span>
+                          <span className="text-text-disabled"> · {i + 1}</span>
                         </span>
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, -1); }} disabled={i === 0} className="p-1.5 text-white/60 hover:text-white disabled:opacity-30 hover:bg-white/10 rounded-md" title="Move up">
+                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, -1); }} disabled={i === 0} className="p-1.5 text-text-secondary hover:text-white disabled:opacity-30 hover:bg-white/10 rounded-md" title="Move up">
                           <ChevronUp className="h-4 w-4" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, 1); }} disabled={i === artifact.blocks.length - 1} className="p-1.5 text-white/60 hover:text-white disabled:opacity-30 hover:bg-white/10 rounded-md" title="Move down">
+                        <button onClick={(e) => { e.stopPropagation(); moveBlock(i, 1); }} disabled={i === artifact.blocks.length - 1} className="p-1.5 text-text-secondary hover:text-white disabled:opacity-30 hover:bg-white/10 rounded-md" title="Move down">
                           <ChevronDown className="h-4 w-4" />
                         </button>
                         <div className="w-px h-4 bg-white/10" />
-                        <button onClick={(e) => { e.stopPropagation(); duplicateBlock(b.id); }} className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-md" title="Duplicate">
+                        <button onClick={(e) => { e.stopPropagation(); duplicateBlock(b.id); }} className="p-1.5 text-text-tertiary hover:text-white hover:bg-white/10 rounded-md" title="Duplicate">
                           <Copy className="h-3.5 w-3.5" />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); deleteBlock(b.id); }} className="p-1.5 text-white/40 hover:text-red-400 hover:bg-white/10 rounded-md" title="Delete">
+                        <button onClick={(e) => { e.stopPropagation(); deleteBlock(b.id); }} className="p-1.5 text-text-tertiary hover:text-red-400 hover:bg-white/10 rounded-md" title="Delete">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </span>
@@ -591,7 +591,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             <div className="space-y-3">
               {selectedBlock ? (
                 <>
-                  <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium px-1">Edit block</p>
+                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1">Edit block</p>
                   <PropertyEditor
                     block={selectedBlock}
                     def={def.blockTypes.find((t) => t.type === selectedBlock.type)!}
@@ -599,7 +599,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                   />
                 </>
               ) : (
-                <p className="text-xs text-white/30 px-1">Select a block to edit its properties</p>
+                <p className="text-xs text-text-muted px-1">Select a block to edit its properties</p>
               )}
             </div>
           )}
@@ -610,7 +610,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
       <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-neutral-950/50">
         <div className="flex items-center justify-between px-3 h-12 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <button onClick={() => router.push(`/${mode}`)} className="text-white/50 hover:text-white transition-colors">
+            <button onClick={() => router.push(`/${mode}`)} className="text-text-tertiary hover:text-white transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
             <button
@@ -618,7 +618,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               title={sidebarOpen ? "Hide editor panel" : "Show editor panel"}
               className={cn(
                 "hidden md:flex h-7 w-7 items-center justify-center rounded-lg border transition-colors",
-                sidebarOpen ? "text-white border-white/20 bg-primary/10" : "text-white/40 border-white/10 hover:text-white"
+                sidebarOpen ? "text-white border-white/20 bg-primary/10" : "text-text-tertiary border-white/10 hover:text-white"
               )}
             >
               <PanelLeft className="h-3.5 w-3.5" />
@@ -637,7 +637,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                   title={v}
                   className={cn(
                     "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
-                    viewport === v ? "bg-primary/20 text-white" : "text-white/40 hover:text-white/70"
+                    viewport === v ? "bg-primary/20 text-white" : "text-text-tertiary hover:text-text-secondary"
                   )}
                 >
                   {v === "desktop" ? <Monitor className="h-3.5 w-3.5" /> : v === "tablet" ? <Tablet className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
@@ -650,22 +650,22 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               <button
                 onClick={() => setZoom((z) => Math.max(0.5, Math.round((z - 0.1) * 100) / 100))}
                 title="Zoom out"
-                className="h-7 w-7 flex items-center justify-center rounded-md text-white/40 hover:text-white/70 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-secondary transition-colors"
               >
                 <ZoomOut className="h-3.5 w-3.5" />
               </button>
-              <span className="text-[10px] text-white/50 w-10 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
+              <span className="text-[10px] text-text-tertiary w-10 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
               <button
                 onClick={() => setZoom((z) => Math.min(2.5, Math.round((z + 0.1) * 100) / 100))}
                 title="Zoom in"
-                className="h-7 w-7 flex items-center justify-center rounded-md text-white/40 hover:text-white/70 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-secondary transition-colors"
               >
                 <ZoomIn className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => setZoom(1)}
                 title="Reset zoom"
-                className="h-7 w-7 flex items-center justify-center rounded-md text-white/40 hover:text-white/70 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-md text-text-tertiary hover:text-text-secondary transition-colors"
               >
                 <span className="text-[9px]">1:1</span>
               </button>
@@ -689,7 +689,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               title="Toggle chat"
               className={cn(
                 "h-7 w-7 flex items-center justify-center rounded-lg border transition-colors",
-                chatOpen ? "bg-primary/20 border-primary/30 text-white" : "text-white/40 border-white/10 hover:text-white/70"
+                chatOpen ? "bg-primary/20 border-primary/30 text-white" : "text-text-tertiary border-white/10 hover:text-text-secondary"
               )}
             >
               <MessageSquare className="h-3.5 w-3.5" />
@@ -709,7 +709,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                 title="Toggle markdown source"
                 className={cn(
                   "h-7 w-7 flex items-center justify-center rounded-lg border transition-colors",
-                  editingSource ? "bg-primary/20 border-primary/30 text-white" : "text-white/40 border-white/10 hover:text-white/70"
+                  editingSource ? "bg-primary/20 border-primary/30 text-white" : "text-text-tertiary border-white/10 hover:text-text-secondary"
                 )}
               >
                 <Code2 className="h-3.5 w-3.5" />
@@ -717,7 +717,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             )}
             <button
               onClick={() => setMobileEditorOpen(true)}
-              className="md:hidden h-7 w-7 flex items-center justify-center rounded-lg border border-white/10 text-white/60 hover:text-white"
+              className="md:hidden h-7 w-7 flex items-center justify-center rounded-lg border border-white/10 text-text-secondary hover:text-white"
             >
               <Maximize2 className="h-3.5 w-3.5" />
             </button>
@@ -757,11 +757,11 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                     onClick={() => setSelectedId(b.id)}
                   >
                     <SlidesRenderer block={b} viewport={viewport} theme={activeTheme} editable={selectedId === b.id} onEdit={updateBlock} />
-                    <p className="text-center text-[10px] text-white/30 mt-1">{i + 1}</p>
+                    <p className="text-center text-[10px] text-text-muted mt-1">{i + 1}</p>
                   </div>
                 ))}
                 {artifact.blocks.length === 0 && (
-                  <p className="text-white/30 text-sm text-center py-16">Add slides from the Blocks panel to start building</p>
+                  <p className="text-text-muted text-sm text-center py-16">Add slides from the Blocks panel to start building</p>
                 )}
               </div>
             )}
@@ -796,7 +796,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                     </div>
                   ))}
                   {artifact.blocks.length === 0 && (
-                    <p className={cn("text-sm text-center py-16", docLight ? "text-neutral-400" : "text-white/30")}>Add document blocks from the Blocks panel</p>
+                    <p className={cn("text-sm text-center py-16", docLight ? "text-text-secondary" : "text-text-muted")}>Add document blocks from the Blocks panel</p>
                   )}
                 </div>
               </div>
@@ -804,7 +804,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             {mode === "document" && editingSource && (
               <div className="bg-neutral-900 rounded-xl border border-white/10 min-h-[60vh] overflow-hidden">
                 <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/10">
-                  <span className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Markdown source</span>
+                  <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Markdown source</span>
                   <button
                     onClick={() => {
                       const blocks = markdownToBlocks(sourceText);
@@ -854,7 +854,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                     </div>
                   ))}
                   {artifact.blocks.length === 0 && (
-                    <p className="text-white/30 text-sm text-center py-16">Add a sheet block to start</p>
+                    <p className="text-text-muted text-sm text-center py-16">Add a sheet block to start</p>
                   )}
                 </div>
               </div>
@@ -871,7 +871,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           >
             <button
               onClick={addDefaultBlock}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-white/25 bg-white/[0.03] px-4 py-2 text-xs font-medium text-white/60 hover:text-white hover:bg-white/[0.07] hover:border-white/40 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-white/25 bg-white/[0.03] px-4 py-2 text-xs font-medium text-text-secondary hover:text-white hover:bg-white/[0.07] hover:border-white/40 transition-colors"
             >
               <Plus className="h-3.5 w-3.5" />
               Add page
@@ -898,7 +898,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col md:hidden">
           <div className="flex items-center justify-between p-3 border-b border-white/10">
             <span className="text-sm font-medium text-white">Editor</span>
-            <button onClick={() => setMobileEditorOpen(false)} className="text-white/60 hover:text-white">
+            <button onClick={() => setMobileEditorOpen(false)} className="text-text-secondary hover:text-white">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -909,7 +909,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                 onClick={() => setActiveTab(tab)}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-medium",
-                  activeTab === tab ? "bg-primary/20 text-white" : "text-white/50"
+                  activeTab === tab ? "bg-primary/20 text-white" : "text-text-tertiary"
                 )}
               >
                 {tab === "blocks" ? "Blocks" : "Properties"}
@@ -920,7 +920,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
             {activeTab === "blocks" ? (
               <div className="space-y-1.5">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-text-muted" />
                   <input
                     value={blockSearch}
                     onChange={(e) => setBlockSearch(e.target.value)}
@@ -1007,12 +1007,12 @@ function SheetStatsBlock({ block, selected, onSelect }: { block: ArtifactBlock; 
   const items: { label?: string; value?: string }[] = Array.isArray(p.items) ? p.items : [];
   return (
     <div onClick={onSelect} className={cn("p-4", selected && "ring-2 ring-primary/50")}>
-      <p className="text-[10px] uppercase tracking-wider text-white/40 font-medium mb-3">{p.title || "Overview"}</p>
+      <p className="text-[10px] uppercase tracking-wider text-text-tertiary font-medium mb-3">{p.title || "Overview"}</p>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {items.map((item, i) => (
           <div key={i} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
             <p className="text-xl font-bold text-white">{item.value ?? "—"}</p>
-            <p className="text-[10px] text-white/40 mt-0.5">{item.label}</p>
+            <p className="text-[10px] text-text-tertiary mt-0.5">{item.label}</p>
           </div>
         ))}
       </div>
@@ -1073,16 +1073,16 @@ function FloatingPropertyCard({
       <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/[0.03]">
         <span className="text-[11px] font-medium text-white/80 truncate">{label}</span>
         <div className="flex items-center gap-0.5">
-          <button onClick={() => setExpanded(!expanded)} title={expanded ? "Compact" : "Expand"} className="p-1 text-white/40 hover:text-white rounded-md">
+          <button onClick={() => setExpanded(!expanded)} title={expanded ? "Compact" : "Expand"} className="p-1 text-text-tertiary hover:text-white rounded-md">
             {expanded ? <ChevronRight className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
           </button>
-          <button onClick={onDuplicate} title="Duplicate" className="p-1 text-white/40 hover:text-white rounded-md">
+          <button onClick={onDuplicate} title="Duplicate" className="p-1 text-text-tertiary hover:text-white rounded-md">
             <Copy className="h-3 w-3" />
           </button>
-          <button onClick={onDelete} title="Delete" className="p-1 text-white/40 hover:text-red-400 rounded-md">
+          <button onClick={onDelete} title="Delete" className="p-1 text-text-tertiary hover:text-red-400 rounded-md">
             <Trash2 className="h-3 w-3" />
           </button>
-          <button onClick={onClose} title="Close" className="p-1 text-white/40 hover:text-white rounded-md">
+          <button onClick={onClose} title="Close" className="p-1 text-text-tertiary hover:text-white rounded-md">
             <X className="h-3 w-3" />
           </button>
         </div>

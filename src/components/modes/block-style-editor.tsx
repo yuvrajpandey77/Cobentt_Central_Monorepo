@@ -42,10 +42,10 @@ function set<K extends keyof BlockStyle>(style: BlockStyle | undefined, key: K, 
 export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
   return (
     <div className="space-y-3">
-      <p className="text-[10px] uppercase tracking-wider text-white/30 font-medium">Style & Design</p>
+      <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Style & Design</p>
 
       <div className="space-y-1.5">
-        <label className="text-[11px] text-white/50">Font family</label>
+        <label className="text-[11px] text-text-tertiary">Font family</label>
         <select
           value={style?.fontFamily ?? "Inter"}
           onChange={(e) => onChange(set(style, "fontFamily", e.target.value))}
@@ -57,7 +57,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
-          <label className="text-[11px] text-white/50">Font size</label>
+          <label className="text-[11px] text-text-tertiary">Font size</label>
           <input
             type="number"
             min={8}
@@ -68,7 +68,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] text-white/50">Weight</label>
+          <label className="text-[11px] text-text-tertiary">Weight</label>
           <select
             value={style?.fontWeight ?? "400"}
             onChange={(e) => onChange(set(style, "fontWeight", e.target.value))}
@@ -81,7 +81,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
-          <label className="text-[11px] text-white/50">Line height</label>
+          <label className="text-[11px] text-text-tertiary">Line height</label>
           <input
             type="number"
             step={0.1}
@@ -93,7 +93,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[11px] text-white/50">Letter spacing</label>
+          <label className="text-[11px] text-text-tertiary">Letter spacing</label>
           <input
             type="number"
             min={0}
@@ -109,7 +109,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
       <div className="pt-1 border-t border-white/10" />
 
       <div className="space-y-1.5">
-        <label className="text-[11px] text-white/50">Align</label>
+        <label className="text-[11px] text-text-tertiary">Align</label>
         <div className="flex gap-1">
           {ALIGN.map((a) => (
             <button
@@ -119,7 +119,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
                 "flex-1 h-7 rounded-md border transition-colors text-xs",
                 style?.textAlign === a.value
                   ? "bg-primary/20 border-primary/40 text-white"
-                  : "border-white/10 text-white/40 hover:text-white/70"
+                  : "border-white/10 text-text-tertiary hover:text-text-secondary"
               )}
             >
               {a.label}
@@ -129,7 +129,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[11px] text-white/50">Text color</label>
+        <label className="text-[11px] text-text-tertiary">Text color</label>
         <div className="flex items-center gap-2">
           <input
             type="color"
@@ -157,7 +157,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[11px] text-white/50">Background</label>
+        <label className="text-[11px] text-text-tertiary">Background</label>
         <div className="flex items-center gap-2">
           <input
             type="color"
@@ -185,7 +185,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-[11px] text-white/50">Decorative</label>
+        <label className="text-[11px] text-text-tertiary">Decorative</label>
         <div className="flex gap-1.5">
           <button
             onClick={() => onChange(set(style, "border", !style?.border))}
@@ -193,7 +193,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
               "flex-1 h-7 rounded-md border transition-colors text-xs",
               style?.border
                 ? "bg-primary/20 border-primary/40 text-white"
-                : "border-white/10 text-white/40 hover:text-white/70 bg-white/[0.03]"
+                : "border-white/10 text-text-tertiary hover:text-text-secondary bg-white/[0.03]"
             )}
           >
             Border
@@ -204,7 +204,7 @@ export function BlockStyleEditor({ style, onChange }: BlockStyleEditorProps) {
               "flex-1 h-7 rounded-md border transition-colors text-xs",
               style?.shadow
                 ? "bg-primary/20 border-primary/40 text-white"
-                : "border-white/10 text-white/40 hover:text-white/70 bg-white/[0.03]"
+                : "border-white/10 text-text-tertiary hover:text-text-secondary bg-white/[0.03]"
             )}
           >
             Shadow

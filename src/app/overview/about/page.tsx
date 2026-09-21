@@ -20,14 +20,14 @@ export default function AboutPage() {
     <main className="pt-24 lg:pt-28">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="text-center mb-16 lg:mb-20 pt-8">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-white/50 bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium text-text-tertiary bg-white/5 border border-white/10 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] mb-4">
             About
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Built for the way{" "}
             <span className="text-white">you work.</span>
           </h1>
-          <p className="mt-4 text-base lg:text-lg text-white/40 max-w-xl mx-auto">
+          <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
             Cobentt is an AI workspace where research, development, and creation converge. We do not believe in one-size-fits AI — we believe in giving you the tools to build your own workflow.
           </p>
         </div>
@@ -35,10 +35,10 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto mb-16 lg:mb-20">
           <div className="p-6 lg:p-8 bg-bg-card border border-white/5 rounded-tr-[16px] rounded-bl-[16px] rounded-tl-[10px] rounded-br-[10px]">
             <h2 className="text-lg font-semibold text-white mb-3">Our Mission</h2>
-            <p className="text-sm text-white/40 leading-relaxed mb-4">
+            <p className="text-sm text-text-tertiary leading-relaxed mb-4">
               AI is the most transformative technology of our time — yet most tools lock you into one model, one provider, one way of working. We founded Cobentt to change that.
             </p>
-            <p className="text-sm text-white/40 leading-relaxed">
+            <p className="text-sm text-text-tertiary leading-relaxed">
               Our mission is simple: build the workspace that adapts to you. Whether you are a researcher synthesizing papers, a developer shipping code, or a creator bringing ideas to life, Cobentt gives you the freedom to choose the right AI for every task — without sacrificing privacy, control, or quality.
             </p>
           </div>
@@ -56,7 +56,7 @@ export default function AboutPage() {
                   <value.icon className="w-4 h-4 text-white" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-1">{value.title}</h3>
-                <p className="text-xs text-white/40 leading-relaxed">{value.desc}</p>
+                <p className="text-xs text-text-tertiary leading-relaxed">{value.desc}</p>
               </div>
             ))}
           </div>
@@ -65,15 +65,31 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto text-center pb-20 lg:pb-28">
           <div className="p-6 lg:p-8 bg-white/[0.02] border border-white/10 rounded-tr-[20px] rounded-bl-[20px] rounded-tl-[12px] rounded-br-[12px]">
             <h2 className="text-lg font-semibold text-white mb-2">Get in Touch</h2>
-            <p className="text-sm text-white/40 mb-4">
-              Have questions, feedback, or want to collaborate? We would love to hear from you.
+            <p className="text-sm text-text-tertiary mb-4">
+              Have questions, feedback, or want to collaborate? For industry-level
+              integrations and enterprise queries, reach us at{" "}
+              <a
+                href="mailto:support@cogerphere.com"
+                className="text-text-secondary hover:text-white transition-colors underline underline-offset-2"
+              >
+                support@cogerphere.com
+              </a>
+              .
             </p>
-            <a
-              href="mailto:cogerphereailabs@gmail.com"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-bg-primary text-sm font-medium rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/90 transition-all"
-            >
-              Email Us
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="/overview/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-bg-primary text-sm font-medium rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/90 transition-all"
+              >
+                Contact Us
+              </a>
+              <a
+                href="mailto:support@cogerphere.com"
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-white/15 text-sm font-medium text-text-secondary rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/5 hover:text-white transition-all"
+              >
+                Email Us
+              </a>
+            </div>
           </div>
         </div>
       </div>

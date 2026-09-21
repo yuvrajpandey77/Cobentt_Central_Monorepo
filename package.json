@@ -7,6 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
+    "intent:eval": "tsx src/lib/intent/eval.ts",
     "postinstall": "patch-package && prisma generate"
   },
   "dependencies": {

@@ -76,7 +76,7 @@ function ChatMarkdown({ content }: { content: string }) {
         parts.push(
           <div key={`code-${i}`} className="my-3 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[4px] rounded-br-[12px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] overflow-hidden">
             {codeLang && (
-              <div className="px-3 py-1.5 text-[10px] font-mono text-[var(--color-cb-text-dim)] border-b border-[var(--color-cb-border)] bg-[var(--color-cb-bg)]/50">{codeLang}</div>
+              <div className="px-3 py-1.5 text-[10px] font-mono text-text-tertiary border-b border-[var(--color-cb-border)] bg-[var(--color-cb-bg)]/50">{codeLang}</div>
             )}
             <pre className="p-4 overflow-x-auto text-[13px] leading-[1.7] font-mono text-[var(--color-cb-assistant-text)]"><code>{codeLines.join("\n")}</code></pre>
           </div>
@@ -178,7 +178,7 @@ function ModeChatComposer({
             <button
               type="button"
               onClick={() => setShowMenu(!showMenu)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/60 flex-shrink-0"
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-text-secondary flex-shrink-0"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -187,7 +187,7 @@ function ModeChatComposer({
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                 <div className="absolute bottom-11 left-0 z-20 w-48 py-1 bg-black/90 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl">
                   {["Camera", "Gallery", "Files", "Web Search", "Connectors"].map((item) => (
-                    <button key={item} onClick={() => setShowMenu(false)} className="w-full text-left px-3 py-2.5 text-sm text-white/60 hover:bg-white/10 hover:text-white transition-colors">
+                    <button key={item} onClick={() => setShowMenu(false)} className="w-full text-left px-3 py-2.5 text-sm text-text-secondary hover:bg-white/10 hover:text-white transition-colors">
                       {item}
                     </button>
                   ))}
@@ -210,7 +210,7 @@ function ModeChatComposer({
             maxLength={8000}
             minRows={1}
             maxRows={6}
-            className="flex-1 bg-transparent text-sm text-white/60 placeholder:text-white/30 outline-none resize-none px-2 py-[10px] leading-relaxed"
+            className="flex-1 bg-transparent text-sm text-text-secondary placeholder:text-text-muted outline-none resize-none px-2 py-[10px] leading-relaxed"
           />
 
           <div className="flex items-center gap-1.5">
@@ -225,7 +225,7 @@ function ModeChatComposer({
             />
             <button
               type="button"
-              className="w-9 h-9 flex items-center justify-center rounded-full text-white/40 hover:text-white/60 hover:bg-white/10"
+              className="w-9 h-9 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-white/10"
               title="Web search"
             >
               <Globe className="w-4 h-4" />
@@ -350,11 +350,11 @@ export function ModeChatPanel({
                   )}
                   {msg.content && (
                     <div className="flex items-center gap-0.5 mt-1.5">
-                      <button onClick={() => copy(msg)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title={copiedId === msg.id ? "Copied" : "Copy"}>
+                      <button onClick={() => copy(msg)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-cb-card)] text-text-tertiary hover:text-text-secondary transition-all" title={copiedId === msg.id ? "Copied" : "Copy"}>
                         {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                       {onRegenerate && prevUser && !isLastAssistant && (
-                        <button onClick={() => onRegenerate(prevUser.id)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-cb-card)] text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] transition-all" title="Regenerate">
+                        <button onClick={() => onRegenerate(prevUser.id)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--color-cb-card)] text-text-tertiary hover:text-text-secondary transition-all" title="Regenerate">
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -389,7 +389,7 @@ export function ModeChatPanel({
         )}
 
         {sorted.length === 0 && !running && !isPending && (
-          <p className="text-[var(--color-cb-text-dim)] text-xs text-center py-8 px-2 leading-relaxed">{emptyText}</p>
+          <p className="text-text-tertiary text-xs text-center py-8 px-2 leading-relaxed">{emptyText}</p>
         )}
       </div>
 

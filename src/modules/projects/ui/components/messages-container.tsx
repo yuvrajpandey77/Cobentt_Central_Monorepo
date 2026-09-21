@@ -75,7 +75,7 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
 
                 </div>
                 {isReadOnly ? (
-                    <div className="text-center text-sm text-white/40 py-4">
+                    <div className="text-center text-sm text-text-tertiary py-4">
                         Sign in to use this project as a template
                     </div>
                 ) : (

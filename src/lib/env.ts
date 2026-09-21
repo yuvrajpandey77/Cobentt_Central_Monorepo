@@ -10,6 +10,7 @@ import { z } from "zod";
 
 const serverSchema = z.object({
   DATABASE_URL: z.string().url({ message: "DATABASE_URL must be a valid PostgreSQL connection string" }),
+  DIRECT_URL: z.string().url({ message: "DIRECT_URL must be a valid PostgreSQL connection string" }).optional(),
   CLERK_SECRET_KEY: z.string().min(1, { message: "CLERK_SECRET_KEY is required" }),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENROUTER_API_KEY: z.string().min(1).optional(),

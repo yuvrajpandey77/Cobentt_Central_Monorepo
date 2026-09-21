@@ -165,7 +165,7 @@ const PageShell = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-white" />
                   <div className="text-center">
                     <h3 className="text-lg font-semibold text-white mb-2">Processing Your Request</h3>
-                    <p className="text-white/70 text-sm mb-4">
+                    <p className="text-text-secondary text-sm mb-4">
                       Analyzing your smart contract requirements...
                     </p>
                     <div className="bg-white/10 rounded-lg p-3">
@@ -194,10 +194,10 @@ const PageShell = () => {
                 <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">
                   Build & Deploy Smart Contracts
                 </h1>
-                <p className="mt-4 text-lg text-white/70 max-w-3xl mx-auto">
+                <p className="mt-4 text-lg text-text-secondary max-w-3xl mx-auto">
                   Create production-ready smart contracts in minutes. Our AI-powered platform handles everything from code generation to deployment and verification.
                 </p>
-                <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-white/60">
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-text-secondary">
                     <span>AI-powered configuration</span>
                     <span>•</span>
                   <span>Multi-chain deployment</span>
@@ -226,7 +226,7 @@ const PageShell = () => {
                       onBlur={() => setIsFocused(false)}
                       minRows={1}
                       maxRows={6}
-                      className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white placeholder:text-white/60 cursor-text"
+                      className="w-full resize-none border-none outline-none bg-transparent px-5 py-4 text-base text-white placeholder:text-text-secondary cursor-text"
                       placeholder=""
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -237,7 +237,7 @@ const PageShell = () => {
                     />
                     {!prompt && !isFocused && (
                       <div className="absolute inset-0 px-5 py-4 pointer-events-none cursor-text flex items-center">
-                        <div className="text-base text-white/60 text-left w-full">
+                        <div className="text-base text-text-secondary text-left w-full">
                           Describe your smart contract idea...
                         </div>
                       </div>
@@ -246,7 +246,7 @@ const PageShell = () => {
                   
                   <div className="px-5 py-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-white/60">
+                      <div className="text-xs text-text-secondary">
                         Press <kbd className="px-1.5 py-0.5 text-xs bg-white/20 rounded border border-white/30">Ctrl + Enter</kbd> to generate
                       </div>
                       <Button
@@ -269,7 +269,7 @@ const PageShell = () => {
 
                 {/* Example Prompts */}
                 <div className="mt-8 space-y-3">
-                  <div className="flex items-center gap-2 text-white/60">
+                  <div className="flex items-center gap-2 text-text-secondary">
                     <Lightbulb className="h-4 w-4" />
                     <span className="text-sm font-medium">Try these examples:</span>
                   </div>
@@ -307,7 +307,7 @@ const PageShell = () => {
                 className="text-center mb-16"
               >
                 <h2 className="text-2xl font-semibold text-white md:text-3xl">Why Choose Our Platform</h2>
-                <p className="mt-4 text-white/60 max-w-2xl mx-auto">
+                <p className="mt-4 text-text-secondary max-w-2xl mx-auto">
                   Professional-grade smart contract development with enterprise security and deployment automation.
                 </p>
               </motion.div>
@@ -326,7 +326,7 @@ const PageShell = () => {
                         <feature.icon className={`h-8 w-8 ${feature.color}`} />
                         <div className="space-y-2">
                           <h3 className="text-lg font-semibold">{feature.title}</h3>
-                          <p className="text-sm text-white/70">{feature.description}</p>
+                          <p className="text-sm text-text-secondary">{feature.description}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -349,7 +349,7 @@ const PageShell = () => {
                 className="text-center mb-16"
               >
                 <h2 className="text-2xl font-semibold text-white md:text-3xl">Supported Contract Types</h2>
-                <p className="mt-4 text-white/60 max-w-2xl mx-auto">
+                <p className="mt-4 text-text-secondary max-w-2xl mx-auto">
                   Deploy any type of smart contract with our comprehensive template library.
                 </p>
               </motion.div>
@@ -368,12 +368,12 @@ const PageShell = () => {
                         <contract.icon className="h-8 w-8 text-blue-400" />
                         <div className="space-y-3">
                           <h3 className="text-lg font-semibold">{contract.title}</h3>
-                          <p className="text-sm text-white/70">{contract.description}</p>
+                          <p className="text-sm text-text-secondary">{contract.description}</p>
                           <div className="space-y-2">
-                            <p className="text-xs text-white/50 font-medium">Common use cases:</p>
+                            <p className="text-xs text-text-tertiary font-medium">Common use cases:</p>
                             <div className="space-y-1">
                               {contract.examples.map((example) => (
-                                <p key={example} className="text-xs text-white/60">• {example}</p>
+                                <p key={example} className="text-xs text-text-secondary">• {example}</p>
                               ))}
                           </div>
                           </div>
@@ -399,7 +399,7 @@ const PageShell = () => {
                 className="text-center mb-16"
               >
                 <h2 className="text-2xl font-semibold text-white md:text-3xl">Simple 3-Step Process</h2>
-                <p className="mt-4 text-white/60 max-w-2xl mx-auto">
+                <p className="mt-4 text-text-secondary max-w-2xl mx-auto">
                   From idea to deployed contract in minutes, not hours.
                 </p>
               </motion.div>
@@ -422,7 +422,7 @@ const PageShell = () => {
                         </div>
                         <div className="space-y-2">
                           <h3 className="text-xl font-semibold">{step.title}</h3>
-                          <p className="text-sm text-white/70">{step.description}</p>
+                          <p className="text-sm text-text-secondary">{step.description}</p>
                         </div>
                       </CardContent>
                     </Card>

@@ -43,7 +43,7 @@ export function ChatList() {
             </div>
             <div className="space-y-1">
               <h1 className="text-2xl font-semibold text-white">Your chats</h1>
-              <p className="text-sm text-white/50">Open an existing chat, or start a new one from the home page.</p>
+              <p className="text-sm text-text-tertiary">Open an existing chat, or start a new one from the home page.</p>
             </div>
           </div>
           <div className="flex justify-center sm:justify-end">
@@ -68,8 +68,8 @@ export function ChatList() {
           </div>
         ) : error ? (
           <div className="text-center py-16">
-            <FolderOpen className="w-10 h-10 text-white/20 mx-auto mb-3" />
-            <p className="text-sm text-white/60">Failed to load chats. Please try again.</p>
+            <FolderOpen className="w-10 h-10 text-text-disabled mx-auto mb-3" />
+            <p className="text-sm text-text-secondary">Failed to load chats. Please try again.</p>
           </div>
         ) : !conversations || conversations.length === 0 ? (
           <div className="text-center py-16 space-y-4">
@@ -80,7 +80,7 @@ export function ChatList() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white/80">No chats yet</h3>
-              <p className="text-sm text-white/50 mt-1">Start a conversation from the home page.</p>
+              <p className="text-sm text-text-tertiary mt-1">Start a conversation from the home page.</p>
             </div>
             <Button
               onClick={() => router.push("/")}
@@ -93,7 +93,7 @@ export function ChatList() {
           </div>
         ) : (
           <>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-text-tertiary">
               {conversations.length} {conversations.length === 1 ? "chat" : "chats"}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -111,15 +111,15 @@ export function ChatList() {
                               <MessageCircle className="w-6 h-6" />
                             </div>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0 mt-0.5" />
+                          <ArrowRight className="w-4 h-4 text-text-disabled group-hover:text-text-secondary transition-colors flex-shrink-0 mt-0.5" />
                         </div>
                         <h3 className="text-sm font-semibold text-white line-clamp-1 mb-2">
                           {conv.title || "Untitled chat"}
                         </h3>
-                        <p className="text-xs text-white/50 line-clamp-2 mb-4 flex-1">
+                        <p className="text-xs text-text-tertiary line-clamp-2 mb-4 flex-1">
                           {preview}
                         </p>
-                        <div className="flex items-center gap-3 text-[10px] text-white/40">
+                        <div className="flex items-center gap-3 text-[10px] text-text-tertiary">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {formatDistanceToNow(new Date(conv.createdAt), { addSuffix: true })}

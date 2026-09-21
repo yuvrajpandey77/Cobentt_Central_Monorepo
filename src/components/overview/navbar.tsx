@@ -13,6 +13,7 @@ const navLinks = [
   { label: "Research", href: "/overview/research" },
   { label: "Developers", href: "/overview/developers" },
   { label: "Pricing", href: "/overview/pricing" },
+  { label: "Contact", href: "/overview/contact" },
 ];
 
 export function Navbar() {

@@ -121,7 +121,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
           </div>
           <div>
             <h2 className="text-base font-semibold text-white">Bring your own key</h2>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-text-tertiary">
               Cobentt runs on your API key. Add one to unlock chat &amp; builders.
             </p>
           </div>
@@ -129,7 +129,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
 
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">Provider</Label>
+            <Label className="text-xs text-text-secondary">Provider</Label>
             <select
               value={provider}
               onChange={(e) => {
@@ -144,23 +144,23 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-white/40">
+            <p className="text-[11px] text-text-tertiary">
               OpenRouter works with every model. OpenAI keys work with GPT models only.
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">Key name</Label>
+            <Label className="text-xs text-text-secondary">Key name</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My OpenRouter key"
-              className="border-white/10 bg-black/40 text-white placeholder:text-white/30"
+              className="border-white/10 bg-black/40 text-white placeholder:text-text-muted"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">API key</Label>
+            <Label className="text-xs text-text-secondary">API key</Label>
             <div className="flex gap-2">
               <Input
                 type={showKey ? "text" : "password"}
@@ -170,7 +170,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
                   setTestResult(null);
                 }}
                 placeholder={PROVIDERS.find((p) => p.id === provider)?.placeholder}
-                className="border-white/10 bg-black/40 font-mono text-white placeholder:text-white/30"
+                className="border-white/10 bg-black/40 font-mono text-white placeholder:text-text-muted"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -178,13 +178,13 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
                 {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
-            <p className="text-[11px] text-white/40">
+            <p className="text-[11px] text-text-tertiary">
               Encrypted with AES-256-GCM. Never shown again after saving.
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-white/60">Model</Label>
+            <Label className="text-xs text-text-secondary">Model</Label>
             <select
               value={model}
               onChange={(e) => {
@@ -200,7 +200,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
               ))}
             </select>
             {selectedModel && (
-              <p className="text-[11px] text-white/40">
+              <p className="text-[11px] text-text-tertiary">
                 {selectedModel.description} · {Math.round(selectedModel.context / 1000)}K context
               </p>
             )}
@@ -243,7 +243,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
               Save & continue
             </Button>
           </div>
-          <p className="text-center text-[11px] text-white/30">
+          <p className="text-center text-[11px] text-text-muted">
             Test first — only working keys can be saved. Manage keys anytime in Settings → API Keys.
           </p>
         </div>

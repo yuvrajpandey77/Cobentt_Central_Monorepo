@@ -144,7 +144,7 @@ const AllProjectsContent = () => {
                                         {previewText}
                                     </p>
                                     
-                                    <div className="flex items-center gap-4 text-xs text-white/60">
+                                    <div className="flex items-center gap-4 text-xs text-text-secondary">
                                         <div className="flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />
                                             <span>Created {formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })}</span>
@@ -162,14 +162,14 @@ const AllProjectsContent = () => {
                                 
                                 <div className="flex items-center gap-2 ml-4">
                                     <Link href={isSmartContract ? `/projects/${project.id}/build` : `/projects/${project.id}`}>
-                                        <Button variant="ghost" size="sm" className="text-white/60 hover:text-foreground hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
+                                        <Button variant="ghost" size="sm" className="text-text-secondary hover:text-foreground hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
                                             <Eye className="w-4 h-4" />
                                         </Button>
                                     </Link>
-                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-foreground hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
+                                    <Button variant="ghost" size="sm" className="text-text-secondary hover:text-foreground hover:bg-white/20 transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none">
                                         <Edit className="w-4 h-4" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 ease-out focus:ring-2 focus:ring-red-400/20 focus:outline-none">
+                                    <Button variant="ghost" size="sm" className="text-text-secondary hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 ease-out focus:ring-2 focus:ring-red-400/20 focus:outline-none">
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -224,13 +224,13 @@ const AllProjectsContent = () => {
                             {/* Search */}
                             <div className="flex-1 max-w-md">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-4 h-4" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary w-4 h-4" />
                                     <input
                                         type="text"
                                         placeholder="Search projects..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all duration-200 ease-out hover:border-white/30"
+                                        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-transparent transition-all duration-200 ease-out hover:border-white/30"
                                     />
                                 </div>
                             </div>
@@ -284,7 +284,7 @@ const AllProjectsContent = () => {
                             <h3 className="text-xl font-semibold text-white/80 mb-2">
                                 Error loading projects
                             </h3>
-                            <p className="text-white/60 mb-4">
+                            <p className="text-text-secondary mb-4">
                                 There was a problem loading your projects. Please try again.
                             </p>
                             <Button 
@@ -298,12 +298,12 @@ const AllProjectsContent = () => {
                     ) : filteredProjects.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <FolderOpen className="w-8 h-8 text-white/40" />
+                                <FolderOpen className="w-8 h-8 text-text-tertiary" />
                             </div>
                             <h3 className="text-xl font-semibold text-white/80 mb-2">
                                 {searchQuery ? 'No projects found' : 'No projects yet'}
                             </h3>
-                            <p className="text-white/60 mb-6">
+                            <p className="text-text-secondary mb-6">
                                 {searchQuery 
                                     ? `No projects match "${searchQuery}". Try a different search term.`
                                     : 'Create your first project to get started with Cobentt!'
@@ -322,7 +322,7 @@ const AllProjectsContent = () => {
                         <>
                             {/* Projects Stats */}
                             <div className="mb-6">
-                                <p className="text-white/60 text-sm">
+                                <p className="text-text-secondary text-sm">
                                     Showing {filteredProjects.length} of {projects?.length || 0} projects
                                     {searchQuery && ` matching "${searchQuery}"`}
                                 </p>

@@ -144,7 +144,7 @@ function ContractPageContent() {
             <div className="absolute inset-0 w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-blue-500 to-purple-500 opacity-20 animate-pulse"></div>
           </div>
           <h3 className="text-xl font-semibold text-white mb-2">Loading Contract</h3>
-          <p className="text-white/60">Fetching contract details and interaction interface...</p>
+          <p className="text-text-secondary">Fetching contract details and interaction interface...</p>
         </motion.div>
       </div>
     );
@@ -182,7 +182,7 @@ function ContractPageContent() {
               </div>
               
               <h2 className="text-2xl font-bold text-white mb-3">No Deployed Contract Found</h2>
-              <p className="text-white/70 mb-8 leading-relaxed">
+              <p className="text-text-secondary mb-8 leading-relaxed">
                 This project doesn&apos;t have a deployed contract yet. Deploy your smart contract to start interacting with it on the blockchain.
               </p>
               
@@ -251,7 +251,7 @@ function ContractPageContent() {
                       <Shield className="mr-1 h-3 w-3" />
                       {project.contractType}
                     </Badge>
-                    <Badge className="h-6 px-2 py-0 text-xs border-white/20 bg-white/10 text-white/70">
+                    <Badge className="h-6 px-2 py-0 text-xs border-white/20 bg-white/10 text-text-secondary">
                       <Globe className="mr-1 h-3 w-3" />
                       {networkLabel}
                     </Badge>
@@ -259,11 +259,11 @@ function ContractPageContent() {
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-[0.25em] text-white/40">Contract Interaction</p>
+                  <p className="text-xs uppercase tracking-[0.25em] text-text-tertiary">Contract Interaction</p>
                   <h1 className="text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-br from-white via-neutral-200 to-white md:text-4xl">
                     {project.tokenName || project.name}
                   </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-white/70">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
                     <span className="inline-flex items-center gap-2">
                       <Activity className="h-4 w-4" />
                       {project.tokenSymbol}
@@ -280,15 +280,15 @@ function ContractPageContent() {
                 </div>
               </div>
 
-              <div className="space-y-4 rounded-2xl border border-white/15 bg-black/60 px-5 py-6 text-sm text-white/70">
+              <div className="space-y-4 rounded-2xl border border-white/15 bg-black/60 px-5 py-6 text-sm text-text-secondary">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs uppercase tracking-[0.2em] text-white/40">Address</span>
+                  <span className="text-xs uppercase tracking-[0.2em] text-text-tertiary">Address</span>
                   <div className="flex items-center gap-1.5">
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => copyToClipboard(contractAddress)}
-                      className="h-7 w-7 text-white/70 hover:bg-white/20 hover:text-black"
+                      className="h-7 w-7 text-text-secondary hover:bg-white/20 hover:text-black"
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -296,7 +296,7 @@ function ContractPageContent() {
                       size="icon"
                       variant="ghost"
                       onClick={() => window.open(`${getExplorerUrl()}/address/${contractAddress}`, '_blank')}
-                      className="h-7 w-7 text-white/70 hover:bg-white/20 hover:text-black"
+                      className="h-7 w-7 text-text-secondary hover:bg-white/20 hover:text-black"
                     >
                       <ExternalLink className="h-3 w-3" />
                     </Button>
@@ -307,11 +307,11 @@ function ContractPageContent() {
                 </code>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                    <p className="text-xs uppercase tracking-[0.15em] text-white/40">Build Job</p>
+                    <p className="text-xs uppercase tracking-[0.15em] text-text-tertiary">Build Job</p>
                     <p className="mt-2 text-sm font-semibold text-white">{buildJob?.id.slice(0, 8)}…</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                    <p className="text-xs uppercase tracking-[0.15em] text-white/40">Status</p>
+                    <p className="text-xs uppercase tracking-[0.15em] text-text-tertiary">Status</p>
                     <p className="mt-2 text-sm font-semibold text-white/80">{buildJob?.status}</p>
                   </div>
                 </div>

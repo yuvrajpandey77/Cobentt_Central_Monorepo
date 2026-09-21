@@ -104,7 +104,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
             <CheckCircle2 className="h-6 w-6 text-green-400" />
             <h1 className="text-3xl font-semibold text-white">Configuration Review</h1>
           </div>
-          <p className="text-white/70 max-w-2xl mx-auto">
+          <p className="text-text-secondary max-w-2xl mx-auto">
             Review your smart contract configuration before generation. All settings look good to proceed.
           </p>
         </div>
@@ -115,7 +115,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
             <div className="grid gap-6 md:grid-cols-2">
               {previewSections.map((section) => (
                 <div key={section.field} className="space-y-2">
-                  <p className="text-sm text-white/60 font-medium">{section.label}</p>
+                  <p className="text-sm text-text-secondary font-medium">{section.label}</p>
                   <p className="text-white font-semibold capitalize">
                     {String(data[section.field as keyof DappStudioFormValues])}
                   </p>
@@ -177,13 +177,13 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
           <Button 
             variant="ghost" 
             onClick={handleCopy} 
-            className="text-white/70 hover:text-white hover:bg-white/10"
+            className="text-text-secondary hover:text-white hover:bg-white/10"
           >
             <Clipboard className="mr-2 h-4 w-4" />
             {copyState === "copied" ? "Copied!" : "Copy Configuration"}
           </Button>
           
-          <Button asChild variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10">
+          <Button asChild variant="ghost" className="text-text-secondary hover:text-white hover:bg-white/10">
             <Link href="/docs/deployments/overview">
               <ExternalLink className="mr-2 h-4 w-4" />
               View Documentation
@@ -193,7 +193,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
 
         {/* Info Note */}
         <div className="text-center">
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-text-tertiary">
             Contract generation will create your smart contract template and prepare it for deployment.
           </p>
         </div>
