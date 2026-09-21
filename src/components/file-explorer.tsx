@@ -1,9 +1,8 @@
-import { ArrowLeftIcon, CopyCheckIcon, CopyIcon, Save, Edit3 } from "lucide-react";
+import { CopyCheckIcon, CopyIcon, Save, Edit3 } from "lucide-react";
 import { useState, useMemo, useCallback, Fragment, useEffect } from "react";
 
 import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
-import { CodeView } from "@/components/code-view";
 import {
     ResizableHandle,
     ResizablePanel,
@@ -16,11 +15,9 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator,
     BreadcrumbEllipsis,
-    BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import { convertFilesToTreeItems } from "@/lib/utils";
 import type { TreeItem } from "@/types";
-import TreeView from "@/components/tree-view";
 import Editor from '@monaco-editor/react';
 import { ChevronRightIcon, FileIcon, FolderIcon } from "lucide-react";
 
@@ -28,11 +25,6 @@ import { ChevronRightIcon, FileIcon, FolderIcon } from "lucide-react";
 
 
 type FileCollection = { [path: string]: string };
-
-function getLanguageFromExtension(filename: string): string {
-    const extension = filename.split(".").pop()?.toLowerCase();
-    return extension || "text";
-}
 
 interface FileBreadcrumbProps {
     filepath: string;
@@ -206,7 +198,7 @@ export const FileExplorer = ({ files, onFileChange, editable = true }: FileExplo
         if (!selectedFile && Object.keys(files).length > 0) {
             setSelectedFile(Object.keys(files)[0]);
         }
-    }, [files]);
+    }, [files, selectedFile]);
 
     const treeData = useMemo(() => {
         return convertFilesToTreeItems(files);

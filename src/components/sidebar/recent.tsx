@@ -4,12 +4,12 @@ import { useMemo } from "react";
 import { RecentRow } from "./recent-row";
 import type { SidebarConversation, SidebarProject } from "./types";
 
-type ConversationEntry = Omit<SidebarConversation, "updatedAt" | "title"> & {
+export type ConversationEntry = Omit<SidebarConversation, "updatedAt" | "title"> & {
   title?: string | null;
   updatedAt: Date | string;
 };
 
-type ProjectEntry = Omit<SidebarProject, "updatedAt"> & {
+export type ProjectEntry = Omit<SidebarProject, "updatedAt"> & {
   updatedAt: Date | string;
   contractType?: string | null;
 };

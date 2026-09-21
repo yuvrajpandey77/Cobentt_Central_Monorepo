@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,6 @@ interface Props {
 export default function InteractiveNavLink({ href, children, className, activeClassName }: Props) {
   const [pending, setPending] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
 
   const isActive = pathname === href || (href !== "/" && pathname?.startsWith(href));
 

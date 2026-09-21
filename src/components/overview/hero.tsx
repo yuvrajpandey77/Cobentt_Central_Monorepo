@@ -34,7 +34,6 @@ import {
   Heart,
   Share2,
   RefreshCw,
-  Sparkles,
   Globe,
   Terminal,
   Smartphone,

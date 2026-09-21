@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Settings, User, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { UsageCard } from "./usage-card";
 
 interface SidebarFooterProps {

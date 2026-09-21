@@ -90,7 +90,7 @@ export default function GlobalQueryProgress() {
       if (showTimer) window.clearTimeout(showTimer);
       if (hideTimer) window.clearTimeout(hideTimer);
     };
-  }, [isFetching]);
+  }, [isFetching, pathname, routePending]);
 
   return (
     <div

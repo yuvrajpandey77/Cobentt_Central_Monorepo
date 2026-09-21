@@ -437,7 +437,7 @@ export const projectsRouter = createTRPCRouter({
                     await browser.close();
                 }
                 return { ok: true } as const;
-            } catch (err) {
+            } catch {
                 throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Screenshot failed" });
             }
         }),

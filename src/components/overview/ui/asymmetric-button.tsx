@@ -54,7 +54,8 @@ export const AsymmetricButton = forwardRef<HTMLButtonElement | HTMLAnchorElement
     );
 
     if ("as" in rest && rest.as === "a") {
-      const { as: _, ...anchorProps } = rest as AsymmetricLinkProps & { as: "a" };
+      const { as: _as, ...anchorProps } = rest as AsymmetricLinkProps & { as: "a" };
+      void _as;
       return (
         <a
           ref={ref as React.Ref<HTMLAnchorElement>}

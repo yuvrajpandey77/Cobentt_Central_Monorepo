@@ -9,12 +9,9 @@ import {
   Book, 
   Mail, 
   Phone, 
-  Clock, 
   Users,
-  FileText,
   Video,
   HelpCircle,
-  Search,
   Send
 } from "lucide-react";
 

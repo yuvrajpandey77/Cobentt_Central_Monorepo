@@ -85,8 +85,8 @@ export async function POST(req: Request) {
         "Content-Length": zipBuffer.byteLength.toString(),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Download error:", error);
-    return NextResponse.json({ error: error?.message || "Download failed" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Download failed" }, { status: 500 });
   }
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -147,20 +146,24 @@ function mapPrismaMessage(m: PrismaMessageLike): Message {
   };
 }
 
+interface PrismaMessagePreview {
+  content: string; role: string;
+  createdAt: Date | string;
+}
+
 function mapPrismaConversation(c: {
   id: string; title?: string | null; updatedAt: Date | string;
-  messages: PrismaMessageLike[];
+  messages: PrismaMessagePreview[];
 }): Thread {
   return {
     id: c.id,
     title: c.title || "New chat",
     date: new Date(c.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    messages: (c.messages || []).map(mapPrismaMessage),
+    messages: (c.messages || []).map((m) => mapPrismaMessage(m as unknown as PrismaMessageLike)),
   };
 }
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 

@@ -6,14 +6,13 @@ import {
     ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { MessagesContainer } from "@/modules/projects/ui/components/messages-container";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Fragment } from "@/generated/prisma";
 import { ProjectHeader } from "../components/project-header";
 import { FragmentWeb } from "../components/fragment-web";
-import { CodeIcon, CrownIcon, EyeIcon, RotateCcwIcon, DownloadIcon, Copy, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { CodeIcon, EyeIcon, RotateCcwIcon, DownloadIcon, Copy, Loader2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AsyncButton from "@/components/async-button";
 import { FileExplorer } from "@/components/file-explorer";
@@ -135,8 +134,8 @@ export const ProjectView = ({ projectId }: Props) => {
 
     const [tabsState, setTabsState] = useState<"preview" | "code">("preview");
     const [restoring, setRestoring] = useState(false);
-    const [downloading, setDownloading] = useState(false);
-    const [sandboxDead, setSandboxDead] = useState(false);
+    const [, setDownloading] = useState(false);
+    const [, setSandboxDead] = useState(false);
     const [autoRestoreAttempted, setAutoRestoreAttempted] = useState(false);
     const handleRestore = useCallback(async () => {
         if (!activeFragment?.id) return;

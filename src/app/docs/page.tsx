@@ -2,18 +2,11 @@
 
 import { useCallback, useState, useEffect } from "react";
 import {
-  Sparkles,
-  Clipboard,
-  Check,
-  BookOpen,
   Bot,
   Code2,
   Globe,
   Shield,
   Workflow,
-  Cpu,
-  Layers,
-  Zap,
   Network,
   FileText,
   Search,
@@ -73,33 +66,6 @@ const FEATURES = [
     desc: "Access GPT-4, Claude, Gemini, Llama, and more from a single interface. Meridian routes each task to the optimal model automatically.",
   },
 ];
-
-function CodeSnippet({ code, language }: { code: string; language: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }, [code]);
-
-  return (
-    <div className="relative group">
-      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border border-white/10 border-b-0 rounded-tl-[8px] rounded-tr-[8px]">
-        <span className="text-[11px] font-medium text-white/40 font-mono uppercase tracking-wider">{language}</span>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/70 transition-colors"
-        >
-          {copied ? <><Check className="w-3 h-3" /> Copied</> : <><Clipboard className="w-3 h-3" /> Copy</>}
-        </button>
-      </div>
-      <pre className="p-4 bg-black/40 border border-white/10 rounded-bl-[8px] rounded-br-[8px] overflow-x-auto">
-        <code className="text-sm font-mono leading-relaxed text-white/80">{code}</code>
-      </pre>
-    </div>
-  );
-}
 
 function SectionDivider() {
   return <div className="border-t border-white/5" />;

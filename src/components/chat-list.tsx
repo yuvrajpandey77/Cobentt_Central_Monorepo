@@ -6,7 +6,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Plus, FolderOpen, ArrowRight, Calendar, Clock, Loader2 } from "lucide-react";
+import { MessageCircle, Plus, FolderOpen, ArrowRight, Calendar, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const MODE_ICONS: Record<string, { bg: string; color: string }> = {

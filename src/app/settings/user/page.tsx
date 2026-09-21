@@ -7,6 +7,7 @@ import { TokenCounter } from "@/components/token-counter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import type { UsageAlert } from "@/generated/prisma";
 
 export default function UserInfoPage() {
   const trpc = useTRPC();
@@ -38,6 +39,14 @@ export default function UserInfoPage() {
   const { data: analytics } = useQuery(
     trpc.usage.analytics.queryOptions({ days: 30 })
   );
+
+  // Element types derived from the tRPC query outputs above.
+  type DailyUsageItem = NonNullable<typeof analytics>["dailyUsage"][number];
+  type ProjectBreakdownItem = NonNullable<typeof projectBreakdown>[number];
+  type BreakdownItem = NonNullable<typeof breakdown>[number];
+  type RecentCallItem = NonNullable<typeof recentCalls>[number] & {
+    projectName?: string | null;
+  };
 
   if (loadingQuota || loadingTotals) {
     return (
@@ -171,7 +180,7 @@ export default function UserInfoPage() {
             30-Day Usage
           </div>
           <div className="space-y-1">
-            {analytics.dailyUsage.slice(-14).map((day: any, i: number) => (
+            {analytics.dailyUsage.slice(-14).map((day: DailyUsageItem, i: number) => (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <span className="w-20 text-muted-foreground shrink-0">
                   {new Date(day.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
@@ -199,8 +208,8 @@ export default function UserInfoPage() {
         </div>
         {!loadingProjectBreakdown && projectBreakdown && projectBreakdown.length > 0 ? (
           <div className="space-y-2 text-sm">
-            {projectBreakdown.map((p: any) => {
-              const maxTokens = Math.max(...projectBreakdown.map((x: any) => x.totalTokens), 1);
+            {projectBreakdown.map((p: ProjectBreakdownItem) => {
+              const maxTokens = Math.max(...projectBreakdown.map((x: ProjectBreakdownItem) => x.totalTokens), 1);
               return (
                 <div key={p.projectId} className="flex items-center gap-3">
                   <span className="w-40 truncate font-medium">{p.projectName}</span>
@@ -229,7 +238,7 @@ export default function UserInfoPage() {
         </div>
         {!loadingBreakdown && breakdown && breakdown.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-            {breakdown.map((b: any, i: number) => (
+            {breakdown.map((b: BreakdownItem, i: number) => (
               <div key={i} className="flex items-center justify-between border rounded p-2 bg-white/5">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{b.provider}</span>
@@ -255,7 +264,7 @@ export default function UserInfoPage() {
         </div>
         {!loadingRecent && recentCalls && recentCalls.length > 0 ? (
           <div className="space-y-2">
-            {recentCalls.map((r: any) => (
+            {recentCalls.map((r: RecentCallItem) => (
               <div key={r.id} className="flex items-center justify-between text-sm border rounded p-2 bg-white/5">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{r.provider}</span>
@@ -284,7 +293,7 @@ export default function UserInfoPage() {
         </div>
         {alerts && alerts.length > 0 ? (
           <div className="space-y-2 text-sm">
-            {alerts.map((a: any) => (
+            {alerts.map((a: UsageAlert) => (
               <div key={a.id} className="flex items-start gap-2">
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 text-amber-500" />
                 <div>

@@ -723,7 +723,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                       <div className="mb-4">
                         <p className="text-xs text-white/60 mb-2">Custom Requirements Detected</p>
                         <div className="space-y-2">
-                          {Object.entries(form.watch("aiConfiguration").customRequirements).map(([key, value]: [string, any]) => {
+                          {Object.entries(form.watch("aiConfiguration").customRequirements).map(([key, value]: [string, unknown]) => {
                             if (value && typeof value === 'object' && Object.keys(value).length > 0) {
                               return (
                                 <div key={key} className="flex items-start gap-2">

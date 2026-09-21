@@ -1,7 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-let defaultLimiter: Ratelimit | null = null;
 const limitersByPrefix = new Map<string, Ratelimit>();
 let redisClient: Redis | null = null;
 
@@ -12,22 +11,6 @@ function getRedis(): Redis | null {
   if (!url || !token) return null;
   redisClient = new Redis({ url, token });
   return redisClient;
-}
-
-function getLimiter(): Ratelimit | null {
-  if (defaultLimiter) return defaultLimiter;
-  const redis = getRedis();
-  if (!redis) {
-    console.warn("[rate-limit] UPSTASH_REDIS_REST_URL/TOKEN not configured, rate limiting disabled");
-    return null;
-  }
-  defaultLimiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(100, "60 s"),
-    analytics: true,
-    prefix: "cobentt:ratelimit",
-  });
-  return defaultLimiter;
 }
 
 function getOrCreateLimiter(prefix: string, limit: number, windowMs: number): Ratelimit | null {

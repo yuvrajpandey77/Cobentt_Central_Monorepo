@@ -55,7 +55,7 @@ async function main() {
       console.log('━'.repeat(60));
       logs.forEach((log: string) => console.log(log));
       console.log('━'.repeat(60));
-    } catch (e) {
+    } catch {
       console.log('\n📝 Raw Logs:', failedJob.logs);
     }
   }

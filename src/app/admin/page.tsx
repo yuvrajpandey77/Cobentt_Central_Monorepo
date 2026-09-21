@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, TrendingUp, Users, Activity } from "lucide-react";
+import { Search, TrendingUp, Users, Activity } from "lucide-react";
 
 export default function AdminPanel() {
   const [email, setEmail] = useState("");

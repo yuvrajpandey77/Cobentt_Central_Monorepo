@@ -78,7 +78,7 @@ export async function GET(
         console.log('🔍 Connecting to existing E2B sandbox:', sandboxId);
         sandbox = await Sandbox.connect(sandboxId);
         console.log('✅ Successfully connected to existing sandbox');
-      } catch (error) {
+      } catch {
         console.log('⚠️ Failed to connect to existing sandbox, creating new one...');
         try {
           sandbox = await Sandbox.create("solidity-foundry-template");
@@ -139,7 +139,7 @@ export async function GET(
           const fullPath = `/home/user/hello_template/${path}`;
           const content = await sandbox.files.read(fullPath);
           files[path] = content;
-        } catch (error) {
+        } catch {
           // File doesn't exist, continue
         }
       }

@@ -7,24 +7,21 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { 
     Code2, 
     Plus, 
     Search, 
-    Filter, 
     Grid3X3, 
     List, 
     Calendar,
     Clock,
     FolderOpen,
-    Loader2,
     Trash2,
     Edit,
     Eye,
-    MoreHorizontal
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
@@ -58,11 +55,15 @@ const AllProjectsContent = () => {
         trpc.projects.getMany.queryOptions()
     );
 
+    // Element types derived from the tRPC query output above.
+    type ProjectListItem = NonNullable<typeof projects>[number];
+    type ProjectMessageItem = ProjectListItem["messages"][number];
+
     const queryClient = useQueryClient();
 
-    const [renameTarget, setRenameTarget] = useState<any>(null);
+    const [renameTarget, setRenameTarget] = useState<ProjectListItem | null>(null);
     const [renameValue, setRenameValue] = useState("");
-    const [deleteTarget, setDeleteTarget] = useState<any>(null);
+    const [deleteTarget, setDeleteTarget] = useState<ProjectListItem | null>(null);
 
     const renameMutation = useMutation(trpc.projects.rename.mutationOptions({
         onSuccess: () => {
@@ -90,22 +91,26 @@ const AllProjectsContent = () => {
     }));
 
     // Filter projects based on search query
-    const filteredProjects = projects?.filter((project: any) =>
+    const filteredProjects = projects?.filter((project: ProjectListItem) =>
         project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.messages.some((message: any) => 
+        project.messages.some((message: ProjectMessageItem) => 
             message.content.toLowerCase().includes(searchQuery.toLowerCase())
         )
     ) ?? [];
 
     const ProjectGridView = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProjects.map((project: any) => (
+            {filteredProjects.map((project: ProjectListItem) => (
                 <ProjectCard
                     key={project.id}
-                    project={project}
+                    project={{
+                        ...project,
+                        contractType: project.contractType ?? undefined,
+                        contractAddress: project.contractAddress ?? undefined,
+                    }}
                     onRename={(id, name) => { setRenameTarget(project); setRenameValue(name); }}
                     onTogglePin={(id) => togglePinMutation.mutate({ projectId: id })}
-                    onDelete={(id) => setDeleteTarget(project)}
+                    onDelete={() => setDeleteTarget(project)}
                 />
             ))}
         </div>
@@ -113,7 +118,7 @@ const AllProjectsContent = () => {
 
     const ProjectListView = () => (
         <div className="space-y-4">
-            {filteredProjects.map((project: any) => {
+            {filteredProjects.map((project: ProjectListItem) => {
                 const latestMessage = project.messages[0];
                 const previewText = latestMessage?.content?.slice(0, 200) + "..." || "No description available";
                 const isSmartContract = project.projectType === 'SMART_CONTRACT' || project.contractType;
@@ -337,7 +342,7 @@ const AllProjectsContent = () => {
                 <DialogHeader>
                     <DialogTitle>Rename Project</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={(e) => { e.preventDefault(); if (renameValue.trim()) renameMutation.mutate({ projectId: renameTarget?.id, name: renameValue.trim() }); }}>
+                <form onSubmit={(e) => { e.preventDefault(); if (renameValue.trim() && renameTarget) renameMutation.mutate({ projectId: renameTarget.id, name: renameValue.trim() }); }}>
                     <input
                         autoFocus
                         value={renameValue}
@@ -371,7 +376,7 @@ const AllProjectsContent = () => {
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                         className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => deleteMutation.mutate({ projectId: deleteTarget?.id })}
+                        onClick={() => { if (deleteTarget) deleteMutation.mutate({ projectId: deleteTarget.id }); }}
                         disabled={deleteMutation.isPending}
                     >
                         {deleteMutation.isPending ? "Deleting..." : "Delete"}

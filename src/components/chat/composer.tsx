@@ -37,10 +37,10 @@ export function Composer({
   onRegenerateHandled?: () => void;
 }) {
   const {
-    activeThread, createThread, isStreaming, setIsStreaming,
-    provider, apiKey, baseUrl, modelId, setModelId, temperature, topP,
+    activeThread, isStreaming, setIsStreaming,
+    modelId, setModelId,
     webSearch, setWebSearch, pendingEditContent, clearPendingEdit,
-    refetchConversations, selectThread,
+    selectThread,
   } = useChat();
 
   // The model shown in the input-box picker is the model actually used:
@@ -108,10 +108,13 @@ export function Composer({
   }, [initialFiles]);
 
   const initialSentRef = useRef(false);
+  // Latest handleSend without subscribing the effect to its identity
+  // (it is re-created each render; the sent-ref guard keeps this one-shot).
+  const handleSendRef = useRef<(text?: string) => void>(() => {});
   useEffect(() => {
     if (initialPrompt && initialPrompt.trim() && !initialSentRef.current && !isStreaming) {
       initialSentRef.current = true;
-      handleSend(initialPrompt.trim());
+      handleSendRef.current(initialPrompt.trim());
     }
   }, [initialPrompt, isStreaming]);
 
@@ -361,6 +364,8 @@ export function Composer({
       toast.error(_err?.message || "Failed to send message");
     }
   };
+
+  handleSendRef.current = handleSend;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {

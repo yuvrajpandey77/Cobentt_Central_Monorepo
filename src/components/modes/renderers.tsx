@@ -370,6 +370,7 @@ function SingleSlideRenderer({
             onCommit={edit("title")}
           />
           {p.url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- user-supplied arbitrary image URLs (unknown hosts/dimensions) can't use next/image remote optimization.
             <img
               src={p.url}
               alt={p.caption || p.title}

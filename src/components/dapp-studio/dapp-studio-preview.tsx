@@ -4,11 +4,10 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Rocket, CheckCircle2, Code2, Shield, Sparkles, ArrowLeft, Download, Clipboard, ExternalLink, Loader2 } from "lucide-react";
+import { Rocket, CheckCircle2, Sparkles, ArrowLeft, Clipboard, ExternalLink, Loader2 } from "lucide-react";
 import type { DappStudioFormValues } from "@/components/dapp-studio/dapp-studio-form";
 import type { Blockchain, ContractType, Network } from "@/generated/prisma";
 import { useMutation } from "@tanstack/react-query";
@@ -91,7 +90,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
       await navigator.clipboard.writeText(configJson);
       setCopyState("copied");
       setTimeout(() => setCopyState("idle"), 2400);
-    } catch (error) {
+    } catch {
       setCopyState("idle");
     }
   }, [configJson]);

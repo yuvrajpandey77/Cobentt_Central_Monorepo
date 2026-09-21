@@ -12,8 +12,7 @@ import {
   generateContractWithIteration, 
   ContractGenerationResult,
   refineContractWithForgeErrors,
-  parseForgeOutput,
-  ForgeErrorInfo
+  parseForgeOutput
 } from './ai-contract-generator';
 import { recordTokenUsage } from "@/lib/token-usage";
 // Screenshot capture deps loaded dynamically to avoid type and runtime issues when unavailable
@@ -426,7 +425,7 @@ export const CobenttAgent = inngest.createFunction(
           await page.close();
           await browser.close();
         }
-      } catch (_err) {
+      } catch {
         // Ignore failures; UI will fallback
       }
     });
@@ -486,155 +485,6 @@ async function updateBuildProgress(buildJobId: string, progress: number, current
   });
 }
 
-// Helper function to validate contract syntax before compilation
-function validateContractSyntax(contractCode: string, isAIGenerated: boolean = false): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-  
-  // Check for SPDX license identifier
-  if (!contractCode.includes('// SPDX-License-Identifier:')) {
-    errors.push('Missing SPDX license identifier');
-  }
-  
-  // Check for pragma statement
-  if (!contractCode.match(/pragma\s+solidity\s+[\^~]?[\d.]+;/)) {
-    errors.push('Missing or invalid pragma statement');
-  }
-  
-  // Check for contract declaration
-  if (!contractCode.match(/contract\s+\w+/)) {
-    errors.push('Missing contract declaration');
-  }
-  
-  // Check for basic syntax issues
-  const lines = contractCode.split('\n');
-  const openBraces = (contractCode.match(/{/g) || []).length;
-  const closeBraces = (contractCode.match(/}/g) || []).length;
-  
-  if (openBraces !== closeBraces) {
-    errors.push(`Mismatched braces: ${openBraces} opening, ${closeBraces} closing`);
-  }
-  
-  // Check for unclosed parentheses
-  const openParens = (contractCode.match(/\(/g) || []).length;
-  const closeParens = (contractCode.match(/\)/g) || []).length;
-  
-  if (openParens !== closeParens) {
-    errors.push(`Mismatched parentheses: ${openParens} opening, ${closeParens} closing`);
-  }
-  
-  // Check for import statements are properly formatted
-  const imports = contractCode.match(/import\s+"[^"]+";/g) || [];
-  const invalidImports = contractCode.match(/import\s+[^";]+$/gm) || [];
-  
-  if (invalidImports.length > 0) {
-    errors.push('Invalid import statement(s) detected');
-  }
-  
-  // Check for constructor syntax (OpenZeppelin v5 requires msg.sender for Ownable)
-  if (contractCode.includes('Ownable') && contractCode.includes('constructor')) {
-    const constructorStart = contractCode.indexOf('constructor');
-    const constructorBodyStart = contractCode.indexOf('{', constructorStart);
-    // Find the matching closing brace for the constructor body
-    let braceCount = 1;
-    let constructorEnd = constructorBodyStart + 1;
-    while (braceCount > 0 && constructorEnd < contractCode.length) {
-      if (contractCode[constructorEnd] === '{') braceCount++;
-      if (contractCode[constructorEnd] === '}') braceCount--;
-      constructorEnd++;
-    }
-    
-    const constructorSection = contractCode.substring(constructorStart, constructorEnd);
-    
-    // If using Ownable, should have Ownable(msg.sender) or Ownable(initialOwner)
-    // Check for Ownable initialization in the full contract since it might be on initialization list
-    if (!constructorSection.includes('Ownable(') && !contractCode.includes('Ownable(msg.sender)') && !contractCode.includes('Ownable(initialOwner)')) {
-      errors.push('Ownable contract requires explicit owner initialization in constructor');
-    }
-  }
-  
-  // Enhanced validation for AI-generated code
-  if (isAIGenerated) {
-    // Additional checks for AI-generated code
-    errors.push(...checkSecurityPatterns(contractCode));
-    errors.push(...checkGasOptimizations(contractCode));
-    errors.push(...checkAccessControls(contractCode));
-    errors.push(...checkReentrancyGuards(contractCode));
-  }
-  
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-}
-
-// Security pattern checks for AI-generated code
-function checkSecurityPatterns(contractCode: string): string[] {
-  const errors: string[] = [];
-  
-  // Check for dangerous patterns
-  if (contractCode.includes('selfdestruct')) {
-    errors.push('selfdestruct is not allowed in generated code');
-  }
-  
-  if (contractCode.includes('delegatecall')) {
-    errors.push('delegatecall is not allowed in generated code');
-  }
-  
-  // Check for proper access controls
-  const hasAccessControl = contractCode.includes('onlyOwner') || 
-                          contractCode.includes('onlyRole') || 
-                          contractCode.includes('require(msg.sender');
-  
-  if (contractCode.includes('function') && !hasAccessControl) {
-    errors.push('Functions should include proper access controls');
-  }
-  
-  return errors;
-}
-
-// Gas optimization checks
-function checkGasOptimizations(contractCode: string): string[] {
-  const errors: string[] = [];
-  
-  // Check for unchecked blocks where appropriate
-  const hasUnchecked = contractCode.includes('unchecked');
-  const hasLoops = contractCode.includes('for (') || contractCode.includes('while (');
-  
-  if (hasLoops && !hasUnchecked) {
-    errors.push('Consider using unchecked blocks for gas optimization in loops');
-  }
-  
-  return errors;
-}
-
-// Access control checks
-function checkAccessControls(contractCode: string): string[] {
-  const errors: string[] = [];
-  
-  // Check for proper error handling
-  if (contractCode.includes('function') && !contractCode.includes('require')) {
-    errors.push('Functions should include proper validation with require statements');
-  }
-  
-  return errors;
-}
-
-// Reentrancy guard checks
-function checkReentrancyGuards(contractCode: string): string[] {
-  const errors: string[] = [];
-  
-  // Check for external calls without reentrancy protection
-  const hasExternalCalls = contractCode.includes('.call(') || 
-                          contractCode.includes('.transfer(') || 
-                          contractCode.includes('.send(');
-  
-  if (hasExternalCalls && !contractCode.includes('ReentrancyGuard')) {
-    errors.push('Consider using ReentrancyGuard for external calls');
-  }
-  
-  return errors;
-}
-
 // AI-Only Contract Generation Function
 export const generateContract = inngest.createFunction(
   { 
@@ -646,7 +496,7 @@ export const generateContract = inngest.createFunction(
   { event: "contract/generate" },
   async ({ event, step }) => {
     console.log('🎯 AI Contract Generator called with event:', event);
-    const { buildJobId, contractType, tokenName, tokenSymbol, tokenSupply, decimals, features } = event.data;
+    const { buildJobId, contractType, tokenName, tokenSymbol, features } = event.data;
     
     // Check if this build job is already being processed
     const existingJob = await prisma.buildJob.findUnique({ where: { id: buildJobId } });
@@ -1132,16 +982,14 @@ export const generateContract = inngest.createFunction(
         ];
         
         let artifactContent = null;
-        let artifactPath = null;
         
         for (const path of possiblePaths) {
           try {
             console.log(`Trying artifact path: ${path}`);
             artifactContent = await sandbox.files.read(path);
-            artifactPath = path;
             console.log(`Successfully read artifact from: ${path}`);
             break;
-          } catch (pathError) {
+          } catch {
             console.log(`Path ${path} not found, trying next...`);
           }
         }
@@ -1439,40 +1287,12 @@ export const verifyContract = inngest.createFunction(
 // Helper functions for contract generation - REMOVED (using AI-only generation)
 // All template generation functions have been replaced with AI generation
 
-function extractABI(output: string): Record<string, unknown>[] {
-  // Simple ABI extraction - in production, use proper JSON parsing
-  try {
-    const lines = output.split('\n');
-    const abiLine = lines.find(line => line.includes('"abi"'));
-    if (abiLine) {
-      return JSON.parse(abiLine.split('"abi":')[1]?.trim());
-    }
-  } catch (error) {
-    console.error('Error extracting ABI:', error);
-  }
-  return [];
-}
-
-function extractBytecode(output: string): string {
-  // Simple bytecode extraction - in production, use proper JSON parsing
-  try {
-    const lines = output.split('\n');
-    const bytecodeLine = lines.find(line => line.includes('"bytecode"'));
-    if (bytecodeLine) {
-      return bytecodeLine.split('"bytecode":')[1]?.trim().replace(/"/g, '');
-    }
-  } catch (error) {
-    console.error('Error extracting bytecode:', error);
-  }
-  return '';
-}             
-
 // Test Contract Function
 export const testContract = inngest.createFunction(
   { id: 'test-contract' },
   { event: 'test-contract' },
   async ({ event, step }) => {
-    const { buildJobId, projectId, contractCode, contractName, contractType } = event.data;
+    const { buildJobId, contractCode, contractName, contractType } = event.data;
 
     // Update build progress
     const updateTestProgress = async (progress: number, step: string, log: string) => {

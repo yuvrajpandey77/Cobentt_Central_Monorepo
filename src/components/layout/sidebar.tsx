@@ -19,6 +19,7 @@ import { SidebarActions } from "@/components/sidebar/actions";
 import { SidebarNavigation } from "@/components/sidebar/navigation";
 import { SidebarSections } from "@/components/sidebar/sections";
 import { SidebarRecent } from "@/components/sidebar/recent";
+import type { ConversationEntry, ProjectEntry } from "@/components/sidebar/recent";
 import { SidebarFooter } from "@/components/sidebar/footer";
 
 import {
@@ -76,12 +77,27 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     queryClient.invalidateQueries(trpc.conversations.getAll.queryOptions());
   }, [queryClient, trpc]);
 
-  // Element types derived from the tRPC query outputs above.
-  type QueryProject = NonNullable<typeof projects>[number];
-  type QueryConversation = NonNullable<typeof conversations>[number];
-  // Prisma Project has no `isArchived` column; sidebar treats it as optional.
-  type ProjectListItem = QueryProject & { isArchived?: boolean };
-  type ConversationListItem = QueryConversation;
+  // Adapt tRPC rows to SidebarRecent's entry shapes. In particular Prisma
+  // Project has no `isArchived` column, so projects are never archived.
+  const conversationItems: ConversationEntry[] = (conversations ?? []).map((c) => ({
+    id: c.id,
+    title: c.title,
+    updatedAt: c.updatedAt,
+    isPinned: c.isPinned,
+    isArchived: c.isArchived,
+    mode: c.mode ?? undefined,
+    messages: c.messages.map((m) => ({ content: m.content, role: m.role })),
+  }));
+  const projectItems: ProjectEntry[] = (projects ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    updatedAt: p.updatedAt,
+    isPinned: p.isPinned,
+    isArchived: false,
+    projectType: p.projectType,
+    messages: p.messages.map((m) => ({ content: m.content, role: m.role })),
+    contractType: p.contractType ?? null,
+  }));
 
   interface SidebarTarget {
     id: string;
@@ -156,12 +172,12 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     }
   };
 
-  const handleRenameConv = useCallback((conv: ConversationListItem) => {
+  const handleRenameConv = useCallback((conv: ConversationEntry) => {
     setRenameTarget({ ...conv, __type: "conversation" });
     setRenameValue(conv.title || "");
   }, []);
 
-  const handleTogglePinConv = useCallback((conv: ConversationListItem) => {
+  const handleTogglePinConv = useCallback((conv: ConversationEntry) => {
     if (isLocal && chatCtx) {
       chatCtx.togglePinThread(conv.id, !conv.isPinned);
     } else {
@@ -169,7 +185,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     }
   }, [isLocal, chatCtx, togglePinConversation]);
 
-  const handleToggleArchiveConv = useCallback((conv: ConversationListItem) => {
+  const handleToggleArchiveConv = useCallback((conv: ConversationEntry) => {
     if (isLocal && chatCtx) {
       chatCtx.toggleArchiveThread(conv.id, !conv.isArchived);
     } else {
@@ -177,7 +193,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     }
   }, [isLocal, chatCtx, toggleArchiveConversation]);
 
-  const handleDeleteConv = useCallback((conv: ConversationListItem) => {
+  const handleDeleteConv = useCallback((conv: ConversationEntry) => {
     setDeleteTarget({ ...conv, __type: "conversation" });
   }, []);
 
@@ -190,7 +206,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
   const isRenamePending = renameProject.isPending || renameConversation.isPending;
   const isDeletePending = deleteProject.isPending || deleteConversation.isPending;
 
-  const convRoute = useCallback((conv: any) => `/${conv.mode || "chat"}/${conv.id}`, []);
+  const convRoute = useCallback((conv: ConversationEntry) => `/${conv.mode || "chat"}/${conv.id}`, []);
 
   const iconClasses = "h-9 w-9 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200";
 
@@ -335,38 +351,38 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
                 <SidebarSections
                   archiveContent={
                     <SidebarRecent
-                      conversations={(conversations as any[] || []).filter((c: any) => c.isArchived)}
-                      projects={(projects as any[] || []).filter((p: any) => p.isArchived)}
+                      conversations={conversationItems.filter((c) => c.isArchived)}
+                      projects={projectItems.filter((p) => p.isArchived)}
                       pathname={pathname}
                       convRoute={convRoute}
                       onRename={handleRenameConv}
                       onTogglePin={handleTogglePinConv}
                       onToggleArchive={handleToggleArchiveConv}
                       onDelete={handleDeleteConv}
-                      onRenameProject={(project: any) => { setRenameTarget(project); setRenameValue(project.name); }}
-                      onTogglePinProject={(project: any) => togglePinProject.mutate({ projectId: project.id })}
-                      onDeleteProject={(project: any) => setDeleteTarget(project)}
+                      onRenameProject={(project: ProjectEntry) => { setRenameTarget(project); setRenameValue(project.name); }}
+                      onTogglePinProject={(project: ProjectEntry) => togglePinProject.mutate({ projectId: project.id })}
+                      onDeleteProject={(project: ProjectEntry) => setDeleteTarget(project)}
                       isCollapsed={isCollapsed}
                       searchQuery={searchQuery}
                     />
                   }
                 >
                   <SidebarRecent
-                    conversations={(conversations as any[] || []).filter((c: any) => !c.isArchived)}
-                    projects={(projects as any[] || []).filter((p: any) => !p.isArchived)}
+                    conversations={conversationItems.filter((c) => !c.isArchived)}
+                    projects={projectItems.filter((p) => !p.isArchived)}
                     pathname={pathname}
                     convRoute={convRoute}
                     onRename={handleRenameConv}
                     onTogglePin={handleTogglePinConv}
                     onToggleArchive={handleToggleArchiveConv}
                     onDelete={handleDeleteConv}
-                    onRenameProject={(project: any) => { setRenameTarget(project); setRenameValue(project.name); }}
-                    onTogglePinProject={(project: any) => togglePinProject.mutate({ projectId: project.id })}
-                    onDeleteProject={(project: any) => setDeleteTarget(project)}
-                    isCollapsed={isCollapsed}
-                    searchQuery={searchQuery}
-                  />
-                </SidebarSections>
+                    onRenameProject={(project: ProjectEntry) => { setRenameTarget(project); setRenameValue(project.name); }}
+                    onTogglePinProject={(project: ProjectEntry) => togglePinProject.mutate({ projectId: project.id })}
+                    onDeleteProject={(project: ProjectEntry) => setDeleteTarget(project)}
+                      isCollapsed={isCollapsed}
+                      searchQuery={searchQuery}
+                    />
+                  </SidebarSections>
               )}
             </div>
           )}

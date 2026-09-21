@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { logUserAuditEvent } from "@/lib/user-audit";
 
 interface ProfileData {
   bio: string;

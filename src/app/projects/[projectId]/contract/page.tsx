@@ -57,7 +57,7 @@ function ContractPageContent() {
     };
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {

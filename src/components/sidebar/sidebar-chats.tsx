@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, ChevronDown } from "lucide-react";
 import { isToday, isYesterday, differenceInDays } from "date-fns";
-import { cn } from "@/lib/utils";
 import { ConversationRow } from "./conversation-row";
 import type { SidebarConversation } from "./types";
 

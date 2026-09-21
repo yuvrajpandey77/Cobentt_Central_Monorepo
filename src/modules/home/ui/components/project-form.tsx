@@ -54,7 +54,7 @@ interface TRPCMutationErrorShape {
 
 
 
-export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory, onCategoryClear, onStartChat, onModePrompt }: Props) => {
+export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear, onStartChat, onModePrompt }: Props) => {
     const clerk = useClerk();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -147,25 +147,6 @@ export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory
             setCreatedProjectId(data.id);
             setShowLoading(true);
             console.log("Loading screen should now be visible");
-        },
-        onError: (error) => {
-            toast.error(error.message);
-            if(error.data?.code === "UNAUTHORIZED") {
-                router.push("/sign-in");
-            }
-        },
-    }));
-
-    const createDappProject = useMutation(trpc.projects.createDapp.mutationOptions({
-        onSuccess: (data) => {
-            console.log("Dapp project created successfully:", data);
-            // Invalidate project list
-            queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
-            // Invalidate usage so token bar refreshes
-            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as unknown as readonly unknown[] });
-            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as unknown as readonly unknown[] });
-            // Redirect to build page to show real-time progress
-            router.push(`/projects/${data.id}/build`);
         },
         onError: (error) => {
             toast.error(error.message);

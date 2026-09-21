@@ -62,7 +62,7 @@ export default function TermsPage() {
         </div>
 
         <div className="max-w-3xl mx-auto pb-20 lg:pb-28 space-y-6">
-          {sections.map((section, i) => (
+          {sections.map((section) => (
             <div
               key={section.title}
               className="p-6 lg:p-8 bg-bg-card border border-white/5 rounded-tr-[16px] rounded-bl-[16px] rounded-tl-[10px] rounded-br-[10px] hover:border-white/10 transition-colors"

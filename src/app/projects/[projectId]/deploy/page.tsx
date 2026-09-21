@@ -18,7 +18,6 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { CheckCircle2, ArrowLeft, ArrowRight, Loader2, Rocket, Wallet, Coins, Shield, ExternalLink } from 'lucide-react';
-import { useTRPC } from '@/trpc/client';
 import type { Abi } from 'viem';
 
 interface ContractArtifacts {
@@ -71,12 +70,11 @@ function DeployPageContent() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
-  const trpc = useTRPC();
   const [currentStep, setCurrentStep] = useState(0);
   const [contractArtifacts, setContractArtifacts] = useState<ContractArtifacts | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<DeployProjectInfo | null>(null);
-  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deploying' | 'completed' | 'failed'>('idle');
+  const [deploymentStatus] = useState<'idle' | 'deploying' | 'completed' | 'failed'>('idle');
 
   // Use wagmi hook (safe because component only renders after mounting)
   const { address } = useAccount();

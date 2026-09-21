@@ -77,7 +77,7 @@ export async function POST(
     } else {
       try {
         sandbox = await Sandbox.connect(sandboxId);
-      } catch (error) {
+      } catch {
         console.log('Failed to connect to existing sandbox, creating new one...');
         sandbox = await Sandbox.create("solidity-foundry-template");
         sandboxId = sandbox.sandboxId;
