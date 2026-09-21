@@ -21,6 +21,17 @@ import { useMode } from "@/contexts/mode-context";
 import { AttachInput, AttachmentPills, type AttachInputHandle, type AttachmentMeta, type AttachmentPill } from "@/components/chat/attach-input";
 import { stashPendingFiles } from "@/lib/attachments/shuttle";
 import { UNIQUE_MODELS, getModelById } from "@/lib/models";
+import { useIntentRouter } from "@/lib/intent/use-intent";
+import { IntentConfirmationCard } from "@/components/intent/intent-confirmation-card";
+import type { IntentResult } from "@/lib/intent/types";
+
+const INTENT_MODE_MAP: Record<string, string> = {
+    slides: "slides",
+    document: "document",
+    sheet: "sheet",
+    deep_research: "deep-research",
+    data_analysis: "sheet",
+};
 
 
 
@@ -100,6 +111,8 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
     const attachRef = useRef<AttachInputHandle>(null);
     const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
     const [pendingPills, setPendingPills] = useState<AttachmentPill[]>([]);
+    const { pending: intentPending, setPending: setIntentPending, classify } = useIntentRouter();
+    const [deferredPrompt, setDeferredPrompt] = useState<string | null>(null);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -162,8 +175,24 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
             stashPendingFiles(attachRef.current.getPendingFiles());
         }
 
-        // Default: no category selected → start a chat
+        // Default: no category selected → Intent Router decides (chat vs artifact).
+        // Explicit category pills ALWAYS take precedence over inference.
         if (!projectCategory && onStartChat) {
+            let routed: { result: IntentResult; telemetryId?: string } | null = null;
+            try {
+                routed = await classify({
+                    message: values.value,
+                    hasAttachments: attachments.length > 0 || !!attachRef.current?.hasPending(),
+                    attachmentNames: attachments.map((a) => a.fileName),
+                });
+            } catch { routed = null; }
+            const artifact = routed?.result.capabilities.find((c) => INTENT_MODE_MAP[c]);
+            if (routed && artifact && routed.result.action !== "chat" && onModePrompt) {
+                // HIGH → 3s auto-action card; MEDIUM → wait for user.
+                setDeferredPrompt(values.value);
+                setIntentPending({ result: routed.result, telemetryId: routed.telemetryId });
+                return;
+            }
             onStartChat(values.value);
             return;
         }
@@ -225,6 +254,24 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
     const [isFocused, setIsFocused] = useState(false);
     const isPending = createProject.isPending;
     const isButtonDisabled = isPending || isAnalyzingContract || !form.formState.isValid;
+
+    const confirmArtifactRoute = () => {
+        const text = deferredPrompt;
+        const cap = intentPending?.result.capabilities.find((c) => INTENT_MODE_MAP[c]);
+        setIntentPending(null);
+        setDeferredPrompt(null);
+        if (text && cap && onModePrompt) {
+            onModePrompt(INTENT_MODE_MAP[cap], text, templateId || undefined, selectedModel || undefined);
+        } else if (text && onStartChat) {
+            onStartChat(text);
+        }
+    };
+    const keepChatRoute = () => {
+        const text = deferredPrompt;
+        setIntentPending(null);
+        setDeferredPrompt(null);
+        if (text && onStartChat) onStartChat(text);
+    };
 
     return (
         <>
@@ -415,6 +462,16 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                         </div>
                     </div>
                 </form>
+                {intentPending && (
+                    <div className="pt-3">
+                        <IntentConfirmationCard
+                            result={intentPending.result}
+                            telemetryId={intentPending.telemetryId}
+                            onConfirm={confirmArtifactRoute}
+                            onCancel={keepChatRoute}
+                        />
+                    </div>
+                )}
             </section>
         </Form>
         </>

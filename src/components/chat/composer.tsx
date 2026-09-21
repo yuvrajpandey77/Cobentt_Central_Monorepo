@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useChat, type Message } from "@/lib/chat-store";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
@@ -12,6 +13,25 @@ import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { AttachInput, AttachmentPills, type AttachmentMeta, type AttachmentPill, type AttachInputHandle } from "@/components/chat/attach-input";
 import { ModelSelector } from "@/modules/chat/ui/components/model-selector";
 import { DEFAULT_MODEL } from "@/lib/models";
+import { useIntentRouter } from "@/lib/intent/use-intent";
+import { IntentConfirmationCard } from "@/components/intent/intent-confirmation-card";
+import type { IntentResult } from "@/lib/intent/types";
+
+/** Artifact capability → conversation mode + route. */
+const ARTIFACT_MODE: Record<string, { mode: string; route: string }> = {
+  slides: { mode: "slides", route: "/slides" },
+  document: { mode: "document", route: "/document" },
+  sheet: { mode: "sheet", route: "/sheet" },
+  deep_research: { mode: "deep-research", route: "/deep-research" },
+  data_analysis: { mode: "sheet", route: "/sheet" },
+};
+
+function primaryArtifactMode(result: IntentResult): { mode: string; route: string } | null {
+  for (const c of ["slides", "document", "sheet", "deep_research", "data_analysis"] as const) {
+    if (result.capabilities.includes(c as never) && ARTIFACT_MODE[c]) return ARTIFACT_MODE[c];
+  }
+  return null;
+}
 
 const starters = [
   "Turn this into a slide deck",
@@ -42,6 +62,10 @@ export function Composer({
     webSearch, setWebSearch, pendingEditContent, clearPendingEdit,
     selectThread,
   } = useChat();
+  const router = useRouter();
+  const { pending: intentPending, setPending: setIntentPending, classify } = useIntentRouter();
+  const [webTouched, setWebTouched] = useState(false);
+  const [deferred, setDeferred] = useState<{ text: string; webForThisSend: boolean } | null>(null);
 
   // The model shown in the input-box picker is the model actually used:
   // it is sent with every stream request and stored on new conversations.
@@ -118,7 +142,7 @@ export function Composer({
     }
   }, [initialPrompt, isStreaming]);
 
-  const handleStream = async (conversationId: string, userContent: string, attachmentIds?: string[]) => {
+  const handleStream = async (conversationId: string, userContent: string, attachmentIds?: string[], webForRequest?: boolean) => {
     setIsStreaming(true);
 
     const assistantId = `stream-${Date.now()}`;
@@ -130,7 +154,8 @@ export function Composer({
     };
     onStreamMessage?.(placeholder);
 
-    const webSources = webSearch ? [{ index: 1, title: "Web Search" }] : undefined;
+    const effectiveWeb = typeof webForRequest === "boolean" ? webForRequest : webSearch;
+    const webSources = effectiveWeb ? [{ index: 1, title: "Web Search" }] : undefined;
 
     try {
       const res = await fetch(`/api/chat/${conversationId}/stream`, {
@@ -281,11 +306,99 @@ export function Composer({
     const trimmed = (overrideText ?? value).trim();
     if (!trimmed || isStreaming) return;
 
-    if (!overrideText) {
+    // Regenerate / programmatic sends skip the router (explicit context).
+    if (overrideText) {
       setValue("");
-      setShowMenu(false);
+      await executeChat(trimmed, undefined, true);
+      return;
     }
 
+    // --- Intent Router: classify before executing ---
+    // Explicit UI selection ALWAYS takes precedence over inference.
+    const explicitSelection = webSearch ? "web_search" : webTouched ? "none" : null;
+    let routed: { result: IntentResult; telemetryId?: string } | null = null;
+    try {
+      const history = (activeThread?.messages ?? []).slice(-4).map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content.slice(0, 1000),
+      }));
+      routed = await classify({
+        message: trimmed,
+        history,
+        explicitSelection,
+        hasAttachments: attachments.length > 0 || !!attachRef.current?.hasPending(),
+        attachmentNames: attachments.map((a) => a.fileName),
+      });
+    } catch { routed = null; }
+
+    if (!routed) {
+      setValue("");
+      setShowMenu(false);
+      await executeChat(trimmed);
+      return;
+    }
+
+    const { result, telemetryId } = routed;
+    const artifact = primaryArtifactMode(result);
+
+    // 1) Pure chat (or low confidence): proceed silently, but honor
+    //    silent web enrichment for high-confidence web lookups.
+    if (!artifact || result.action === "chat") {
+      const webForThisSend = result.requires_web && result.action === "auto" && !webTouched;
+      if (webForThisSend) setWebSearch(true);
+      setValue("");
+      setShowMenu(false);
+      await executeChat(trimmed, webForThisSend || undefined);
+      return;
+    }
+
+    // 2) Artifact detected: show confirmation card.
+    //    HIGH → 3s auto-action card; MEDIUM → wait for user.
+    setValue("");
+    setShowMenu(false);
+    setDeferred({ text: trimmed, webForThisSend: result.requires_web });
+    setIntentPending({ result, telemetryId });
+  };
+
+  const executeArtifact = async () => {
+    const pending = intentPending;
+    const text = deferred?.text;
+    if (!pending || !text) return;
+    const dest = primaryArtifactMode(pending.result);
+    const decision = pending.result.auto_after_ms > 0 ? "auto" as const : "confirmed" as const;
+    try {
+      await fetch("/api/intent/telemetry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telemetryId: pending.telemetryId, userDecision: decision, executionSuccess: true }),
+      });
+    } catch { /* non-blocking */ }
+    setIntentPending(null);
+    setDeferred(null);
+    try {
+      // Multi-capability (research → artifact): keep the original prompt so the
+      // mode canvas builds on it; web evidence is injected server-side on arrival.
+      const result = await createConvMutation.mutateAsync({
+        initialMessage: text,
+        model: effectiveModel,
+        mode: dest?.mode ?? "slides",
+      });
+      router.push(`${dest?.route ?? "/slides"}/${result.id}`);
+    } catch (err) {
+      toast.error((err as Error)?.message || "Failed to create workspace. Staying in chat.");
+      await executeChat(text);
+    }
+  };
+
+  const keepChat = async () => {
+    const text = deferred?.text;
+    setIntentPending(null);
+    setDeferred(null);
+    if (text) await executeChat(text);
+  };
+
+  const executeChat = async (trimmed: string, webOverride?: boolean, isRegenerate = false) => {
+    const effectiveWeb = typeof webOverride === "boolean" ? webOverride : webSearch;
     const threadId = activeThread?.id;
 
     const attachmentIdsFromState =
@@ -322,11 +435,11 @@ export function Composer({
           attachments: echo,
         };
         onUserMessage?.(userMsg);
-        await handleStream(result.id, trimmed, ids);
+        await handleStream(result.id, trimmed, ids, effectiveWeb);
       } else {
         // Existing conversation: upload queued files first, then echo pills.
         let uploadedMetas: AttachmentMeta[] = [];
-        if (!overrideText && attachRef.current?.hasPending()) {
+        if (!isRegenerate && attachRef.current?.hasPending()) {
           uploadedMetas = await attachRef.current.uploadPending(threadId);
         }
         const uploadedPills: AttachmentPill[] = uploadedMetas.map((m) => ({
@@ -337,7 +450,7 @@ export function Composer({
         const echo = [...pillsFromAttachments(attachments), ...uploadedPills];
         const attachmentIds =
           echo.length > 0 ? echo.map((p) => p.id) : undefined;
-        if (!overrideText) setAttachments([]);
+        if (!isRegenerate) setAttachments([]);
 
         const userMsg: Message = {
           id: `user-${Date.now()}`,
@@ -357,7 +470,7 @@ export function Composer({
         } catch {
           // Persist failed; still stream so the user gets a reply
         }
-        await handleStream(threadId, trimmed, attachmentIds);
+        await handleStream(threadId, trimmed, attachmentIds, effectiveWeb);
       }
     } catch (err) {
       const _err = err as { message?: string } | undefined;
@@ -376,6 +489,15 @@ export function Composer({
 
   return (
     <div className="w-full max-w-[810px] mx-auto">
+      {/* Smart confirmation card: small, near-composer, never covers history */}
+      {intentPending && (
+        <IntentConfirmationCard
+          result={intentPending.result}
+          telemetryId={intentPending.telemetryId}
+          onConfirm={executeArtifact}
+          onCancel={keepChat}
+        />
+      )}
       {/* Starter pills */}
       {!isStreaming && !value && (activeThread?.messages.length || 0) === 0 && (
         <div className="flex flex-wrap justify-center gap-1.5 mb-3">
@@ -424,8 +546,15 @@ export function Composer({
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                 <div className="absolute bottom-11 left-0 z-20 w-48 py-1 bg-black/90 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl">
                   {["Camera", "Gallery", "Files", "Web Search", "Connectors"].map((item) => (
-                    <button key={item} onClick={() => setShowMenu(false)} className="w-full text-left px-3 py-2.5 text-sm text-text-secondary hover:bg-white/10 hover:text-white transition-colors">
-                      {item}
+                    <button
+                      key={item}
+                      onClick={() => {
+                        if (item === "Web Search") { setWebTouched(true); setWebSearch(true); }
+                        setShowMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 text-sm text-text-secondary hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      {item}{item === "Web Search" && webSearch ? " ✓" : ""}
                     </button>
                   ))}
                 </div>
@@ -466,9 +595,11 @@ export function Composer({
               onPendingChange={setPendingPills}
             />
             <button
-              onClick={() => setWebSearch(!webSearch)}
+              onClick={() => { setWebTouched(true); setWebSearch(!webSearch); }}
+              title={webSearch ? "Web search on (explicit — router will honor this)" : "Enable web search"}
+              aria-pressed={webSearch}
               className={webSearch
-                ? "w-9 h-9 flex items-center justify-center rounded-full text-white bg-white/10"
+                ? "w-9 h-9 flex items-center justify-center rounded-full text-white bg-white/10 ring-1 ring-white/30"
                 : "w-9 h-9 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-white/10"}
             >
               <Globe className="w-4 h-4" />
