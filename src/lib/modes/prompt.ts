@@ -63,7 +63,7 @@ The user wants you to create a ${def.label.toLowerCase()} with this request:
 ${attachmentSection}
 ${editSection}
 
-${template ? `Use this template style: ${template.label}. ${template.description}` : ""}
+${template ? `Use this visual system: ${template.label}. ${template.designDirection || template.description}` : ""}
 
 Respond ONLY with a valid JSON object, no markdown code fences, no commentary. The JSON must match exactly:
 
@@ -83,7 +83,9 @@ Rules:
 - "props" must only contain the fields listed for that block type.
 - Every block that has a "text"/"title"/"quote" field must have meaningful, complete content based on the user request.
 - ${currentArtifact ? "Apply the user's edit to the existing document and return the FULL updated document." : "Cover the user's topic thoroughly with 5-12 blocks."}
-- Make content specific and concrete, never generic placeholders.`;
+- Make content specific and concrete, never generic placeholders.
+- For slides, create a visual rhythm: alternate title, statement, comparison, proof, quote, metric, image, and closing layouts where they serve the story. Avoid repeating the same layout more than twice in a row.
+- For slides, use ${template?.theme ? `the "${template.theme}" theme` : "a theme that supports the topic"}; make the title and each slide's copy presentation-ready, not a document pasted onto slides.`;
 }
 
 export function buildResearchPrompt(userMessage: string, templateId?: string): string {

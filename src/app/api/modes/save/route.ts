@@ -47,6 +47,17 @@ export async function POST(req: NextRequest) {
 
     const files = (fragment.files as Record<string, unknown>) ?? {};
     files.artifact = artifact;
+    // Keep the downloadable/browser-presentable deck in sync with direct
+    // canvas edits. The JSON artifact remains the source of truth.
+    if (mode === "slides") {
+      try {
+        const parsed = typeof artifact === "string" ? JSON.parse(artifact) : artifact;
+        const { buildDeckHtml } = await import("../[mode]/export/html");
+        files["slides.html"] = buildDeckHtml(parsed);
+      } catch {
+        return NextResponse.json({ error: "Invalid slide artifact" }, { status: 400 });
+      }
+    }
 
     const updated = await prisma.fragment.update({
       where: { id: fragmentId },

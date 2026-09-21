@@ -22,7 +22,7 @@ export async function GET() {
     } catch (err) {
       console.error("[byok/status] rate-limit check failed:", err instanceof Error ? err.message : err);
       // Rate-limiter outage must not block the gate: fail open with empty status.
-      return NextResponse.json({ hasKey: false, providers: [], keys: [], degraded: true });
+      return NextResponse.json({ hasKey: false, canUseServerKey: false, providers: [], keys: [], degraded: true });
     }
     if (!rl.success) {
       return NextResponse.json({ error: "Too many requests", code: "RATE_LIMITED" }, { status: 429 });

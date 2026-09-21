@@ -44,7 +44,10 @@ export async function POST(req: Request) {
   let rateLimit;
   try {
     rateLimit = await checkRateLimit(`byok:test:${session.userId}`, {
-      requests: 5,
+      // Key tests are paid by the caller's own credential. Permit enough
+      // retries for a typo or provider/model mismatch without allowing an
+      // unbounded validation endpoint.
+      requests: 10,
       window: "60 s",
       // Hits upstream providers (= spend) — never run unlimited.
       failClosed: true,
@@ -59,7 +62,7 @@ export async function POST(req: Request) {
   if (!rateLimit.success) {
     return NextResponse.json(
       { ok: false, error: "Too many tests. Wait a minute and retry.", code: "RATE_LIMITED" },
-      { status: 429 }
+      { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((rateLimit.reset - Date.now()) / 1000))) } }
     );
   }
 

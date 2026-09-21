@@ -49,6 +49,10 @@ export interface ModeTemplate {
   label: string;
   description: string;
   prompt: string;
+  /** Existing deck theme applied before the first generated block renders. */
+  theme?: string;
+  /** A concise visual brief passed to the generator with the user's content. */
+  designDirection?: string;
 }
 
 export interface ModeDefinition {

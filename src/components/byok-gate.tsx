@@ -21,10 +21,12 @@ const PROVIDERS = [
  * this modal. Keys are never displayed back; only prefix…suffix metadata.
  */
 export function ByokGate({ children }: { children: React.ReactNode }) {
-  const { hasKey, loading, refresh } = useByok();
+  const { hasKey, canUseServerKey, loading, refresh } = useByok();
   const [dismissed, setDismissed] = useState(false);
 
-  if (loading || hasKey || dismissed) return <>{children}</>;
+  // Paid users may use the managed Cobentt credential. The server repeats this
+  // authorization before every AI request, so this only controls presentation.
+  if (loading || hasKey || canUseServerKey || dismissed) return <>{children}</>;
 
   return (
     <>

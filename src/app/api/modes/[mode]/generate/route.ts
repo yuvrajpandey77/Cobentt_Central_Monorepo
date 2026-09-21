@@ -231,6 +231,15 @@ export async function POST(
           artifact = parseArtifact(content);
         }
 
+        // Slides remain data-first for hand editing, with a self-contained HTML
+        // representation stored beside the artifact for presentation and export.
+        // Rebuild it on every AI edit so the two representations never drift.
+        const generatedFiles: Record<string, unknown> = { artifact: JSON.stringify(artifact) };
+        if (mode === "slides") {
+          const { buildDeckHtml } = await import("../export/html");
+          generatedFiles["slides.html"] = buildDeckHtml(artifact);
+        }
+
         const previousFragment = conversation.messages
           .flatMap((m) => m.fragments ?? [])
           .reverse()
@@ -244,7 +253,9 @@ export async function POST(
           await prisma.fragment.update({
             where: { id: previousFragment.id },
             data: {
-              files: { ...((previousFragment.files as Record<string, unknown>) ?? {}), artifact: JSON.stringify(artifact) },
+              // Prisma's JSON input type cannot infer a spread Record here.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              files: { ...((previousFragment.files as Record<string, unknown>) ?? {}), ...generatedFiles } as any,
               title: artifact.title || `New ${mode}`,
             },
           });
@@ -277,7 +288,8 @@ export async function POST(
               messageId: assistantMessage.id,
               sandboxUrl: null,
               title: artifact.title || `New ${mode}`,
-              files: { artifact: JSON.stringify(artifact) },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              files: generatedFiles as any,
               mode,
             },
           });
