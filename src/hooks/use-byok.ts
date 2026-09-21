@@ -15,6 +15,7 @@ export interface ByokKeyMeta {
 
 interface ByokStatus {
   hasKey: boolean;
+  canUseServerKey: boolean;
   providers: string[];
   keys: ByokKeyMeta[];
 }
@@ -27,7 +28,12 @@ export function useByok() {
     try {
       const { ok, data } = await fetchJson<ByokStatus>("/api/byok/status", { cache: "no-store" });
       if (!ok || !data) return;
-      setStatus({ hasKey: !!data.hasKey, providers: data.providers ?? [], keys: data.keys ?? [] });
+      setStatus({
+        hasKey: !!data.hasKey,
+        canUseServerKey: !!data.canUseServerKey,
+        providers: data.providers ?? [],
+        keys: data.keys ?? [],
+      });
     } catch {
       // Gate stays closed on network failure — harness will surface BYOK_REQUIRED.
     } finally {
@@ -39,5 +45,12 @@ export function useByok() {
     refresh();
   }, [refresh]);
 
-  return { hasKey: status?.hasKey ?? false, providers: status?.providers ?? [], keys: status?.keys ?? [], loading, refresh };
+  return {
+    hasKey: status?.hasKey ?? false,
+    canUseServerKey: status?.canUseServerKey ?? false,
+    providers: status?.providers ?? [],
+    keys: status?.keys ?? [],
+    loading,
+    refresh,
+  };
 }

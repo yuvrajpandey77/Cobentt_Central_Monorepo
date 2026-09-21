@@ -80,8 +80,29 @@ function extraHeadersFor(provider: string, baseUrl: string): Record<string, stri
   return {};
 }
 
-function serverFallbackAllowed(): boolean {
+function serverFallbackEnabled(): boolean {
   return process.env.BYOK_ALLOW_SERVER_FALLBACK === "true";
+}
+
+/**
+ * The Cobentt-managed credential is a paid-plan benefit.  Do this lookup on
+ * the server immediately before resolving a credential; client-side plan
+ * state is advisory only and must never authorize use of a server key.
+ */
+export async function canUseServerCredential(clerkUserId: string): Promise<boolean> {
+  if (!serverFallbackEnabled()) return false;
+
+  const account = await prisma.allowedUser.findUnique({
+    where: { clerkUserId },
+    select: { plan: true, status: true, subscriptionStatus: true, currentPeriodEnd: true },
+  });
+  if (!account || account.status !== "APPROVED") return false;
+  if (account.plan === "FREE") return false;
+  if (account.subscriptionStatus !== "ACTIVE") return false;
+
+  // A legacy/manual paid account may not have a period end date. When it does,
+  // never continue serving the managed key after the paid period has ended.
+  return !account.currentPeriodEnd || account.currentPeriodEnd > new Date();
 }
 
 /**
@@ -122,7 +143,7 @@ export async function resolveByokCredential(
       : match;
 
   if (!usable) {
-    if (serverFallbackAllowed()) {
+    if (await canUseServerCredential(clerkUserId)) {
       const cfg = getProviderConfig();
       if (cfg.apiKey) {
         return {
@@ -139,8 +160,8 @@ export async function resolveByokCredential(
     throw new ByokError(
       BYOK_REQUIRED_CODE,
       direct === "openai"
-        ? "Add your OpenAI or OpenRouter key to use this model."
-        : "Add your OpenRouter key to use AI features.",
+        ? "Add your OpenAI or OpenRouter key, or upgrade to a paid Cobentt plan, to use this model."
+        : "Add your OpenRouter key, or upgrade to a paid Cobentt plan, to use AI features.",
       402
     );
   }
@@ -192,6 +213,9 @@ export async function getByokStatus(clerkUserId: string) {
   });
   return {
     hasKey: keys.length > 0,
+    // Safe entitlement metadata for the UI gate. This does not reveal or
+    // authorize any key; resolveByokCredential verifies it again per request.
+    canUseServerKey: await canUseServerCredential(clerkUserId),
     providers: [...new Set(keys.map((k) => k.provider))],
     keys,
   };

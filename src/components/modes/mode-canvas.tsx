@@ -729,6 +729,16 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               <FileDown className="h-3.5 w-3.5" />
               Export
             </button>
+            {mode === "slides" && (
+              <button
+                onClick={() => exportFile("html")}
+                disabled={exporting}
+                title="Download an editable standalone HTML deck"
+                className="hidden sm:flex h-7 items-center gap-1.5 px-2.5 rounded-lg border border-white/15 text-xs text-text-secondary hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Code2 className="h-3.5 w-3.5" /> HTML
+              </button>
+            )}
           </div>
         </div>
 

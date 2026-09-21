@@ -4,6 +4,7 @@ import { chatCompletion } from "@/lib/ai/client";
 import { extractJson } from "@/lib/modes/prompt";
 import { runAIPipeline, recordAITokens } from "@/lib/ai/pipeline";
 import { resolveByokCredential, ByokError } from "@/lib/byok";
+import { runWebSearchPipeline, type SearchResult } from "@/lib/intent/web-search";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,7 +17,7 @@ function sse(controller: ReadableStreamDefaultController, event: string, data: R
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { conversationId, message, currentArtifact } = body;
+  const { conversationId, message, currentArtifact, attachmentIds } = body;
 
   // Shared pipeline: auth, rate limit (3/min — expensive multi-call), sanitize, injection, quota, ownership
   const pipeline = await runAIPipeline(message, {
@@ -71,6 +72,34 @@ export async function POST(req: NextRequest) {
         }
         const model = credential.model;
 
+        // Research must ground claims in retrieved sources. The chat route
+        // already uses this pipeline, but this mode previously only displayed a
+        // “Searching sources” phase while asking the model to invent plausible
+        // citations. Keep attachment content bounded so it can inform the
+        // report without crowding out source evidence.
+        let attachmentContext = "";
+        if (Array.isArray(attachmentIds) && attachmentIds.length > 0) {
+          const attachments = await prisma.attachment.findMany({
+            where: { id: { in: attachmentIds }, conversationId, extractedText: { not: null } },
+            select: { fileName: true, extractedText: true },
+          });
+          attachmentContext = attachments
+            .map((a) => `[${a.fileName}]\n${(a.extractedText ?? "").slice(0, 6000)}`)
+            .join("\n\n")
+            .slice(0, 12000);
+        }
+
+        sse(controller, "phase", { phase: "Searching sources", progress: 20 });
+        const search = await runWebSearchPipeline(sanitizedMessage);
+        const searchResults: SearchResult[] = search.failed ? [] : search.results.slice(0, 6);
+        const researchEvidence = search.failed
+          ? "No live sources were available. State that the report could not verify external claims and do not add citations."
+          : search.answerContext;
+        const sourceList = searchResults.map((source) => ({
+          title: source.title,
+          url: source.url,
+        }));
+
         // Phase 1: Plan research outline
         const planRes = await chatCompletion({
           model,
@@ -102,7 +131,6 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        sse(controller, "phase", { phase: "Searching sources", progress: 35 });
         const total = sections.length;
         const sectionContents: string[] = [];
 
@@ -117,9 +145,12 @@ export async function POST(req: NextRequest) {
             messages: [
               {
                 role: "system",
-                content: `You are an expert research writer. Write a detailed, well-structured markdown section for a research report on the topic. Include concrete details, plausible statistics (labeled as estimates where uncertain), and citations as [Source N]. Respond ONLY with the markdown section content.`,
+                content: "You are an expert research writer. Write a detailed, well-structured markdown section. Use only the supplied source evidence for external factual claims. Cite supported claims with [1], [2], etc. matching the supplied source list. Never invent statistics, sources, URLs, or citations. If evidence is insufficient, say so plainly. Respond ONLY with the markdown section content.",
               },
-              { role: "user", content: `Topic: ${sanitizedMessage}\nSection heading: "${heading}"\nPrevious sections: ${sectionContents.map((c, j) => `\n--- ${sections[j]} ---\n${c}`).join("\n")}${priorContext}` },
+              {
+                role: "user",
+                content: `Topic: ${sanitizedMessage}\nSection heading: "${heading}"\n\nSource evidence:\n${researchEvidence}\n\nAttached source material:\n${attachmentContext || "None"}\n\nPrevious sections: ${sectionContents.map((c, j) => `\n--- ${sections[j]} ---\n${c}`).join("\n")}${priorContext}`,
+              },
             ],
           });
           if (!sectionRes.ok) throw new Error(`Section ${heading} failed`);
@@ -137,13 +168,14 @@ export async function POST(req: NextRequest) {
 
         sse(controller, "phase", { phase: "Summarizing findings", progress: 80 });
 
-        // Phase 3: Summary + sources
+        // Phase 3: Summary. Sources come from the verified search result, not
+        // from model output, so the report never presents fabricated links.
         const summaryRes = await chatCompletion({
           model,
           credential,
           maxTokens: 1500,
           messages: [
-            { role: "system", content: "You are a research editor. Based on the sections below, produce a 1-2 sentence executive summary and a JSON list of 4-8 plausible source titles with URLs (authoritative domains). Respond ONLY with valid JSON: {\"summary\": \"...\", \"sources\": [{\"title\": \"...\", \"url\": \"...\"}]}" },
+            { role: "system", content: "You are a research editor. Based on the sections below, produce a concise 1-2 sentence executive summary. Do not introduce claims that are not supported by the sections. Respond ONLY with valid JSON: {\"summary\": \"...\"}" },
             { role: "user", content: sectionContents.join("\n\n") },
           ],
         });
@@ -151,11 +183,9 @@ export async function POST(req: NextRequest) {
         const summaryData = await summaryRes.json();
         const summaryText = summaryData.choices?.[0]?.message?.content ?? "";
         let summary = "";
-        let sources: { title: string; url: string }[] = [];
         try {
           const parsed = JSON.parse(extractJson(summaryText));
           summary = parsed.summary ?? "";
-          sources = Array.isArray(parsed.sources) ? parsed.sources : [];
         } catch {}
 
         // Record summary phase tokens
@@ -174,7 +204,7 @@ export async function POST(req: NextRequest) {
           title: sanitizedMessage.slice(0, 80),
           summary,
           sections: sections.map((heading, i) => ({ heading, content: sectionContents[i] })),
-          sources,
+          sources: sourceList,
         };
 
         const assistantMessage = await prisma.message.create({

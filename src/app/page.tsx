@@ -14,6 +14,7 @@ import { Footer } from "@/components/layout/footer";
 import { SidebarProvider, useSidebar } from "@/contexts/sidebar-context";
 import { ModeProvider } from "@/contexts/mode-context";
 import { TemplatePicker } from "@/components/mode-template-picker";
+import { SlidesLaunchpad } from "@/components/slides-launchpad";
 import { ProjectCard, ProjectCardSkeleton } from "@/components/project-card";
 import { Zap, Code2, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -152,7 +153,9 @@ const PageContent = () => {
                                         onStartChat={(prompt) => router.push(`/chat?q=${encodeURIComponent(prompt)}`)}
                                         onModePrompt={handleModePrompt}
                                     />
-                                    {projectCategory && MODE_CATEGORY_MAP[projectCategory] && (
+                                    {projectCategory === "slides" ? (
+                                        <SlidesLaunchpad onCreate={(prompt, templateId) => handleModePrompt("slides", prompt, templateId)} />
+                                    ) : projectCategory && MODE_CATEGORY_MAP[projectCategory] && (
                                         <div className="flex justify-center">
                                             <TemplatePicker mode={MODE_CATEGORY_MAP[projectCategory]} />
                                         </div>

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const VALID_MODES = ["slides", "document", "sheet", "deep-research"];
-const VALID_FORMATS = ["pptx", "docx", "xlsx", "pdf"];
+const VALID_FORMATS = ["pptx", "docx", "xlsx", "pdf", "html"];
 const MAX_ARTIFACT_BYTES = 2 * 1024 * 1024;
 
 export async function POST(
@@ -66,6 +66,17 @@ export async function POST(
         headers: {
           "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
           "Content-Disposition": `attachment; filename="${encodeURIComponent(parsed.title || "deck")}.pptx"`,
+        },
+      });
+    }
+
+    if (mode === "slides" && format === "html") {
+      const { buildDeckHtml } = await import("./html");
+      const html = buildDeckHtml(parsed);
+      return new Response(html, {
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${encodeURIComponent(parsed.title || "deck")}.html"`,
         },
       });
     }
