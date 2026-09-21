@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import type { ComponentProps } from "react";
 import { useRouter } from "next/navigation";
 import { useTRPC } from "@/trpc/client";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,13 @@ const MODE_CATEGORY_MAP: Record<string, string> = {
     sheet: "sheet",
     "deep research": "deep-research",
 };
+
+type CardProject = ComponentProps<typeof ProjectCard>["project"];
+
+interface ProjectsPage {
+    projects: CardProject[];
+    nextCursor?: string | null;
+}
 
 const PageContent = () => {
     const { isCollapsed } = useSidebar();
@@ -89,7 +97,7 @@ const PageContent = () => {
             limit: 20,
             projectType: projectType
         }),
-        getNextPageParam: (lastPage: any) => lastPage.nextCursor,
+        getNextPageParam: (lastPage: ProjectsPage) => lastPage.nextCursor,
     });
 
     const copyProject = useMutation(trpc.projects.copyProject.mutationOptions({
@@ -98,7 +106,7 @@ const PageContent = () => {
         },
     }));
 
-    const projects = data?.pages.flatMap((page: any) => page.projects) ?? [];
+    const projects = data?.pages.flatMap((page: ProjectsPage) => page.projects) ?? [];
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -245,7 +253,7 @@ const PageContent = () => {
                         ) : projects && projects.length > 0 ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {projects.map((project: any) => (
+                                    {projects.map((project: CardProject) => (
                                         <ProjectCard
                                             key={project.id}
                                             project={project}
@@ -267,7 +275,7 @@ const PageContent = () => {
                                     ) : hasNextPage ? (
                                         <p className="text-white/40 text-sm">Scroll down to load more projects</p>
                                     ) : (
-                                        <p className="text-white/40 text-sm">You've reached the end!</p>
+                                        <p className="text-white/40 text-sm">You&apos;ve reached the end!</p>
                                     )}
             </div>
                             </>

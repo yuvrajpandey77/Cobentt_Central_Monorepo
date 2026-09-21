@@ -6,19 +6,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConversationRow } from "./conversation-row";
+import type { SidebarConversation, SidebarProject } from "./types";
+
+type ProjectEntry = Omit<SidebarProject, "updatedAt"> & {
+  updatedAt: Date | string;
+  contractType?: string | null;
+};
+
+type ConversationEntry = Omit<SidebarConversation, "updatedAt" | "title"> & {
+  title?: string | null;
+  updatedAt: Date | string;
+};
 
 interface SidebarProjectsProps {
-  projects: any[];
-  conversations: any[];
+  projects: ProjectEntry[];
+  conversations: ConversationEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive: (conv: any) => void;
-  onDelete: (conv: any) => void;
-  onRenameProject: (project: any) => void;
-  onTogglePinProject: (project: any) => void;
-  onDeleteProject: (project: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
+  onRenameProject: (project: ProjectEntry) => void;
+  onTogglePinProject: (project: ProjectEntry) => void;
+  onDeleteProject: (project: ProjectEntry) => void;
   isCollapsed: boolean;
   searchQuery: string;
 }
@@ -30,19 +41,19 @@ function ProjectItem({
   projectChats,
   ...rest
 }: {
-  project: any;
+  project: ProjectEntry;
   isExpanded: boolean;
   onToggle: () => void;
-  projectChats: any[];
+  projectChats: ConversationEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive: (conv: any) => void;
-  onDelete: (conv: any) => void;
-  onRenameProject: (project: any) => void;
-  onTogglePinProject: (project: any) => void;
-  onDeleteProject: (project: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
+  onRenameProject: (project: ProjectEntry) => void;
+  onTogglePinProject: (project: ProjectEntry) => void;
+  onDeleteProject: (project: ProjectEntry) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isSmartContract = project.projectType === "SMART_CONTRACT" || project.contractType;
@@ -129,7 +140,7 @@ function ProjectItem({
             className="overflow-hidden ml-3 border-l border-border/20 pl-2 space-y-[1px]"
           >
             {projectChats.length > 0 ? (
-              projectChats.map((conv: any) => (
+              projectChats.map((conv: ConversationEntry) => (
                 <ConversationRow
                   key={conv.id}
                   conv={conv}
@@ -165,7 +176,7 @@ export function SidebarProjects(props: SidebarProjectsProps) {
     if (!projects) return [];
     const query = searchQuery.trim().toLowerCase();
     if (!query) return projects;
-    return projects.filter((p: any) => {
+    return projects.filter((p: ProjectEntry) => {
       const nameMatch = p.name?.toLowerCase().includes(query);
       return nameMatch;
     });
@@ -176,13 +187,13 @@ export function SidebarProjects(props: SidebarProjectsProps) {
 
   return (
     <div className="space-y-[1px]">
-      {filtered.map((project: any) => (
+      {filtered.map((project: ProjectEntry) => (
         <ProjectItem
           key={project.id}
           project={project}
           isExpanded={expandedProjects.has(project.id)}
           onToggle={() => toggleProjectExpanded(project.id)}
-          projectChats={(rest.conversations || []).filter((c: any) => c.projectId === project.id)}
+          projectChats={(rest.conversations || []).filter((c: ConversationEntry) => c.projectId === project.id)}
           {...rest}
         />
       ))}

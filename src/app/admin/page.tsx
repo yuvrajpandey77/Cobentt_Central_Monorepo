@@ -241,7 +241,7 @@ export default function AdminPanel() {
                 <div className="flex gap-2">
                   <Select
                     value={newPlan}
-                    onValueChange={(v: any) => setNewPlan(v)}
+                    onValueChange={(v: string) => setNewPlan(v as "FREE" | "PRO" | "ENTERPRISE" | "CUSTOM")}
                   >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Select plan" />
@@ -310,7 +310,7 @@ export default function AdminPanel() {
                 <div className="flex gap-2">
                   <Select
                     value={newStatus}
-                    onValueChange={(v: any) => setNewStatus(v)}
+                    onValueChange={(v: string) => setNewStatus(v as "PENDING" | "APPROVED" | "REVOKED")}
                   >
                     <SelectTrigger className="w-[180px]">
                       <SelectValue />

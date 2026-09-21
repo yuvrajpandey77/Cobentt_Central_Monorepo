@@ -4,7 +4,7 @@ import prisma from "../src/lib/db";
 
 async function main() {
   // Try to pick an existing approved/any allowed user or fallback to the latest user_usage row
-  const anyUsage = await prisma.userUsage.findFirst({ orderBy: { updatedAt: "desc" } as any });
+  const anyUsage = await prisma.userUsage.findFirst({ orderBy: { updatedAt: "desc" } });
   const userId = anyUsage?.userId;
   if (!userId) {
     throw new Error("No userId found in user_usage. Create a project/message once, then re-run.");
@@ -13,7 +13,7 @@ async function main() {
 
   await recordTokenUsage({
     userId,
-    provider: "OPENAI" as any,
+    provider: "OPENAI",
     model: "gpt-4o-mini",
     promptTokens: 15,
     completionTokens: 25,

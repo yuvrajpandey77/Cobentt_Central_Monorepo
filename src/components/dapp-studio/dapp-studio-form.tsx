@@ -67,7 +67,7 @@ const formSchema = z.object({
   reasoning: z.string().optional(),
 });
 
-export interface DappStudioFormValues extends z.infer<typeof formSchema> {}
+export type DappStudioFormValues = z.infer<typeof formSchema>;
 
 interface DappStudioFormProps {
   onSubmit: (values: DappStudioFormValues) => void;

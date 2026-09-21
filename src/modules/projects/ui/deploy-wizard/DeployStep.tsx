@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, Loader2, AlertCircle, ExternalLink, XCircle } from 'lucide-react';
+import type { Abi } from 'viem';
 
 interface DeployStepProps {
   onNext: () => void;
   onBack: () => void;
-  contractABI: any[];
+  contractABI: Abi;
   contractBytecode: string;
-  constructorArgs?: any[];
+  constructorArgs?: unknown[];
   projectId?: string;
   buildJobId?: string;
 }

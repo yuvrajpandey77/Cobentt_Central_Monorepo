@@ -19,6 +19,7 @@ import {
     BreadcrumbLink,
 } from "@/components/ui/breadcrumb";
 import { convertFilesToTreeItems } from "@/lib/utils";
+import type { TreeItem } from "@/types";
 import TreeView from "@/components/tree-view";
 import Editor from '@monaco-editor/react';
 import { ChevronRightIcon, FileIcon, FolderIcon } from "lucide-react";
@@ -101,7 +102,7 @@ const FileBreadcrumb = ({ filepath }: FileBreadcrumbProps) => {
 
 // Compact Tree View Component for File Explorer
 interface CompactTreeViewProps {
-    data: any[];
+    data: TreeItem[];
     value?: string | null;
     onSelect: (value: string) => void;
 }
@@ -124,7 +125,7 @@ const CompactTreeView = ({ data, value, onSelect }: CompactTreeViewProps) => {
 };
 
 interface CompactTreeProps {
-    item: any;
+    item: TreeItem;
     selectedValue?: string | null;
     onSelect?: (value: string) => void;
     parentPath: string;

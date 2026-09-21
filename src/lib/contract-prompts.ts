@@ -998,12 +998,18 @@ Analyze this contract and provide validation results:`;
 
 export function buildRefinementPrompt(
   previousCode: string,
-  validationResult: any,
+  validationResult: {
+    valid: boolean;
+    errors: string[];
+    missingFeatures: string[];
+    securityIssues: string[];
+    suggestions: string[];
+  },
   userPrompt: string,
   config: EnhancedContractConfig
 ): string {
   return CONTRACT_REFINEMENT_PROMPT
-    .replace('{valid}', validationResult.valid)
+    .replace('{valid}', String(validationResult.valid))
     .replace('{errors}', JSON.stringify(validationResult.errors || []))
     .replace('{missingFeatures}', JSON.stringify(validationResult.missingFeatures || []))
     .replace('{securityIssues}', JSON.stringify(validationResult.securityIssues || []))

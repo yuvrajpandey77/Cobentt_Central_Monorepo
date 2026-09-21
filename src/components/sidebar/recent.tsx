@@ -2,6 +2,20 @@
 
 import { useMemo } from "react";
 import { RecentRow } from "./recent-row";
+import type { SidebarConversation, SidebarProject } from "./types";
+
+type ConversationEntry = Omit<SidebarConversation, "updatedAt" | "title"> & {
+  title?: string | null;
+  updatedAt: Date | string;
+};
+
+type ProjectEntry = Omit<SidebarProject, "updatedAt"> & {
+  updatedAt: Date | string;
+  contractType?: string | null;
+};
+
+type RecentConversationRaw = ConversationEntry & { __type: "conversation" };
+type RecentProjectRaw = ProjectEntry & { __type: "project" };
 
 interface RecentItem {
   id: string;
@@ -11,21 +25,21 @@ interface RecentItem {
   href: string;
   isPinned?: boolean;
   isArchived?: boolean;
-  raw: any;
+  raw: RecentConversationRaw | RecentProjectRaw;
 }
 
 interface SidebarRecentProps {
-  conversations: any[];
-  projects: any[];
+  conversations: ConversationEntry[];
+  projects: ProjectEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive: (conv: any) => void;
-  onDelete: (conv: any) => void;
-  onRenameProject: (project: any) => void;
-  onTogglePinProject: (project: any) => void;
-  onDeleteProject: (project: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
+  onRenameProject: (project: ProjectEntry) => void;
+  onTogglePinProject: (project: ProjectEntry) => void;
+  onDeleteProject: (project: ProjectEntry) => void;
   isCollapsed: boolean;
   searchQuery: string;
 }

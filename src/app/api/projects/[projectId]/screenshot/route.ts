@@ -32,12 +32,10 @@ export async function GET(
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    // Cast select to any to accommodate fields added in upcoming migration without typegen yet
-    select: { screenshot: true, screenshotMime: true, updatedAt: true } as any,
+    select: { screenshot: true, screenshotMime: true, updatedAt: true },
   });
 
-  const anyProject = project as any;
-  if (!anyProject || !anyProject.screenshot || !anyProject.screenshotMime) {
+  if (!project || !project.screenshot || !project.screenshotMime) {
     // Optional tiny SVG placeholder (transparent)
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='630'></svg>`;
     return new NextResponse(svg, {
@@ -49,15 +47,15 @@ export async function GET(
     });
   }
 
-  const etag = `W/"${(anyProject.updatedAt as Date).getTime()}-${anyProject.screenshot.byteLength}"`;
+  const etag = `W/"${project.updatedAt.getTime()}-${project.screenshot.byteLength}"`;
 
   const headers: Record<string, string> = {
-    "Content-Type": anyProject.screenshotMime,
+    "Content-Type": project.screenshotMime,
     "Cache-Control": "public, max-age=3600, s-maxage=3600",
     ETag: etag,
   };
 
-  return new NextResponse(anyProject.screenshot as unknown as BodyInit, {
+  return new NextResponse(project.screenshot as unknown as BodyInit, {
     status: 200,
     headers,
   });

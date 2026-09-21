@@ -25,6 +25,43 @@ interface CobenttAgentResult {
 
 }
 
+interface AgentTokenUsage {
+  input_tokens?: number;
+  prompt_tokens?: number;
+  output_tokens?: number;
+  completion_tokens?: number;
+}
+
+interface AgentResultWithUsage {
+  usage?: AgentTokenUsage;
+}
+
+interface BuildJobArtifactsJson {
+  sourceCode?: string;
+  contractCode?: string;
+  contractName?: string;
+  contractType?: string;
+  abi?: unknown;
+  bytecode?: unknown;
+  [key: string]: unknown;
+}
+
+interface ForgeCommandError extends Error {
+  stdout?: string;
+  stderr?: string;
+}
+
+interface ContractTestDetail {
+  name: string;
+  success: boolean;
+  gas: number;
+}
+
+interface ForgeTestCaseResult {
+  success: boolean;
+  gas_used?: number;
+}
+
 export const CobenttAgent = inngest.createFunction(
   { id: "COBENTT" },
   { event: "Cobentt/runAgent" },
@@ -196,7 +233,7 @@ export const CobenttAgent = inngest.createFunction(
     await step.run("record-main-agent-tokens", async () => {
       try {
         // Agent-kit stores usage in result.usage (type assertion needed)
-        const resultWithUsage = result as any;
+        const resultWithUsage = result as unknown as AgentResultWithUsage;
         if (resultWithUsage.usage) {
           const usage = resultWithUsage.usage;
           const promptTokens = usage.input_tokens || usage.prompt_tokens || 0;
@@ -248,7 +285,7 @@ export const CobenttAgent = inngest.createFunction(
     // Track token usage from fragment title generator
     await step.run("record-title-generator-tokens", async () => {
       try {
-        const titleResultWithUsage = fragmentTitleResult as any;
+        const titleResultWithUsage = fragmentTitleResult as unknown as AgentResultWithUsage;
         if (titleResultWithUsage.usage) {
           const usage = titleResultWithUsage.usage;
           const promptTokens = usage.input_tokens || usage.prompt_tokens || 0;
@@ -280,7 +317,7 @@ export const CobenttAgent = inngest.createFunction(
     // Track token usage from response generator
     await step.run("record-response-generator-tokens", async () => {
       try {
-        const responseResultWithUsage = responseGeneratorResult as any;
+        const responseResultWithUsage = responseGeneratorResult as unknown as AgentResultWithUsage;
         if (responseResultWithUsage.usage) {
           const usage = responseResultWithUsage.usage;
           const promptTokens = usage.input_tokens || usage.prompt_tokens || 0;
@@ -383,7 +420,7 @@ export const CobenttAgent = inngest.createFunction(
           await prisma.project.update({
             where: { id: event.data.projectId },
             // Cast to any because Prisma types may not include new fields until client is regenerated
-            data: { screenshot: jpeg, screenshotMime: "image/jpeg" } as any,
+            data: { screenshot: jpeg, screenshotMime: "image/jpeg" },
           });
         } finally {
           await page.close();
@@ -644,7 +681,7 @@ export const generateContract = inngest.createFunction(
           console.log('❌ No enhanced configuration found, creating default config');
           // Create default config from basic parameters
           config = {
-            contractType: contractType.toLowerCase() as any,
+            contractType: contractType.toLowerCase() as EnhancedContractConfig["contractType"],
             tokenName: tokenName || 'Token',
             tokenSymbol: tokenSymbol || 'TKN',
             blockchain: 'ethereum',
@@ -938,8 +975,8 @@ export const generateContract = inngest.createFunction(
             if (error instanceof Error && 'stdout' in error) {
               forgeBuild = {
                 exitCode: 1,
-                stdout: (error as any).stdout || '',
-                stderr: (error as any).stderr || ''
+                stdout: (error as ForgeCommandError).stdout || '',
+                stderr: (error as ForgeCommandError).stderr || ''
               };
             } else {
               throw error;
@@ -1279,7 +1316,7 @@ export const verifyContract = inngest.createFunction(
     // Verify contract on Etherscan/Sourcify
     const verificationResult = await step.run("verify-contract", async () => {
       try {
-        const artifacts = buildJob.artifacts as any;
+        const artifacts = buildJob.artifacts as unknown as BuildJobArtifactsJson;
         const sourceCode = artifacts.sourceCode || '';
         
         // Get project details for network info
@@ -1386,7 +1423,7 @@ export const verifyContract = inngest.createFunction(
         data: {
           status: 'COMPLETED',
           artifacts: {
-            ...(buildJob.artifacts as any),
+            ...(buildJob.artifacts as unknown as Record<string, unknown>),
             verification: verificationResult,
           },
         },
@@ -1402,7 +1439,7 @@ export const verifyContract = inngest.createFunction(
 // Helper functions for contract generation - REMOVED (using AI-only generation)
 // All template generation functions have been replaced with AI generation
 
-function extractABI(output: string): any[] {
+function extractABI(output: string): Record<string, unknown>[] {
   // Simple ABI extraction - in production, use proper JSON parsing
   try {
     const lines = output.split('\n');
@@ -1548,7 +1585,7 @@ contract ${contractName}Test is Test {
           passed: 0,
           failed: 0,
           total: 0,
-          details: [] as any[],
+          details: [] as ContractTestDetail[],
         };
 
         if (forgeTest.exitCode === 0) {
@@ -1556,7 +1593,7 @@ contract ${contractName}Test is Test {
             const testOutput = JSON.parse(forgeTest.stdout);
             if (testOutput.test_results) {
               for (const [testName, result] of Object.entries(testOutput.test_results)) {
-                const testResult = result as any;
+                const testResult = result as ForgeTestCaseResult;
                 testResults.total++;
                 if (testResult.success) {
                   testResults.passed++;

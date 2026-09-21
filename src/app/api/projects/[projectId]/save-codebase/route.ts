@@ -115,7 +115,7 @@ export async function POST(
 
     // Update build job artifacts with the complete codebase
     const existingArtifacts = buildJob.artifacts && typeof buildJob.artifacts === 'object' 
-      ? buildJob.artifacts as Record<string, any>
+      ? buildJob.artifacts as Record<string, unknown>
       : {};
       
     const updatedArtifacts = {

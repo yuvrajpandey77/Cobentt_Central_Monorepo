@@ -6,15 +6,21 @@ import { MessageCircle, ChevronDown } from "lucide-react";
 import { isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ConversationRow } from "./conversation-row";
+import type { SidebarConversation } from "./types";
+
+type ConversationEntry = Omit<SidebarConversation, "updatedAt" | "title"> & {
+  title?: string | null;
+  updatedAt: Date | string;
+};
 
 interface SidebarChatsProps {
-  conversations: any[];
+  conversations: ConversationEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive?: (conv: any) => void;
-  onDelete: (conv: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive?: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
   isCollapsed: boolean;
 }
 
@@ -29,13 +35,13 @@ function ChatGroup({
   onDelete,
 }: {
   label: string;
-  conversations: any[];
+  conversations: ConversationEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive?: (conv: any) => void;
-  onDelete: (conv: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive?: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
 }) {
   const [open, setOpen] = useState(true);
   return (
@@ -64,7 +70,7 @@ function ChatGroup({
             className="overflow-hidden"
           >
             <div className="space-y-[1px] pb-1">
-              {conversations.map((conv: any) => (
+              {conversations.map((conv: ConversationEntry) => (
                 <ConversationRow
                   key={conv.id}
                   conv={conv}
@@ -88,12 +94,12 @@ export function SidebarChats(props: SidebarChatsProps) {
   const { conversations, isCollapsed, ...groupProps } = props;
 
   const grouped = useMemo(() => {
-    const groups: { label: string; conversations: any[] }[] = [];
-    const today: any[] = [];
-    const yesterday: any[] = [];
-    const thisWeek: any[] = [];
-    const thisMonth: any[] = [];
-    const older: any[] = [];
+    const groups: { label: string; conversations: ConversationEntry[] }[] = [];
+    const today: ConversationEntry[] = [];
+    const yesterday: ConversationEntry[] = [];
+    const thisWeek: ConversationEntry[] = [];
+    const thisMonth: ConversationEntry[] = [];
+    const older: ConversationEntry[] = [];
 
     for (const conv of conversations) {
       const date = new Date(conv.updatedAt);

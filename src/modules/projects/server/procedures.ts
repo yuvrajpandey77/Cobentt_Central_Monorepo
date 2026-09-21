@@ -430,7 +430,7 @@ export const projectsRouter = createTRPCRouter({
                     const jpeg = await sharp(raw).resize({ width: 1200 }).jpeg({ quality: 70 }).toBuffer();
                     await prisma.project.update({
                         where: { id: input.projectId },
-                        data: { screenshot: jpeg, screenshotMime: "image/jpeg" } as any,
+                        data: { screenshot: jpeg, screenshotMime: "image/jpeg" },
                     });
                 } finally {
                     await page.close();

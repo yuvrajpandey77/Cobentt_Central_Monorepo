@@ -126,11 +126,13 @@ function loadSettings(): StoredSettings {
   return loadFromStorage<StoredSettings>(STORAGE_KEYS.settings, {});
 }
 
-function mapPrismaMessage(m: {
+interface PrismaMessageLike {
   id: string; content: string; role: string;
   createdAt: Date | string; modelUsed?: string | null;
-  thinking?: any; sources?: any; attachments?: unknown;
-}): Message {
+  thinking?: unknown; sources?: unknown; attachments?: unknown;
+}
+
+function mapPrismaMessage(m: PrismaMessageLike): Message {
   return {
     id: m.id,
     role: m.role.toLowerCase() as "user" | "assistant",
@@ -147,7 +149,7 @@ function mapPrismaMessage(m: {
 
 function mapPrismaConversation(c: {
   id: string; title?: string | null; updatedAt: Date | string;
-  messages: any[];
+  messages: PrismaMessageLike[];
 }): Thread {
   return {
     id: c.id,
@@ -381,7 +383,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const editMessage = useCallback((msgId: string) => {
     if (!activeThreadId || !activeConversation) return;
     const msgs = activeConversation.messages || [];
-    const idx = msgs.findIndex((m: any) => m.id === msgId);
+    const idx = msgs.findIndex((m: { id: string }) => m.id === msgId);
     if (idx === -1) return;
     setPendingEditContent(msgs[idx].content);
   }, [activeThreadId, activeConversation]);

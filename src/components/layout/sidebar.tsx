@@ -56,7 +56,9 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
 
   const isLocal = dataSource === "local";
 
-  const chatCtx = isLocal ? useChat() : null;
+  // Called unconditionally (hooks rule); null outside a ChatProvider.
+  // All uses below are guarded by `isLocal && chatCtx`.
+  const chatCtx = useChat();
 
   const { data: projects, isLoading: projectsLoading } = useQuery({
     ...trpc.projects.getMany.queryOptions(),
@@ -74,9 +76,23 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     queryClient.invalidateQueries(trpc.conversations.getAll.queryOptions());
   }, [queryClient, trpc]);
 
-  const [renameTarget, setRenameTarget] = useState<any>(null);
+  // Element types derived from the tRPC query outputs above.
+  type QueryProject = NonNullable<typeof projects>[number];
+  type QueryConversation = NonNullable<typeof conversations>[number];
+  // Prisma Project has no `isArchived` column; sidebar treats it as optional.
+  type ProjectListItem = QueryProject & { isArchived?: boolean };
+  type ConversationListItem = QueryConversation;
+
+  interface SidebarTarget {
+    id: string;
+    __type?: "conversation" | "project";
+    title?: string | null;
+    name?: string;
+  }
+
+  const [renameTarget, setRenameTarget] = useState<SidebarTarget | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SidebarTarget | null>(null);
 
   const renameProject = useMutation(trpc.projects.rename.mutationOptions({
     onSuccess: () => { invalidateAll(); toast.success("Project renamed"); setRenameTarget(null); },
@@ -117,7 +133,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
 
   const handleRename = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!renameValue.trim()) return;
+    if (!renameValue.trim() || !renameTarget) return;
     if (isLocal && chatCtx && isConversationTarget) {
       chatCtx.renameThread(renameTarget.id, renameValue.trim());
       setRenameTarget(null);
@@ -140,12 +156,12 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     }
   };
 
-  const handleRenameConv = useCallback((conv: any) => {
+  const handleRenameConv = useCallback((conv: ConversationListItem) => {
     setRenameTarget({ ...conv, __type: "conversation" });
     setRenameValue(conv.title || "");
   }, []);
 
-  const handleTogglePinConv = useCallback((conv: any) => {
+  const handleTogglePinConv = useCallback((conv: ConversationListItem) => {
     if (isLocal && chatCtx) {
       chatCtx.togglePinThread(conv.id, !conv.isPinned);
     } else {
@@ -153,7 +169,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     }
   }, [isLocal, chatCtx, togglePinConversation]);
 
-  const handleToggleArchiveConv = useCallback((conv: any) => {
+  const handleToggleArchiveConv = useCallback((conv: ConversationListItem) => {
     if (isLocal && chatCtx) {
       chatCtx.toggleArchiveThread(conv.id, !conv.isArchived);
     } else {
@@ -161,7 +177,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
     }
   }, [isLocal, chatCtx, toggleArchiveConversation]);
 
-  const handleDeleteConv = useCallback((conv: any) => {
+  const handleDeleteConv = useCallback((conv: ConversationListItem) => {
     setDeleteTarget({ ...conv, __type: "conversation" });
   }, []);
 

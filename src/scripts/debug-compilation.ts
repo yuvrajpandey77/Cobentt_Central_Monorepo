@@ -62,7 +62,13 @@ async function main() {
 
   // Show artifacts (contains the error details)
   if (failedJob.artifacts) {
-    const artifacts = failedJob.artifacts as any;
+    const artifacts = failedJob.artifacts as unknown as {
+      error?: string;
+      stderr?: string;
+      stdout?: string;
+      contractCode?: string;
+      validationErrors?: string[];
+    };
     
     console.log('\n🔴 Error Details:');
     console.log('━'.repeat(60));

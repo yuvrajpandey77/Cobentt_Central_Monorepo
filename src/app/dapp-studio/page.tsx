@@ -171,7 +171,7 @@ const PageShell = () => {
                     </p>
                     <div className="bg-white/10 rounded-lg p-3">
                       <p className="text-white/80 text-sm italic">
-                        "{prompt}"
+                        &quot;{prompt}&quot;
                       </p>
                     </div>
                   </div>

@@ -43,7 +43,7 @@ async function main() {
       totalTokens: u.totalTokens,
       totalCostUsd: u.totalCostUsd?.toString?.() ?? String(u.totalCostUsd),
       lastResetAt: u.lastResetAt,
-      updatedAt: (u as any).updatedAt,
+      updatedAt: u.updatedAt,
     });
   }
 

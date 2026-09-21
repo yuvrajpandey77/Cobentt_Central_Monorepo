@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,7 @@ export function Navbar() {
     >
       <nav className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="flex items-center justify-between h-14 lg:h-16">
-          <a href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group">
             <Image
               src="/logo.webp"
               alt="Cobentt"
@@ -50,29 +51,29 @@ export function Navbar() {
               priority
             />
             <span className="text-base lg:text-lg font-bold tracking-tight text-text-primary">Cobentt</span>
-          </a>
+          </Link>
 
           <div className="hidden lg:flex items-center gap-0.5">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 className="px-2.5 py-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors duration-200"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </div>
 
           <div className="hidden lg:flex items-center gap-4">
             {isLoaded && isSignedIn ? (
               <>
-                <a
+                <Link
                   href="/"
                   className="text-xs font-medium text-black bg-white hover:bg-gray-100 px-4 py-1.5 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] transition-all duration-300"
                 >
                   Open Workspace
-                </a>
+                </Link>
                 <SignOutButton>
                   <button className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary transition-colors">
                     <span>{user?.fullName || user?.emailAddresses?.[0]?.emailAddress || "User"}</span>
@@ -81,15 +82,15 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <a href="/sign-in" className="text-xs text-text-secondary hover:text-text-primary transition-colors">
+                <Link href="/sign-in" className="text-xs text-text-secondary hover:text-text-primary transition-colors">
                   Login
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/"
                   className="text-xs font-medium text-black bg-white hover:bg-gray-100 px-4 py-1.5 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] transition-all duration-300"
                 >
                   Open Workspace
-                </a>
+                </Link>
               </>
             )}
           </div>
@@ -115,24 +116,24 @@ export function Navbar() {
           >
             <div className="px-6 py-4 space-y-1">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.label}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <hr className="border-border/50 my-3" />
               {isLoaded && isSignedIn ? (
                 <>
-                  <a
+                  <Link
                     href="/"
                     className="block text-sm font-medium text-black bg-white px-4 py-2 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] text-center mt-2"
                   >
                     Open Workspace
-                  </a>
+                  </Link>
                   <SignOutButton>
                     <button className="block text-sm text-text-secondary hover:text-text-primary px-3 py-2 w-full text-left">
                       Sign Out ({user?.fullName || user?.emailAddresses?.[0]?.emailAddress || "User"})
@@ -141,15 +142,15 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <a href="/sign-in" className="block text-sm text-text-secondary hover:text-text-primary px-3 py-2">
+                  <Link href="/sign-in" className="block text-sm text-text-secondary hover:text-text-primary px-3 py-2">
                     Login
-                  </a>
-                  <a
+                  </Link>
+                  <Link
                     href="/"
                     className="block text-sm font-medium text-black bg-white px-4 py-2 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[5px] rounded-br-[5px] text-center mt-2"
                   >
                     Open Workspace
-                  </a>
+                  </Link>
                 </>
               )}
             </div>

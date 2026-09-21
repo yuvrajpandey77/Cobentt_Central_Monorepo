@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Rocket, CheckCircle2, Code2, Shield, Sparkles, ArrowLeft, Download, Clipboard, ExternalLink, Loader2 } from "lucide-react";
 import type { DappStudioFormValues } from "@/components/dapp-studio/dapp-studio-form";
+import type { Blockchain, ContractType, Network } from "@/generated/prisma";
 import { useMutation } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
@@ -68,13 +69,13 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
     
     await createDapp.mutateAsync({
       value: `Smart contract: ${data.tokenName}`, // Description
-      blockchain: data.blockchain.toUpperCase() as any,
-      contractType: data.contractType.toUpperCase() as any,
+      blockchain: data.blockchain.toUpperCase() as Blockchain,
+      contractType: data.contractType.toUpperCase() as ContractType,
       tokenName: data.tokenName,
       tokenSymbol: data.tokenSymbol,
       tokenSupply: data.tokenSupply,
       decimals: data.decimals,
-      network: data.network.toUpperCase() as any,
+      network: data.network.toUpperCase() as Network,
       features: data.features || [],
       // Enhanced configuration fields
       aiConfiguration: data.aiConfiguration,

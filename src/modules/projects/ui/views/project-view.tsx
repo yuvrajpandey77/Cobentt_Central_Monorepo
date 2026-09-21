@@ -128,8 +128,8 @@ export const ProjectView = ({ projectId }: Props) => {
             });
             if (!res.ok) throw new Error((await res.json()).error || "Failed to save");
             toast.success("File saved");
-        } catch (e: any) {
-            toast.error(e.message || "Failed to save to sandbox");
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Failed to save to sandbox");
         }
     }, [activeFragment, filesState, projectId]);
 
@@ -148,13 +148,13 @@ export const ProjectView = ({ projectId }: Props) => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ fragmentId: activeFragment.id }),
             });
-            const json = await res.json();
+            const json = (await res.json()) as { sandboxUrl: string; error?: string };
             if (!res.ok) throw new Error(json?.error || "Failed to restore");
-            setActiveFragment({ ...(activeFragment as any), sandboxUrl: json.sandboxUrl });
+            setActiveFragment({ ...activeFragment, sandboxUrl: json.sandboxUrl });
             setTabsState("preview");
             toast.success("Sandbox restored", { id: dismiss });
-        } catch (e: any) {
-            toast.error(e?.message || "Restore failed", { id: dismiss });
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Restore failed", { id: dismiss });
         } finally {
             setRestoring(false);
         }
@@ -211,8 +211,8 @@ export const ProjectView = ({ projectId }: Props) => {
             document.body.removeChild(a);
             
             toast.success("Download completed", { id: dismiss });
-        } catch (e: any) {
-            toast.error(e?.message || "Download failed", { id: dismiss });
+        } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Download failed", { id: dismiss });
         } finally {
             setDownloading(false);
         }

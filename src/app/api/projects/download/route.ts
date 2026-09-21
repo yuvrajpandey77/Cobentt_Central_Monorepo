@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       include: {
         message: true,
       },
-    } as any);
+    });
 
     if (!fragments || fragments.length === 0) {
       return NextResponse.json({ error: "No files found for this project" }, { status: 404 });
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       select: { name: true },
-    } as any);
+    });
 
     const projectName = project?.name || "project";
     const sanitizedProjectName = projectName.replace(/[^a-zA-Z0-9-_]/g, "_");

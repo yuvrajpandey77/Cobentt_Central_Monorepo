@@ -141,7 +141,7 @@ const PageShell = () => {
       
       // FALLBACK: Pattern matching if AI fails
       const lowerPrompt = userPrompt.toLowerCase();
-      let config: Partial<DappStudioFormValues> = {
+      const config: Partial<DappStudioFormValues> = {
         network: "testnet",
         autoVerify: true,
         generateFrontend: true,

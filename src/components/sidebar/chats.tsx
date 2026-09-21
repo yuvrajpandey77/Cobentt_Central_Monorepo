@@ -3,28 +3,34 @@
 import { useMemo } from "react";
 import { isToday, isYesterday, differenceInDays } from "date-fns";
 import { ConversationRow } from "./conversation-row";
+import type { SidebarConversation } from "./types";
+
+type ConversationEntry = Omit<SidebarConversation, "updatedAt" | "title"> & {
+  title?: string | null;
+  updatedAt: Date | string;
+};
 
 interface SidebarChatsProps {
-  conversations: any[];
+  conversations: ConversationEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive: (conv: any) => void;
-  onDelete: (conv: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
   isCollapsed: boolean;
   emptyMessage?: string;
 }
 
 function ChatGroup({ label, conversations, ...rowProps }: {
   label: string;
-  conversations: any[];
+  conversations: ConversationEntry[];
   pathname: string;
-  convRoute: (conv: any) => string;
-  onRename: (conv: any) => void;
-  onTogglePin: (conv: any) => void;
-  onToggleArchive: (conv: any) => void;
-  onDelete: (conv: any) => void;
+  convRoute: (conv: ConversationEntry) => string;
+  onRename: (conv: ConversationEntry) => void;
+  onTogglePin: (conv: ConversationEntry) => void;
+  onToggleArchive: (conv: ConversationEntry) => void;
+  onDelete: (conv: ConversationEntry) => void;
 }) {
   if (conversations.length === 0) return null;
 
@@ -35,7 +41,7 @@ function ChatGroup({ label, conversations, ...rowProps }: {
         <span className="text-[10px] text-muted-foreground/40 ml-auto">{conversations.length}</span>
       </div>
       <div className="space-y-[1px]">
-        {conversations.map((conv: any) => (
+        {conversations.map((conv: ConversationEntry) => (
           <ConversationRow key={conv.id} conv={conv} {...rowProps} />
         ))}
       </div>
@@ -47,10 +53,10 @@ export function SidebarChats(props: SidebarChatsProps) {
   const { conversations, isCollapsed, emptyMessage = "No conversations yet", ...groupProps } = props;
 
   const grouped = useMemo(() => {
-    const today: any[] = [];
-    const yesterday: any[] = [];
-    const thisWeek: any[] = [];
-    const older: any[] = [];
+    const today: ConversationEntry[] = [];
+    const yesterday: ConversationEntry[] = [];
+    const thisWeek: ConversationEntry[] = [];
+    const older: ConversationEntry[] = [];
 
     for (const conv of conversations) {
       const date = new Date(conv.updatedAt);

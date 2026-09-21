@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TextareaAutosize from "react-textarea-autosize";
 import { ArrowUp, Loader2Icon, ChevronDown, Check, Globe, ScrollText, Presentation, FileText, Search, Table } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
@@ -26,7 +27,7 @@ import { UNIQUE_MODELS, getModelById } from "@/lib/models";
 interface Props {
     projectId?: string;
     mode?: "app" | "contract";
-    contractPreview?: any;
+    contractPreview?: unknown;
     onContractPrompt?: (prompt: string) => void;
     projectCategory?: string | null;
     onCategoryClear?: () => void;
@@ -44,6 +45,11 @@ const MODE_CATEGORY_MAP: Record<string, string> = {
 const formSchema = z.object({
     value: z.string().min(1, { message: "Value is required" }).max(10000, { message: "Value must be less than 10000 characters" }),
 });
+
+interface TRPCMutationErrorShape {
+    data?: { code?: string; httpStatus?: number };
+    shape?: { code?: string };
+}
 
 
 
@@ -63,16 +69,20 @@ export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory
     // Model picked here is shared with the chat input via the same
     // localStorage key the chat store persists (cb_settings.modelId),
     // so the /chat composer picks it up after the redirect.
-    const [selectedModel, setSelectedModel] = useState<string>(() => {
-        if (typeof window === "undefined") return "";
+    // NOTE: read localStorage in useEffect, not in the useState initializer.
+    // The initializer runs during SSR (window undefined) AND during client
+    // hydration — returning different values causes a hydration mismatch
+    // ("Auto" on server vs stored model on client).
+    const [selectedModel, setSelectedModel] = useState<string>("");
+    useEffect(() => {
         try {
             const raw = localStorage.getItem("cb_settings");
             const parsed = raw ? JSON.parse(raw) : null;
-            return typeof parsed?.modelId === "string" ? parsed.modelId : "";
+            if (typeof parsed?.modelId === "string") setSelectedModel(parsed.modelId);
         } catch {
-            return "";
+            // fall back to Auto
         }
-    });
+    }, []);
     const pickModel = (id: string) => {
         setSelectedModel(id);
         setShowModelMenu(false);
@@ -132,8 +142,8 @@ export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory
             // Invalidate project list
             queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
             // Invalidate usage so token bar refreshes
-            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
-            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as unknown as readonly unknown[] });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as unknown as readonly unknown[] });
             setCreatedProjectId(data.id);
             setShowLoading(true);
             console.log("Loading screen should now be visible");
@@ -152,8 +162,8 @@ export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory
             // Invalidate project list
             queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
             // Invalidate usage so token bar refreshes
-            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as any });
-            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as any });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.quotaStatus.queryKey() as unknown as readonly unknown[] });
+            queryClient.invalidateQueries({ queryKey: trpc.usage.projectTotals.queryKey({ projectId: data.id }) as unknown as readonly unknown[] });
             // Redirect to build page to show real-time progress
             router.push(`/projects/${data.id}/build`);
         },
@@ -208,8 +218,8 @@ export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory
             await createProject.mutateAsync({ value: values.value });
         } catch (error) {
             console.error("Error creating project:", error);
-            const code = (error as any)?.data?.code ?? (error as any)?.shape?.code;
-            const httpStatus = (error as any)?.data?.httpStatus;
+            const code = (error as TRPCMutationErrorShape)?.data?.code ?? (error as TRPCMutationErrorShape)?.shape?.code;
+            const httpStatus = (error as TRPCMutationErrorShape)?.data?.httpStatus;
             if (code === "UNAUTHORIZED" || httpStatus === 401) {
                 router.push("/sign-in");
             }
@@ -382,7 +392,7 @@ export const ProjectForm = ({ contractPreview, onContractPrompt, projectCategory
                                     onPendingChange={setPendingPills}
                                 />
                                 {projectCategory && onCategoryClear && (() => {
-                                    const iconMap: Record<string, any> = {
+                                    const iconMap: Record<string, LucideIcon> = {
                                         website: Globe,
                                         "smart contract": ScrollText,
                                         slides: Presentation,
