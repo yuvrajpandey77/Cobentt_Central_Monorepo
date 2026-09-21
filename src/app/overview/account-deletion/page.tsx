@@ -121,8 +121,8 @@ export default function AccountDeletionPage() {
             <div className="inline-flex items-center gap-2 text-sm text-white/40">
               <Mail className="w-3.5 h-3.5" />
               Need help?{" "}
-              <a href="mailto:cogerphereailabs@gmail.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
-                cogerphereailabs@gmail.com
+              <a href="mailto:support@cogerphere.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
+                support@cogerphere.com
               </a>
             </div>
           </div>

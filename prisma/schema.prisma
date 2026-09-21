@@ -13,6 +13,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Direct (non-pooled) connection for migrations/DDL. Neon pooler endpoints
+  // can be flaky for schema changes, so Prisma uses this when available.
+  directUrl = env("DIRECT_URL")
 }
 
 model Project {
@@ -57,6 +60,7 @@ model Project {
 
   @@index([isPublic])
   @@index([userId, isPublic])
+  @@map("projects")
 }
 
 model Conversation {
@@ -156,6 +160,7 @@ model Message {
   @@index([conversationId, createdAt])
   @@index([projectId, createdAt])
   @@index([status])
+  @@map("messages")
 }
 
 model Fragment {
@@ -174,6 +179,7 @@ model Fragment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@map("fragments")
 }
 
 // Blockchain-related enums
@@ -237,6 +243,7 @@ model BuildJob {
   @@index([projectId, createdAt])
   @@index([projectId, status])
   @@index([status, createdAt])
+  @@map("build_jobs")
 }
 
 // ============================================================

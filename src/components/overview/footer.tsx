@@ -35,7 +35,10 @@ const footerLinks = [
   {
     title: "Connect",
     links: [
-      { label: "Contact", href: "mailto:cogerphereailabs@gmail.com" },
+      { label: "Contact", href: "/overview/contact" },
+      { label: "Share feedback", href: "/overview/contact?topic=feedback" },
+      { label: "Industry integrations", href: "/overview/contact?topic=integration" },
+      { label: "support@cogerphere.com", href: "mailto:support@cogerphere.com" },
     ],
   },
 ];

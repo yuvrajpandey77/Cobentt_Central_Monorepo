@@ -51,7 +51,7 @@ export const Footer = () => {
               </a>
             </div>
             <p className="text-gray-500 text-xs max-w-xs mt-5">
-              by{' '}<a href="https://cogerphere.vercel.app" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Cogerphere</a>{' '}AI Labs
+              by{' '}<a href="https://cogerphere.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Cogerphere</a>{' '}AI Labs
             </p>
           </div>
 
@@ -152,7 +152,7 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/overview/about" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
+                <Link href="/overview/contact" className="hover:text-white transition-colors duration-200 flex items-center gap-1 group">
                   <span>Contact</span>
                   <ChevronRight className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -197,9 +197,19 @@ export const Footer = () => {
             <h3 className="font-semibold mb-4 text-gray-300">Connect</h3>
             <ul className="space-y-3 text-gray-400">
               <li>
-                <a href="mailto:cogerphereailabs@gmail.com" className="hover:text-white transition-colors duration-200">
-                  Contact
+                <Link href="/overview/contact" className="hover:text-white transition-colors duration-200">
+                  Contact us
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:support@cogerphere.com" className="hover:text-white transition-colors duration-200">
+                  support@cogerphere.com
                 </a>
+              </li>
+              <li>
+                <Link href="/overview/contact?topic=integration" className="hover:text-white transition-colors duration-200">
+                  Industry integrations
+                </Link>
               </li>
             </ul>
           </div>

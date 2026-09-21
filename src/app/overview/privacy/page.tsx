@@ -24,7 +24,7 @@ const sections = [
   },
   {
     title: "Your Rights",
-    content: "You own your data. Period. You can export all your data at any time via Settings > Export. You can delete your account and all associated data instantly. You can opt out of analytics collection. You can request a copy of all data we hold about you. You can withdraw consent for any processing at any time. Contact us at cogerphereailabs@gmail.com for any data rights requests.",
+    content: "You own your data. Period. You can export all your data at any time via Settings > Export. You can delete your account and all associated data instantly. You can opt out of analytics collection. You can request a copy of all data we hold about you. You can withdraw consent for any processing at any time. Contact us at support@cogerphere.com for any data rights requests.",
   },
   {
     title: "Cookies",
@@ -67,8 +67,8 @@ export default function PrivacyPage() {
           <div className="pt-6 text-center">
             <p className="text-xs text-white/30">
               Last updated: July 2026. If you have questions, email{" "}
-              <a href="mailto:cogerphereailabs@gmail.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
-                cogerphereailabs@gmail.com
+              <a href="mailto:support@cogerphere.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
+                support@cogerphere.com
               </a>
             </p>
           </div>

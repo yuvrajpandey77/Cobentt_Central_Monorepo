@@ -639,7 +639,7 @@ export function Hero() {
                 <Cpu className="w-3 h-3 text-white/40" />
                 Built by{" "}
                 <a
-                  href="https://cogerphere.vercel.app"
+                  href="https://cogerphere.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"

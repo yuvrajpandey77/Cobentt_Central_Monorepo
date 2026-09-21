@@ -75,7 +75,7 @@ export default function TermsPage() {
           <div className="pt-6 text-center">
             <p className="text-xs text-white/30">
               Last updated: July 2026. Questions?{" "}
-              <a href="mailto:cogerphereailabs@gmail.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
+              <a href="mailto:support@cogerphere.com" className="text-white/50 hover:text-white transition-colors underline underline-offset-2">
                 Contact us
               </a>
             </p>

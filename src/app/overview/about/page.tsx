@@ -66,14 +66,30 @@ export default function AboutPage() {
           <div className="p-6 lg:p-8 bg-white/[0.02] border border-white/10 rounded-tr-[20px] rounded-bl-[20px] rounded-tl-[12px] rounded-br-[12px]">
             <h2 className="text-lg font-semibold text-white mb-2">Get in Touch</h2>
             <p className="text-sm text-white/40 mb-4">
-              Have questions, feedback, or want to collaborate? We would love to hear from you.
+              Have questions, feedback, or want to collaborate? For industry-level
+              integrations and enterprise queries, reach us at{" "}
+              <a
+                href="mailto:support@cogerphere.com"
+                className="text-white/70 hover:text-white transition-colors underline underline-offset-2"
+              >
+                support@cogerphere.com
+              </a>
+              .
             </p>
-            <a
-              href="mailto:cogerphereailabs@gmail.com"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-bg-primary text-sm font-medium rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/90 transition-all"
-            >
-              Email Us
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a
+                href="/overview/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-bg-primary text-sm font-medium rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/90 transition-all"
+              >
+                Contact Us
+              </a>
+              <a
+                href="mailto:support@cogerphere.com"
+                className="inline-flex items-center gap-2 px-5 py-2.5 border border-white/15 text-sm font-medium text-white/70 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/5 hover:text-white transition-all"
+              >
+                Email Us
+              </a>
+            </div>
           </div>
         </div>
       </div>

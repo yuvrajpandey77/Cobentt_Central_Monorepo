@@ -152,7 +152,7 @@ export default function PricingPage() {
                 </p>
               </div>
               <a
-                href="mailto:cogerphereailabs@gmail.com"
+                href="/overview/contact"
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-bg-primary text-sm font-medium rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px] hover:bg-white/90 transition-all shrink-0"
               >
                 Contact us
