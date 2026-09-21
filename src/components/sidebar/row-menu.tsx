@@ -15,6 +15,10 @@ export function RowMenu({ trigger, onToggle, children, width = 168 }: RowMenuPro
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // onToggle is a parent callback — keep it in a ref so the effect below
+  // doesn't re-run (and re-position) when the parent re-renders.
+  const onToggleRef = useRef(onToggle);
+  onToggleRef.current = onToggle;
 
   useEffect(() => {
     if (!open) return;
@@ -38,7 +42,9 @@ export function RowMenu({ trigger, onToggle, children, width = 168 }: RowMenuPro
 
       let left = rect.right - menuW;
       left = Math.max(margin, Math.min(left, window.innerWidth - menuW - margin));
-      setPos({ top, left });
+      // Only store when the position actually changed — setPos with a fresh
+      // object on every scroll/resize would re-render endlessly.
+      setPos((prev) => (prev && prev.top === top && prev.left === left ? prev : { top, left }));
     };
 
     place();
@@ -49,13 +55,13 @@ export function RowMenu({ trigger, onToggle, children, width = 168 }: RowMenuPro
       const t = e.target as Node;
       if (!btn.contains(t) && !menu.contains(t)) {
         setOpen(false);
-        onToggle?.(false);
+        onToggleRef.current?.(false);
       }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
-        onToggle?.(false);
+        onToggleRef.current?.(false);
       }
     };
 
@@ -67,11 +73,14 @@ export function RowMenu({ trigger, onToggle, children, width = 168 }: RowMenuPro
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onToggle, pos]);
+    // NOTE: intentionally only [open] — pos is *written* by this effect, so
+    // listing it here re-ran place() → setPos() forever (max update depth).
+  }, [open]);
 
   const close = () => {
     setOpen(false);
-    onToggle?.(false);
+    setPos(null);
+    onToggleRef.current?.(false);
   };
 
   return (
@@ -81,8 +90,10 @@ export function RowMenu({ trigger, onToggle, children, width = 168 }: RowMenuPro
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen((o) => !o);
-          onToggle?.(!open);
+          const next = !open;
+          setOpen(next);
+          if (!next) setPos(null);
+          onToggleRef.current?.(next);
         }}
         aria-label="More actions"
         aria-expanded={open}

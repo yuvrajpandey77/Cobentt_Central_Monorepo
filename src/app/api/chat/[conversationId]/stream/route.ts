@@ -6,6 +6,7 @@ import type { ChatMessage } from "@/lib/ai/client";
 import { estimateTokens } from "@/lib/token-estimator";
 import { logUserAuditEvent } from "@/lib/user-audit";
 import { runAIPipeline, recordAITokens } from "@/lib/ai/pipeline";
+import { resolveByokCredential, ByokError } from "@/lib/byok";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,6 +39,20 @@ export async function POST(
 
   const model =
     typeof reqModel === "string" ? reqModel : conversation.model || DEFAULT_MODEL;
+
+  // BYOK: resolve the caller's own key before spending anything.
+  let credential;
+  try {
+    credential = await resolveByokCredential(userId, model);
+  } catch (err) {
+    if (err instanceof ByokError) {
+      return new Response(
+        JSON.stringify({ error: err.message, code: err.code }),
+        { status: err.status, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    throw err;
+  }
   const sources = Array.isArray(reqSources) ? reqSources : [];
 
   const history = await prisma.message.findMany({
@@ -134,7 +149,8 @@ export async function POST(
 
         const start = Date.now();
         const response = await chatCompletion({
-          model,
+          model: credential.model,
+          credential,
           messages,
           stream: true,
           maxTokens: 4096,

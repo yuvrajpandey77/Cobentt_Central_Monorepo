@@ -11,6 +11,7 @@ import type { Message } from "@/lib/chat-store";
 import { Menu, Share2 } from "lucide-react";
 import { takePendingFiles } from "@/lib/attachments/shuttle";
 import { ShareDialog } from "@/components/chat/share-dialog";
+import { ByokGate } from "@/components/byok-gate";
 
 function ContextRing() {
   const { activeThread } = useChat();
@@ -134,6 +135,7 @@ export function ChatContent() {
   }
 
   return (
+    <ByokGate>
     <div id="chat-workspace" className="flex h-dvh bg-[var(--color-cb-bg)]">
       <Sidebar dataSource="local" />
 
@@ -197,5 +199,6 @@ export function ChatContent() {
         <ShareDialog conversationId={activeThread.id} onClose={() => setShareOpen(false)} />
       )}
     </div>
+    </ByokGate>
   );
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { chatCompletion } from "@/lib/ai/client";
-import { getProviderConfig } from "@/lib/ai/provider";
 import { parseArtifact, buildModePrompt, extractJson } from "@/lib/modes/prompt";
 import { MODE_DEFINITIONS } from "@/lib/modes/definitions";
 import { runAIPipeline, recordAITokens } from "@/lib/ai/pipeline";
+import { resolveByokCredential, ByokError } from "@/lib/byok";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -143,8 +143,17 @@ export async function POST(
   const finalPrompt = attachmentContext
     ? buildModePrompt(mode as never, sanitizedMessage, conversation.template ?? undefined, currentArtifactParsed, attachmentContext)
     : prompt;
-  const cfg = getProviderConfig();
-  const model = conversation.model || cfg.defaultModel;
+  const requestedModel = conversation.model || "openai/gpt-4o-mini";
+  let credential;
+  try {
+    credential = await resolveByokCredential(userId, requestedModel);
+  } catch (err) {
+    if (err instanceof ByokError) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    }
+    throw err;
+  }
+  const model = credential.model;
   const start = Date.now();
 
   // Stream the generated artifact tokens over SSE so the client can render a
@@ -155,6 +164,7 @@ export async function POST(
       try {
         const response = await chatCompletion({
           model,
+          credential,
           maxTokens: 3500,
           stream: true,
           messages: [
