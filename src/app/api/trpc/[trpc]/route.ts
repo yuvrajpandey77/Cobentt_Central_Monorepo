@@ -13,5 +13,10 @@ const handler = (req: Request) =>
     req,
     router: appRouter,
     createContext: createTRPCContext,
+    onError: ({ error, path }) => {
+      // Server-side log only — the client still gets a clean JSON error.
+      // Prevents silent mass-500s with no trace in production logs.
+      console.error(`[trpc] ${path ?? "<unknown>"}: ${error.code} — ${error.message}`);
+    },
   });
 export { handler as GET, handler as POST };

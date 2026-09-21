@@ -92,6 +92,42 @@ export function getClientEnv(): z.infer<typeof clientSchema> {
 }
 
 /**
+ * Production safety checks. Call after getServerEnv() in instrumentation.
+ *
+ * The most common "works locally, 500s in production" causes:
+ *  1. Clerk DEVELOPMENT keys (pk_test_/sk_test_) deployed to prod — Clerk
+ *     rejects/produces auth failures on the production domain.
+ *  2. NEXT_PUBLIC_APP_URL still pointing at localhost — breaks OAuth
+ *     redirects, OpenRouter referer headers, and absolute URL building.
+ * Throws with an actionable message so the deploy fails fast with ONE clear
+ * error instead of scattered runtime 500s.
+ */
+export function assertProductionEnv(): void {
+  if (process.env.NODE_ENV !== "production") return;
+  const problems: string[] = [];
+  const pub = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
+  const secret = process.env.CLERK_SECRET_KEY ?? "";
+  if (pub.startsWith("pk_test_")) {
+    problems.push("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is a DEVELOPMENT key (pk_test_). Create a production Clerk instance and set its pk_live_ key.");
+  }
+  if (secret.startsWith("sk_test_")) {
+    problems.push("CLERK_SECRET_KEY is a DEVELOPMENT key (sk_test_). Set the production instance's sk_live_ key.");
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  if (!appUrl) {
+    problems.push("NEXT_PUBLIC_APP_URL is not set. Set it to the production origin (e.g. https://cobentt.com).");
+  } else if (/localhost|127\.0\.0\.1/.test(appUrl)) {
+    problems.push(`NEXT_PUBLIC_APP_URL points at localhost (${appUrl}). Set it to the production origin.`);
+  }
+  if (process.env.BYOK_ALLOW_SERVER_FALLBACK === "true") {
+    problems.push("BYOK_ALLOW_SERVER_FALLBACK=true in production — every keyless user spends the SERVER AI key. Set it to false.");
+  }
+  if (problems.length > 0) {
+    throw new Error(`Production environment misconfigured:\n  - ${problems.join("\n  - ")}`);
+  }
+}
+
+/**
  * Helper to get a required server env var or throw.
  */
 export function requireServerEnv(key: keyof z.infer<typeof serverSchema>): string {

@@ -34,20 +34,33 @@ function baseUrlFor(provider: string): string {
 }
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await auth();
+    if (!session?.userId) {
+      return NextResponse.json({ ok: false, error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+    }
 
   // Strict rate limit: key testing hits upstream providers.
-  const rateLimit = await checkRateLimit(`byok:test:${session.userId}`, {
-    requests: 5,
-    window: "60 s",
-    // Hits upstream providers (= spend) — never run unlimited.
-    failClosed: true,
-  });
+  let rateLimit;
+  try {
+    rateLimit = await checkRateLimit(`byok:test:${session.userId}`, {
+      requests: 5,
+      window: "60 s",
+      // Hits upstream providers (= spend) — never run unlimited.
+      failClosed: true,
+    });
+  } catch (err) {
+    console.error("[byok/test] rate-limit check failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { ok: false, error: "Service temporarily unavailable. Retry in a minute.", code: "RATE_LIMIT_UNAVAILABLE" },
+      { status: 503 }
+    );
+  }
   if (!rateLimit.success) {
-    return NextResponse.json({ error: "Too many tests. Wait a minute and retry." }, { status: 429 });
+    return NextResponse.json(
+      { ok: false, error: "Too many tests. Wait a minute and retry.", code: "RATE_LIMITED" },
+      { status: 429 }
+    );
   }
 
   let body: unknown;
@@ -78,10 +91,19 @@ export async function POST(req: Request) {
     providerName = provider;
     keyMaterial = rawKey;
   } else if (keyId) {
-    const record = await prisma.apiKey.findFirst({
-      where: { id: keyId, clerkUserId: session.userId, isActive: true },
-      select: { id: true, provider: true, encryptedKey: true, iv: true, authTag: true },
-    });
+    let record;
+    try {
+      record = await prisma.apiKey.findFirst({
+        where: { id: keyId, clerkUserId: session.userId, isActive: true },
+        select: { id: true, provider: true, encryptedKey: true, iv: true, authTag: true },
+      });
+    } catch (err) {
+      console.error("[byok/test] DB lookup failed:", err instanceof Error ? err.message : err);
+      return NextResponse.json(
+        { ok: false, error: "Database unavailable. Retry in a moment.", code: "DB_UNAVAILABLE" },
+        { status: 503 }
+      );
+    }
     if (!record) {
       return NextResponse.json({ error: "Key not found" }, { status: 404 });
     }
@@ -187,5 +209,14 @@ export async function POST(req: Request) {
   } finally {
     clearTimeout(timeout);
     keyMaterial = "";
+  }
+  } catch (err) {
+    // Last-resort guard: this route must ALWAYS return JSON, never an HTML
+    // 500 page (clients do res.json() and crash on "<!DOCTYPE...").
+    console.error("[byok/test] unhandled:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { ok: false, error: "Service temporarily unavailable. Retry in a moment.", code: "INTERNAL" },
+      { status: 503 }
+    );
   }
 }

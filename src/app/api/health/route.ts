@@ -14,6 +14,7 @@ interface HealthCheck {
     database: CheckResult;
     memory: CheckResult;
     cache: CheckResult;
+    configuration: CheckResult;
   };
 }
 
@@ -70,10 +71,48 @@ function checkCache(): CheckResult {
   };
 }
 
+function checkConfiguration(): CheckResult {
+  // Reports misconfiguration WITHOUT leaking secret values — safe to expose.
+  // Lets on-call confirm "mass 500s = bad env" from the health endpoint alone.
+  try {
+    // Dynamic import avoided: keep health dependency-free so it works even
+    // when other modules fail to load.
+    const required = [
+      "DATABASE_URL",
+      "CLERK_SECRET_KEY",
+      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      "API_KEY_ENCRYPTION_SECRET",
+      "INNGEST_EVENT_KEY",
+      "INNGEST_SIGNING_KEY",
+    ];
+    const missing = required.filter((k) => !process.env[k]);
+    if (missing.length > 0) {
+      return { status: "fail", message: `Missing env: ${missing.join(", ")}` };
+    }
+    if (process.env.NODE_ENV === "production") {
+      if ((process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "").startsWith("pk_test_")) {
+        return { status: "fail", message: "Clerk DEVELOPMENT keys (pk_test_) deployed to production" };
+      }
+      if ((process.env.CLERK_SECRET_KEY ?? "").startsWith("sk_test_")) {
+        return { status: "fail", message: "Clerk DEVELOPMENT keys (sk_test_) deployed to production" };
+      }
+      if (/localhost|127\.0\.0\.1/.test(process.env.NEXT_PUBLIC_APP_URL ?? "")) {
+        return { status: "fail", message: "NEXT_PUBLIC_APP_URL still points at localhost" };
+      }
+    }
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      return { status: "warn", message: "Upstash Redis not configured — single-instance in-memory rate limits; spend paths run fail-closed" };
+    }
+    return { status: "pass" };
+  } catch (err) {
+    return { status: "fail", message: err instanceof Error ? err.message : "Config check failed" };
+  }
+}
+
 /**
  * GET /api/health
  *
- * Full health check — verifies database, memory, and cache.
+ * Full health check — verifies database, memory, cache, and configuration.
  * Returns 200 if healthy/degraded, 503 if unhealthy.
  */
 export async function GET() {
@@ -84,8 +123,9 @@ export async function GET() {
     Promise.resolve(checkMemory()),
     Promise.resolve(checkCache()),
   ]);
+  const configuration = checkConfiguration();
 
-  const checks = { database: db, memory, cache: cacheCheck };
+  const checks = { database: db, memory, cache: cacheCheck, configuration };
   const hasFailure = Object.values(checks).some((c) => c.status === "fail");
   const hasWarning = Object.values(checks).some((c) => c.status === "warn");
 

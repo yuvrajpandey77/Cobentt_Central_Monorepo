@@ -27,12 +27,13 @@ const VALID_SELECTIONS = new Set([...DEFAULT_AVAILABLE.map(String), "none"]);
  */
 export async function POST(req: NextRequest) {
   const started = Date.now();
-  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON", code: "BAD_JSON" }, { status: 400 });
+    }
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "message is required (1-8000 chars)" }, { status: 400 });
@@ -62,18 +63,34 @@ export async function POST(req: NextRequest) {
     latencyMs: Date.now() - started,
   });
 
-  return NextResponse.json({ ...result, telemetryId: telemetry.id });
+    return NextResponse.json({ ...result, telemetryId: telemetry.id });
+  } catch (err) {
+    // ALWAYS return JSON — telemetry/recordRouting must never 500 this route.
+    console.error("[intent/route] unhandled:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { error: "Service temporarily unavailable. Retry in a moment.", code: "INTERNAL" },
+      { status: 503 }
+    );
+  }
 }
 
 export async function GET() {
-  // Expose the registry so clients never hardcode capability lists.
-  const { CAPABILITY_REGISTRY: reg } = await import("@/lib/intent/capabilities");
-  return NextResponse.json({
-    capabilities: reg.map((c: (typeof CAPABILITY_REGISTRY)[number]) => ({
-      id: c.id, label: c.label, description: c.description,
-      route: c.route ?? null, mode: c.mode ?? null,
-      needsConfirmation: c.needsConfirmation,
-    })),
-    available: DEFAULT_AVAILABLE,
-  });
+  try {
+    // Expose the registry so clients never hardcode capability lists.
+    const { CAPABILITY_REGISTRY: reg } = await import("@/lib/intent/capabilities");
+    return NextResponse.json({
+      capabilities: reg.map((c: (typeof CAPABILITY_REGISTRY)[number]) => ({
+        id: c.id, label: c.label, description: c.description,
+        route: c.route ?? null, mode: c.mode ?? null,
+        needsConfirmation: c.needsConfirmation,
+      })),
+      available: DEFAULT_AVAILABLE,
+    });
+  } catch (err) {
+    console.error("[intent/route] GET unhandled:", err instanceof Error ? err.message : err);
+    return NextResponse.json(
+      { error: "Service temporarily unavailable. Retry in a moment.", code: "INTERNAL" },
+      { status: 503 }
+    );
+  }
 }

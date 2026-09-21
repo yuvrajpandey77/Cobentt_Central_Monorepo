@@ -5,16 +5,24 @@
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { getServerEnv } = await import("@/lib/env");
+    const { getServerEnv, assertProductionEnv } = await import("@/lib/env");
     try {
       getServerEnv();
+      assertProductionEnv();
     } catch (err) {
-      // Throwing here fails the boot with the exact missing-var message.
-      console.error(
-        "[boot] Environment validation failed — fix .env / .env.local and restart:\n" +
-          (err instanceof Error ? err.message : String(err))
-      );
-      throw err;
+      const message = err instanceof Error ? err.message : String(err);
+      // In production, throwing here kills the serverless instance and the
+      // platform serves HTML 500s for EVERY route (tRPC, RSC, API). Log loud
+      // instead and let /api/health report unhealthy + routes return JSON
+      // 503s with actionable codes. Fail the deploy in dev where it's seen.
+      if (process.env.NODE_ENV === "production") {
+        console.error("[boot] FATAL environment misconfiguration (continuing degraded):\n" + message);
+      } else {
+        console.error(
+          "[boot] Environment validation failed — fix .env / .env.local and restart:\n" + message
+        );
+        throw err;
+      }
     }
 
     if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {

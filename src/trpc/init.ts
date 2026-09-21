@@ -2,9 +2,23 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { cache } from 'react';
 import superjson from 'superjson';
 import { auth } from '@clerk/nextjs/server';
+
+/**
+ * tRPC context — must NEVER throw.
+ *
+ * In production, `auth()` throws when Clerk keys are missing/mismatched
+ * (e.g. dev keys deployed to prod). If we let that propagate, Next renders
+ * an HTML 500 page for /api/trpc and the client fails with
+ * `Unexpected token '<', "<!DOCTYPE"...`. Instead return an unauthenticated
+ * context so `protectedProcedure` yields a clean UNAUTHORIZED JSON error.
+ */
 export const createTRPCContext = cache(async () => {
-  
-  return { auth: await auth() };
+  try {
+    return { auth: await auth() };
+  } catch (err) {
+    console.error("[trpc] auth() failed — returning unauthenticated context:", err instanceof Error ? err.message : err);
+    return { auth: { userId: null } as unknown as Awaited<ReturnType<typeof auth>> };
+  }
 });
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 // Avoid exporting the entire t-object

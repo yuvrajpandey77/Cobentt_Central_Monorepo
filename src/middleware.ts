@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 /**
  * Public routes that do NOT require Clerk authentication.
@@ -31,7 +32,22 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
     if (!isPublicRoute(req)) {
-      await auth.protect();
+      try {
+        await auth.protect();
+      } catch (err) {
+        // Clerk itself can throw in production when keys are missing or
+        // mismatched (e.g. dev keys deployed to prod). For API routes we must
+        // still return JSON — an HTML 500 here surfaces on the client as
+        // `Unexpected token '<', "<!DOCTYPE"... is not valid JSON`.
+        if (req.nextUrl.pathname.startsWith("/api/")) {
+          console.error("[middleware] auth.protect() failed:", err instanceof Error ? err.message : err);
+          return NextResponse.json(
+            { error: "Authentication service unavailable. Retry in a moment.", code: "AUTH_UNAVAILABLE" },
+            { status: 503 }
+          );
+        }
+        throw err;
+      }
     }
 });
 
