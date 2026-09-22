@@ -86,11 +86,17 @@ export async function checkRateLimit(
     remaining: 0,
     reset: Date.now() + windowMs,
   };
+  // Opt-in single-instance escape hatch for local dev without Redis.
+  // Production must leave this unset so spend paths stay fail-closed.
+  const allowMemoryFallback = process.env.ALLOW_MEMORY_RATELIMIT === "true";
   const redis = getRedis();
   if (!redis) {
-    if (opts?.failClosed) {
+    if (opts?.failClosed && !allowMemoryFallback) {
       console.error(`[rate-limit] Redis not configured — rejecting ${key} (fail-closed)`);
       return denied;
+    }
+    if (opts?.failClosed) {
+      console.warn(`[rate-limit] Redis not configured — enforcing in-memory limits for ${key} (ALLOW_MEMORY_RATELIMIT=true, single-instance only)`);
     }
     // No Redis: enforce single-instance in-memory limits instead of
     // disabling throttling entirely.
@@ -101,7 +107,7 @@ export async function checkRateLimit(
 
   const limiter = getOrCreateLimiter(prefix, limit, windowMs);
   if (!limiter) {
-    if (opts?.failClosed) {
+    if (opts?.failClosed && !allowMemoryFallback) {
       console.error(`[rate-limit] Limiter unavailable — rejecting ${key} (fail-closed)`);
       return denied;
     }

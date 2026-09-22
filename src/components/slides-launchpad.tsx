@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, Check, Sparkles, Wand2, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { ArrowRight, Check, Sparkles, Wand2, SlidersHorizontal, RotateCcw, Zap } from "lucide-react";
 import { SLIDES_MODE } from "@/lib/modes/definitions";
 import {
   DYNAMIC_SLIDE_THEMES,
@@ -59,6 +59,9 @@ export function SlidesLaunchpad({
   compact?: boolean;
 }) {
   const [topic, setTopic] = useState(initialTopic);
+  // Auto mode (default): smart defaults, no extra decisions. The dynamic
+  // theme stays auto-selected (pitch → Midnight Signal) unless customized.
+  const [auto, setAuto] = useState(true);
   const [audience, setAudience] = useState<Audience>("executives");
   const [goal, setGoal] = useState<Goal>("persuade");
   const [useSourceImages, setUseSourceImages] = useState(false);
@@ -145,11 +148,36 @@ export function SlidesLaunchpad({
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary">
           <Sparkles className="h-5 w-5" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-white">Design your deck before we build it</h2>
           <p className="mt-0.5 text-sm text-text-tertiary">
-            Describe the idea, pick exactly how many slides you want, and choose a visual world — prebuilt or your own custom theme.
+            {auto
+              ? "Describe the idea — Auto handles theme, length, and style."
+              : "Describe the idea, pick exactly how many slides you want, and choose a visual world — prebuilt or your own custom theme."}
           </p>
+        </div>
+        {/* Auto / Customize switch */}
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+          <button
+            type="button"
+            onClick={() => setAuto(true)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition",
+              auto ? "bg-primary text-primary-foreground shadow" : "text-text-tertiary hover:text-white"
+            )}
+          >
+            <Zap className="h-3.5 w-3.5" /> Auto
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuto(false)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition",
+              !auto ? "bg-white/80 text-black shadow" : "text-text-tertiary hover:text-white"
+            )}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" /> Customize
+          </button>
         </div>
       </div>
 
@@ -160,6 +188,26 @@ export function SlidesLaunchpad({
         className="min-h-24 w-full resize-none rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none placeholder:text-text-muted focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
       />
 
+      {auto && (
+        <div className="mt-4 flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+          <div
+            className="h-12 w-20 shrink-0 rounded-xl border border-white/10"
+            style={{ ...slideBackgroundStyle(baseTheme) }}
+            title={`Auto-selected theme: ${baseTheme.label}`}
+          />
+          <div className="min-w-0">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-white">
+              <Check className="h-3.5 w-3.5 text-primary" /> Auto-selected theme: {baseTheme.label}
+            </p>
+            <p className="mt-0.5 truncate text-[11px] text-text-tertiary">
+              10 slides · Executives · Persuade · varied layouts, story arc included
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!auto && (
+      <>
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1fr]">
         <div>
           <p className="mb-2 text-xs font-medium text-text-secondary">Who is this for?</p>
@@ -296,7 +344,7 @@ export function SlidesLaunchpad({
               onClick={(e) => { e.stopPropagation(); setUseCustomTheme((v) => !v); }}
               className={cn("relative h-5 w-9 rounded-full transition-colors", useCustomTheme ? "bg-primary" : "bg-white/15")}
             >
-              <span className={cn("absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all", useCustomTheme ? "left-4.5 ml-0.5" : "left-0.5")} style={{ left: useCustomTheme ? 18 : 2 }} />
+              <span className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all" style={{ left: useCustomTheme ? 18 : 2 }} />
             </span>
             <span className="text-[11px] text-text-tertiary">{customOpen ? "Hide" : "Show"}</span>
           </span>
@@ -363,9 +411,13 @@ export function SlidesLaunchpad({
         )}
       </div>
 
+      </>
+      )}
       <div className="mt-6 flex items-center justify-between gap-3">
         <p className="text-[11px] text-text-muted">
-          {slideCount} slides · {goal} · {useCustomTheme ? "Custom theme" : baseTheme.label} · {template.label} narrative
+          {auto
+            ? `Auto · 10 slides · ${baseTheme.label} theme`
+            : `${slideCount} slides · ${goal} · ${useCustomTheme ? "Custom theme" : baseTheme.label} · ${template.label} narrative`}
         </p>
         <button type="button" disabled={!topic.trim()} onClick={create} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">
           <Wand2 className="h-4 w-4" /> Create the deck <ArrowRight className="h-4 w-4" />
