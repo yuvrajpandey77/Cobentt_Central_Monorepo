@@ -1,21 +1,69 @@
 import PptxGenJS from "pptxgenjs";
 import { getSlideTheme, type DynamicSlideTheme } from "@/lib/modes/slide-themes";
 
-type Palette = { bg: string; accent: string; text: string; muted: string; chip: string; fontHeading?: string };
+/** Full dynamic theme (NOT the old flat 6-color palette). */
+type Theme = DynamicSlideTheme;
 
-function resolveTheme(artifact: { theme?: string; themeConfig?: unknown }): Palette {
+function resolveTheme(artifact: { theme?: string; themeConfig?: unknown }): Theme {
   const custom = (artifact.themeConfig && typeof artifact.themeConfig === "object"
     ? artifact.themeConfig
     : null) as Partial<DynamicSlideTheme> | null;
-  const t = getSlideTheme(artifact.theme, custom);
-  return { bg: t.bg, accent: t.accent, text: t.text, muted: t.muted, chip: t.chip, fontHeading: t.fontHeading };
+  return getSlideTheme(artifact.theme, custom);
 }
 
 // Resolve the effective text color for an element given optional per-block style.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function textColor(blockStyle: any, theme: Palette, fallback: string): string {
+function textColor(blockStyle: any, theme: Theme, fallback: string): string {
   if (blockStyle?.color) return strip(blockStyle.color);
   return fallback;
+}
+
+/**
+ * Dynamic background painter. pptxgenjs supports solid/image backgrounds
+ * only (no CSS gradients), so the canvas mesh/aurora recipe is approximated
+ * deterministically: solid bg2-blended base + two large translucent accent
+ * glows positioned per backdrop kind + the signature deco rule.
+ * Same theme object the canvas renders — downloads now follow the deck.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function paintSlideBackground(slide: any, pptx: any, theme: Theme): void {
+  slide.background = { color: strip(theme.bg) };
+  const spots: Array<{ x: number; y: number; w: number; h: number; color: string }> = [];
+  switch (theme.backdrop) {
+    case "aurora":
+      spots.push({ x: 2.5, y: -2.2, w: 8.5, h: 4.6, color: strip(theme.accent) });
+      spots.push({ x: 7.5, y: 4.6, w: 7, h: 3.8, color: strip(theme.accent2) });
+      break;
+    case "diagonal":
+      spots.push({ x: -2.5, y: -1.5, w: 7, h: 10, color: strip(theme.accent) });
+      spots.push({ x: 9, y: -1.5, w: 7, h: 10, color: strip(theme.accent2) });
+      break;
+    case "solid":
+      break;
+    case "mesh":
+    default:
+      spots.push({ x: -1.8, y: -1.6, w: 7.5, h: 4.6, color: strip(theme.accent) });
+      spots.push({ x: 8, y: 4.2, w: 7, h: 4, color: strip(theme.accent2) });
+      break;
+  }
+  for (const s of spots) {
+    slide.addShape(pptx.ShapeType.ellipse, {
+      x: s.x, y: s.y, w: s.w, h: s.h,
+      fill: { color: s.color, transparency: 88 },
+      line: { type: "none" },
+    });
+  }
+  // Deep-shade wash toward the bottom edge (echoes the bg→bg2 gradient).
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 4.9, w: 13.33, h: 2.6,
+    fill: { color: strip(theme.bg2), transparency: 72 },
+    line: { type: "none" },
+  });
+  // Signature deco rule.
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 0, w: 0.09, h: 7.5,
+    fill: { color: strip(theme.accent) }, line: { color: strip(theme.accent) },
+  });
 }
 
 function strip(hex: string): string {
@@ -29,22 +77,30 @@ export async function buildPptx(artifact: any): Promise<Buffer> {
   pptx.layout = "WIDE";
 
   const theme = resolveTheme(artifact);
-  const tAccent = strip(theme.accent);
 
   const blocks = Array.isArray(artifact.blocks) ? artifact.blocks : [];
 
-  // Sane default text colors so light themes (ink, slate-light) stay readable.
-  const isDark = isDarkHex(theme.bg);
-  const titleCol = isDark ? "FFFFFF" : "111827";
-  const bodyCol = isDark ? "E4E4E7" : "374151";
-  const accentCol = isDark ? tAccent : tAccent;
-  const dimCol = isDark ? "A1A1AA" : "6B7280";
+  // Theme-native colors (not derived approximations) so exports follow the deck.
+  const titleCol = strip(theme.text);
+  const bodyCol = strip(theme.muted);
+  const accentCol = strip(theme.accent);
+  const dimCol = strip(theme.muted);
+  const headFace = theme.fontHeading || "Arial";
+  const bodyFace = theme.fontBody || "Arial";
 
   for (const block of blocks) {
     const p = block.props || {};
     const color = (fallback: string) => textColor(block.style, theme, fallback);
     const slide = pptx.addSlide();
-    slide.background = { color: strip(theme.bg) };
+    paintSlideBackground(slide, pptx, theme);
+    // Dynamic type: bold runs (titles/metrics) inherit the display face,
+    // body runs inherit the text face — mirrors the canvas type ramp.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const s = slide as any;
+    const prevAddText = s.addText.bind(slide);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    s.addText = (text: any, opts: Record<string, unknown> = {}) =>
+      prevAddText(text, { fontFace: opts.bold ? headFace : bodyFace, ...opts });
 
     switch (block.type) {
       case "title-slide": {
@@ -295,16 +351,6 @@ export async function buildPptx(artifact: any): Promise<Buffer> {
 
   const buffer = await pptx.write({ outputType: "nodebuffer" }) as unknown as Buffer;
   return Buffer.from(buffer);
-}
-
-function isDarkHex(hex: string): boolean {
-  const { r, g, b } = parseHex6(strip(hex));
-  return 0.299 * r + 0.587 * g + 0.114 * b < 128;
-}
-
-function parseHex6(hex: string): { r: number; g: number; b: number } {
-  const num = parseInt(hex || "000000", 16);
-  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
 }
 
 async function fetchImageAsBase64(url: string): Promise<string> {

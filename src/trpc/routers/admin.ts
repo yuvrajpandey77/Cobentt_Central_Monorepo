@@ -327,14 +327,14 @@ export const adminRouter = createTRPCRouter({
           request_count: bigint;
         }>
       >`
-        SELECT 
-          DATE(created_at) as date,
-          SUM(total_tokens)::bigint as total_tokens,
-          SUM(cost_usd) as total_cost,
+        SELECT
+          DATE("createdAt") as date,
+          SUM("totalTokens")::bigint as total_tokens,
+          SUM("costUsd") as total_cost,
           COUNT(*)::bigint as request_count
         FROM token_usage
-        WHERE created_at >= ${startDate}
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${startDate}
+        GROUP BY DATE("createdAt")
         ORDER BY date DESC
       `;
 

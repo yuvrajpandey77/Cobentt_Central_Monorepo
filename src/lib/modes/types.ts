@@ -44,6 +44,8 @@ export interface ArtifactBlock {
   density?: SlideDensity;
   layout?: SlideLayout;
   visual?: SlideVisual;
+  /** Visual-system id assigned by template intelligence (explainability only). */
+  templateId?: string;
 }
 
 export interface BlockStyle {
