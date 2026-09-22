@@ -30,6 +30,7 @@ import {
   PanelLeft,
   ChevronRight,
   Plus,
+  Presentation,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -312,7 +313,8 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${artifact.title || "untitled"}.${format === "pdf" ? "pdf" : format === "pptx" ? "pptx" : format === "docx" ? "docx" : "xlsx"}`;
+      const ext = format === "pdf" ? "pdf" : format === "pptx" ? "pptx" : format === "docx" ? "docx" : format === "html" ? "html" : "xlsx";
+      a.download = `${artifact.title || "untitled"}.${ext}`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -733,10 +735,25 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               <button
                 onClick={() => exportFile("html")}
                 disabled={exporting}
-                title="Download an editable standalone HTML deck"
+                title="Download a standalone HTML deck"
                 className="hidden sm:flex h-7 items-center gap-1.5 px-2.5 rounded-lg border border-white/15 text-xs text-text-secondary hover:text-white hover:bg-white/10 transition-colors"
               >
                 <Code2 className="h-3.5 w-3.5" /> HTML
+              </button>
+            )}
+            {mode === "slides" && (
+              <button
+                onClick={() =>
+                  window.open(
+                    `/api/modes/slides/present?conversationId=${encodeURIComponent(conversationId)}`,
+                    "_blank",
+                    "noopener"
+                  )
+                }
+                title="Present the deck in a new tab"
+                className="hidden sm:flex h-7 items-center gap-1.5 px-2.5 rounded-lg border border-white/15 text-xs text-text-secondary hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Presentation className="h-3.5 w-3.5" /> Present
               </button>
             )}
           </div>
