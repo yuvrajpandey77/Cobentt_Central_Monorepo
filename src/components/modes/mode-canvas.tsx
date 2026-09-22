@@ -30,11 +30,20 @@ import {
   PanelLeft,
   ChevronRight,
   Plus,
+  Presentation,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { friendlyAIErrorMessage } from "@/lib/ai/client";
-import { MODE_DEFINITIONS, SLIDE_THEMES } from "@/lib/modes/definitions";
+import { MODE_DEFINITIONS } from "@/lib/modes/definitions";
+import {
+  DYNAMIC_SLIDE_THEMES,
+  SLIDE_BACKDROPS,
+  SLIDE_FONTS,
+  getSlideTheme,
+  type DynamicSlideTheme,
+} from "@/lib/modes/slide-themes";
+import { LAYOUT_REGISTRY, convertBlockLayout, getLayoutDef } from "@/lib/modes/layouts";
 import {
   Artifact,
   ArtifactBlock,
@@ -44,7 +53,7 @@ import {
   makeId,
 } from "@/lib/modes/types";
 import { PropertyEditor } from "./property-editor";
-import { SlidesRenderer, DocumentBlockRenderer, styleToAttr } from "./renderers";
+import { SlidesRenderer, DocumentBlockRenderer, styleToAttr, resolveSlideThemeForBlock } from "./renderers";
 import { ModeChatPanel, ModeChatMessage } from "./mode-chat-panel";
 import { SheetEditor } from "./sheet-editor";
 import CodeMirror from "@uiw/react-codemirror";
@@ -127,7 +136,17 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
   // we adopt the new server artifact; otherwise the draft persists across refetches.
   const artifact: Artifact = draft ?? serverArtifact;
 
-  const activeTheme = SLIDE_THEMES.find((t) => t.id === (artifact.theme || themeId)) ?? SLIDE_THEMES[0];
+  // Full dynamic theme: prebuilt recipe + any persisted custom override.
+  const activeTheme = useMemo(
+    () => resolveSlideThemeForBlock(artifact.theme || themeId, (artifact as Artifact).themeConfig),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [artifact.theme, JSON.stringify((artifact as Artifact).themeConfig ?? null), themeId]
+  );
+  const activeThemeMeta: DynamicSlideTheme = useMemo(
+    () => getSlideTheme(artifact.theme || themeId, ((artifact as Artifact).themeConfig as Partial<DynamicSlideTheme> | null) ?? null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [artifact.theme, JSON.stringify((artifact as Artifact).themeConfig ?? null), themeId]
+  );
 
   const artifactRef = useRef<Artifact>(artifact);
   artifactRef.current = artifact;
@@ -231,7 +250,45 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
 
   const setTheme = (id: string) => {
     setThemeId(id);
-    persist({ ...artifact, theme: id });
+    // Switching to a prebuilt theme drops any custom override.
+    const next = { ...artifact, theme: id } as Artifact;
+    delete next.themeConfig;
+    persist(next);
+  };
+
+  const familyOf = (b: ArtifactBlock): string =>
+    b.layout?.family ?? LAYOUT_REGISTRY.find((l) => l.blockTypes.includes(b.type))?.family ?? "cards";
+
+  /** Change layout: convert content into the new family's props, keep copy. */
+  const relayoutBlock = (block: ArtifactBlock, family: string) => {
+    if (familyOf(block) === family) return;
+    const converted = convertBlockLayout(block.type, family, block.props, makeId);
+    const def = getLayoutDef(family);
+    const next: Artifact = {
+      ...artifact,
+      blocks: artifact.blocks.map((x) =>
+        x.id === block.id
+          ? {
+              ...x,
+              type: converted.type,
+              props: converted.props,
+              layout: { family, variant: def?.defaultVariant, shell: def?.shell ?? "contained" },
+            }
+          : x
+      ),
+    };
+    persist(next);
+  };
+
+  const applyCustomTheme = (patch: Partial<DynamicSlideTheme>) => {
+    const baseId = artifact.theme || themeId;
+    const prevConfig = ((artifact as Artifact).themeConfig ?? {}) as Record<string, unknown>;
+    const next = {
+      ...artifact,
+      theme: baseId,
+      themeConfig: { ...prevConfig, ...patch, id: "custom", label: "Custom", custom: true },
+    } as Artifact;
+    persist(next);
   };
 
   const addBlock = (type: string) => {
@@ -312,7 +369,8 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${artifact.title || "untitled"}.${format === "pdf" ? "pdf" : format === "pptx" ? "pptx" : format === "docx" ? "docx" : "xlsx"}`;
+      const ext = format === "pdf" ? "pdf" : format === "pptx" ? "pptx" : format === "docx" ? "docx" : format === "html" ? "html" : "xlsx";
+      a.download = `${artifact.title || "untitled"}.${ext}`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -375,6 +433,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
         if (!reader) throw new Error("No stream");
         const decoder = new TextDecoder();
         let buffer = "";
+        let gotDone = false;
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -390,6 +449,7 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
                 throw new Error(friendlyAIErrorMessage(data.error, "Generation failed"));
               }
               if (data.event === "done") {
+                gotDone = true;
                 setRevealTick((t) => t + 1);
                 queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
               }
@@ -397,6 +457,15 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               throw err;
             }
           }
+        }
+        if (!gotDone) {
+          // The connection ended before the server finished (e.g. platform
+          // timeout on a long generation). Never fail silently — the canvas
+          // would otherwise stop loading with nothing to show.
+          queryClient.invalidateQueries(trpc.conversations.getById.queryOptions({ id: conversationId }));
+          throw new Error(
+            "Generation stopped before finishing (connection closed). Check the server logs, then retry — your prompt is saved in chat."
+          );
         }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to generate with AI");
@@ -479,25 +548,13 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           {activeTab === "blocks" && (
             <>
               {mode === "slides" && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1">Theme</p>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {SLIDE_THEMES.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setTheme(t.id)}
-                        title={t.label}
-                        className={cn(
-                          "h-8 rounded-lg border transition-all flex items-center justify-center",
-                          activeTheme.id === t.id ? "border-primary ring-1 ring-primary" : "border-white/10 hover:border-white/30"
-                        )}
-                        style={{ background: `linear-gradient(135deg, ${t.bg}, ${t.accent})` }}
-                      >
-                        <span className="text-[9px] font-medium px-1 truncate" style={{ color: t.muted }}>{t.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <SlidesThemePanel
+                  activeId={(artifact.theme || themeId) ?? "midnight"}
+                  isCustom={!!(artifact as Artifact).themeConfig}
+                  meta={activeThemeMeta}
+                  onPick={setTheme}
+                  onCustomPatch={applyCustomTheme}
+                />
               )}
 
               <div className="space-y-1.5">
@@ -592,6 +649,23 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               {selectedBlock ? (
                 <>
                   <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium px-1">Edit block</p>
+                  {mode === "slides" && (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-text-secondary">Layout</label>
+                      <select
+                        value={familyOf(selectedBlock)}
+                        onChange={(e) => relayoutBlock(selectedBlock, e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/90 outline-none focus:border-primary/40"
+                        title="Change layout — content is preserved where possible"
+                      >
+                        {LAYOUT_REGISTRY.map((l) => (
+                          <option key={l.family} value={l.family} className="bg-neutral-900">
+                            {l.family}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <PropertyEditor
                     block={selectedBlock}
                     def={def.blockTypes.find((t) => t.type === selectedBlock.type)!}
@@ -733,10 +807,25 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
               <button
                 onClick={() => exportFile("html")}
                 disabled={exporting}
-                title="Download an editable standalone HTML deck"
+                title="Download a standalone HTML deck"
                 className="hidden sm:flex h-7 items-center gap-1.5 px-2.5 rounded-lg border border-white/15 text-xs text-text-secondary hover:text-white hover:bg-white/10 transition-colors"
               >
                 <Code2 className="h-3.5 w-3.5" /> HTML
+              </button>
+            )}
+            {mode === "slides" && (
+              <button
+                onClick={() =>
+                  window.open(
+                    `/api/modes/slides/present?conversationId=${encodeURIComponent(conversationId)}`,
+                    "_blank",
+                    "noopener"
+                  )
+                }
+                title="Present the deck in a new tab"
+                className="hidden sm:flex h-7 items-center gap-1.5 px-2.5 rounded-lg border border-white/15 text-xs text-text-secondary hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <Presentation className="h-3.5 w-3.5" /> Present
               </button>
             )}
           </div>
@@ -975,6 +1064,9 @@ export function ModeCanvas({ mode, conversationId }: ModeCanvasProps) {
           onDelete={() => deleteBlock(selectedBlock.id)}
           onDuplicate={() => duplicateBlock(selectedBlock.id)}
           onClose={() => setSelectedId(null)}
+          showLayout={mode === "slides"}
+          currentFamily={familyOf(selectedBlock)}
+          onRelayout={(family) => relayoutBlock(selectedBlock, family)}
         />
       )}
     </div>
@@ -1030,6 +1122,114 @@ function SheetStatsBlock({ block, selected, onSelect }: { block: ArtifactBlock; 
   );
 }
 
+function SlidesThemePanel({
+  activeId,
+  isCustom,
+  meta,
+  onPick,
+  onCustomPatch,
+}: {
+  activeId: string;
+  isCustom: boolean;
+  meta: DynamicSlideTheme;
+  onPick: (id: string) => void;
+  onCustomPatch: (patch: Partial<DynamicSlideTheme>) => void;
+}) {
+  const [customOpen, setCustomOpen] = useState(false);
+  const cfg = (meta ?? getSlideTheme(activeId, null)) as DynamicSlideTheme;
+
+  const colorRow = (label: string, value: string, onChange: (v: string) => void) => (
+    <label className="space-y-1">
+      <span className="text-[10px] text-text-tertiary">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <input
+          type="color"
+          value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#ffffff"}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-6 w-8 cursor-pointer rounded border border-white/10 bg-transparent"
+        />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-6 min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-1.5 font-mono text-[10px] text-white/90 outline-none focus:border-primary/40"
+        />
+      </span>
+    </label>
+  );
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between px-1">
+        <p className="text-[10px] uppercase tracking-wider text-text-muted font-medium">
+          Theme{isCustom ? " · Custom" : ""}
+        </p>
+        <button
+          onClick={() => setCustomOpen((v) => !v)}
+          className="text-[10px] text-primary hover:text-primary/80"
+        >
+          {customOpen ? "Hide builder" : "Customize"}
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {DYNAMIC_SLIDE_THEMES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => onPick(t.id)}
+            title={`${t.label} — ${t.description}`}
+            className={cn(
+              "h-10 rounded-lg border transition-all flex flex-col items-start justify-end p-1 overflow-hidden",
+              activeId === t.id && !isCustom ? "border-primary ring-1 ring-primary" : "border-white/10 hover:border-white/30"
+            )}
+            style={{ background: `linear-gradient(135deg, ${t.bg} 0%, ${t.bg2} 100%)` }}
+          >
+            <span className="h-1 w-6 rounded-full mb-0.5" style={{ background: `linear-gradient(90deg, ${t.accent}, ${t.accent2})` }} />
+            <span className="text-[9px] font-medium px-0.5 truncate max-w-full" style={{ color: t.text, fontFamily: `${t.fontHeading}, sans-serif` }}>{t.label}</span>
+          </button>
+        ))}
+      </div>
+      <p className="text-[10px] text-text-muted px-1 leading-snug">{cfg.description}</p>
+
+      {customOpen && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-2.5 space-y-2.5">
+          <div className="grid grid-cols-2 gap-2">
+            {colorRow("Background", cfg.bg, (v) => onCustomPatch({ bg: v }))}
+            {colorRow("Deep shade", cfg.bg2, (v) => onCustomPatch({ bg2: v }))}
+            {colorRow("Accent", cfg.accent, (v) => onCustomPatch({ accent: v, chip: v }))}
+            {colorRow("Accent 2", cfg.accent2, (v) => onCustomPatch({ accent2: v }))}
+            {colorRow("Text", cfg.text, (v) => onCustomPatch({ text: v }))}
+            {colorRow("Muted", cfg.muted, (v) => onCustomPatch({ muted: v }))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="space-y-1">
+              <span className="text-[10px] text-text-tertiary">Backdrop</span>
+              <select
+                value={cfg.backdrop}
+                onChange={(e) => onCustomPatch({ backdrop: e.target.value as DynamicSlideTheme["backdrop"] })}
+                className="h-7 w-full rounded-md border border-white/10 bg-neutral-900 px-1.5 text-[11px] text-white/90 outline-none"
+              >
+                {SLIDE_BACKDROPS.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="text-[10px] text-text-tertiary">Heading font</span>
+              <select
+                value={cfg.fontHeading}
+                onChange={(e) => onCustomPatch({ fontHeading: e.target.value })}
+                className="h-7 w-full rounded-md border border-white/10 bg-neutral-900 px-1.5 text-[11px] text-white/90 outline-none"
+              >
+                {SLIDE_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </label>
+          </div>
+          <p className="text-[10px] text-text-muted leading-snug">
+            Tip: select any slide text with your mouse for a floating toolbar (color, highlight, alignment), or drag the ✥ Move grip to reposition content.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface FloatingPropertyCardProps {
   top: number;
   left: number;
@@ -1040,6 +1240,9 @@ interface FloatingPropertyCardProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onClose: () => void;
+  showLayout?: boolean;
+  currentFamily?: string;
+  onRelayout?: (family: string) => void;
 }
 
 function FloatingPropertyCard({
@@ -1052,6 +1255,9 @@ function FloatingPropertyCard({
   onDelete,
   onDuplicate,
   onClose,
+  showLayout,
+  currentFamily,
+  onRelayout,
 }: FloatingPropertyCardProps) {
   const [expanded, setExpanded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -1098,6 +1304,23 @@ function FloatingPropertyCard({
         </div>
       </div>
       <div className={cn("overflow-y-auto thin-scrollbar p-3", expanded ? "max-h-[75vh]" : "max-h-[60vh]")}>
+        {showLayout && onRelayout && (
+          <label className="mb-3 block space-y-1">
+            <span className="text-[10px] uppercase tracking-wider text-text-muted font-medium">Layout</span>
+            <select
+              value={currentFamily ?? "cards"}
+              onChange={(e) => onRelayout(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white/90 outline-none focus:border-primary/40"
+              title="Change layout — content is preserved where possible"
+            >
+              {LAYOUT_REGISTRY.map((l) => (
+                <option key={l.family} value={l.family} className="bg-neutral-900">
+                  {l.family}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <PropertyEditor block={block} def={def} onChange={onChange} />
       </div>
     </div>,

@@ -23,6 +23,7 @@ import { stashPendingFiles } from "@/lib/attachments/shuttle";
 import { UNIQUE_MODELS, getModelById } from "@/lib/models";
 import { useIntentRouter } from "@/lib/intent/use-intent";
 import { IntentConfirmationCard } from "@/components/intent/intent-confirmation-card";
+import { SlidesSetupModal } from "@/components/slides-setup-modal";
 import type { IntentResult } from "@/lib/intent/types";
 
 const INTENT_MODE_MAP: Record<string, string> = {
@@ -113,6 +114,19 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
     const [pendingPills, setPendingPills] = useState<AttachmentPill[]>([]);
     const { pending: intentPending, setPending: setIntentPending, classify } = useIntentRouter();
     const [deferredPrompt, setDeferredPrompt] = useState<string | null>(null);
+    // Deck setup opens as a centered middle card (modal) — never inline
+    // below the input. Triggered by intent detection OR the slides pill.
+    const [slidesSetupOpen, setSlidesSetupOpen] = useState(false);
+
+    useEffect(() => {
+        if (projectCategory === "slides") setSlidesSetupOpen(true);
+    }, [projectCategory]);
+
+    const closeSlidesSetup = () => {
+        setSlidesSetupOpen(false);
+        setDeferredPrompt(null);
+        onCategoryClear?.();
+    };
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -188,6 +202,14 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
             } catch { routed = null; }
             const artifact = routed?.result.capabilities.find((c) => INTENT_MODE_MAP[c]);
             if (routed && artifact && routed.result.action !== "chat" && onModePrompt) {
+                // Presentations go through the deck setup page (theme + page
+                // count picker) instead of generating immediately.
+                if (INTENT_MODE_MAP[artifact] === "slides") {
+                    setDeferredPrompt(values.value);
+                    setIntentPending(null);
+                    setSlidesSetupOpen(true);
+                    return;
+                }
                 // HIGH → 3s auto-action card; MEDIUM → wait for user.
                 setDeferredPrompt(values.value);
                 setIntentPending({ result: routed.result, telemetryId: routed.telemetryId });
@@ -208,6 +230,13 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                 toast.error("Failed to analyze contract. Please try again.");
                 setIsAnalyzingContract(false);
             }
+            return;
+        }
+
+        // Slides → open the setup middle card prefilled with the typed text.
+        if (projectCategory === "slides" && onModePrompt) {
+            setDeferredPrompt(values.value);
+            setSlidesSetupOpen(true);
             return;
         }
 
@@ -472,6 +501,18 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                         />
                     </div>
                 )}
+                <SlidesSetupModal
+                    open={slidesSetupOpen}
+                    initialTopic={deferredPrompt ?? ""}
+                    modalKey={deferredPrompt ?? "slides-setup"}
+                    onClose={closeSlidesSetup}
+                    onCreate={(prompt, templateId) => {
+                        setSlidesSetupOpen(false);
+                        setDeferredPrompt(null);
+                        onCategoryClear?.();
+                        onModePrompt?.("slides", prompt, templateId, selectedModel || undefined);
+                    }}
+                />
             </section>
         </Form>
         </>

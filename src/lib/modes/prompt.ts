@@ -9,7 +9,17 @@ function blockTypeSchema(def: ModeDefinition): string {
   return def.blockTypes
     .map((b) => {
       const fields = b.properties
-        .map((p) => `    "${p.key}": <${p.type === "number" ? "number" : p.type === "list" ? "string[]" : "string"}>`)
+        .map((p) => {
+          if (p.type === "number") return `    "${p.key}": <number>`;
+          if (p.type === "list") return `    "${p.key}": <string[]>`;
+          if (p.type === "object-list") {
+            const inner = (p.itemFields ?? [{ key: "label", label: "Label" }])
+              .map((f) => `"${f.key}": <string${f.key === "from" || f.key === "to" ? "|number" : ""}>`)
+              .join(", ");
+            return `    "${p.key}": <Array<{${inner}}>>`;
+          }
+          return `    "${p.key}": <string>`;
+        })
         .join("\n");
       return `  {
     "type": "${b.type}",
@@ -26,7 +36,8 @@ export function buildModePrompt(
   userMessage: string,
   templateId?: string,
   currentArtifact?: Artifact,
-  attachmentContext?: string
+  attachmentContext?: string,
+  opts?: { slideCount?: number; themeBrief?: string; plan?: string }
 ): string {
   const def = MODE_DEFINITIONS[mode];
   if (!def) {
@@ -58,12 +69,42 @@ Respond ONLY with the FULL updated JSON object (same shape as the current docume
 The user wants you to create a ${def.label.toLowerCase()} with this request:
 """${userMessage}"""`;
 
-  return `You are an expert content designer for the "${def.label}" mode of the Cobentt app.
+  const countHint = opts?.slideCount
+    ? `The user explicitly asked for EXACTLY ${opts.slideCount} slides. Your "blocks" array MUST contain exactly ${opts.slideCount} items — no more, no fewer.`
+    : "";
+  const themeHint = opts?.themeBrief ? `Visual theme override from the user: ${opts.themeBrief}` : "";
+  const planSection = opts?.plan
+    ? `\nPRESENTATION PLAN (established by the presentation architect — FOLLOW IT EXACTLY):\n${opts.plan}\n\nRules for the plan:\n- The planner owns story, per-slide purpose, layout family, and visual need. Do NOT reinvent the structure.\n- You own copy, details, and structured slide content. Map each planned slide to blocks in order.\n- Each block MAY carry optional design-intent fields: "purpose", "message" (one-sentence takeaway), "density" (sparse|balanced|dense), "layout" {family, variant, shell, ratio}, "visual" {need, concept}.\n- Set "layout.family" to the planned family and "type" to the matching block type.\n`
+    : "";
 
+  const designerBrief =
+    mode === "slides"
+      ? `
+You are the presentation DESIGNER, not a template filler. For every slide, decide how the information should be communicated visually:
+- WHY does this slide exist (purpose)? WHAT is its single message? HOW MUCH information is required (density)?
+- Does it need a visual, and what kind (photo / chart / diagram / icon / none)? What should dominate attention? What can be removed?
+- Layout follows communication intent — NEVER pick a layout just because it is available.
+
+ANTI-CARD RULES (hard):
+- Cards/grids are NOT the default. Use them only for discrete items, comparable entities, grouped info, or modular features.
+- Do NOT use cards for: single statements, emotional messages, timelines, processes, diagrams, quotes, hero moments, image-led storytelling.
+- A slide with one message should be a statement/hero/bleed slide with large display typography — powerful with almost nothing on it.
+- Prefer: statement for claims, metrics/chart for numbers, timeline for progression, process for flows, diagram for systems, compare variants (vs-split/before-after/pros-cons/table/migration) for relationships, media-split/bleed for image-led moments, editorial for ideas with authority.
+- RHYTHM: never use the same layout family twice in a row unless the story justifies it. Alternate typographic moments, evidence, visuals, comparisons.
+- DENSITY: sparse = large type, minimal copy. If content overflows, SHORTEN or RESTRUCTURE — never just shrink type. Dense content belongs in grids, tables, diagrams, or multi-column editorial.
+- Charts: provide real structured labels+values. Diagrams: provide semantic nodes+edges (the renderer controls geometry).
+`
+      : "";
+
+  return `You are an expert content designer for the "${def.label}" mode of the Cobentt app.
+${designerBrief}
 ${attachmentSection}
 ${editSection}
 
 ${template ? `Use this visual system: ${template.label}. ${template.designDirection || template.description}` : ""}
+${themeHint}
+${countHint}
+${planSection}
 
 Respond ONLY with a valid JSON object, no markdown code fences, no commentary. The JSON must match exactly:
 
@@ -82,10 +123,11 @@ Rules:
 - Each block MUST have "type" and "props".
 - "props" must only contain the fields listed for that block type.
 - Every block that has a "text"/"title"/"quote" field must have meaningful, complete content based on the user request.
-- ${currentArtifact ? "Apply the user's edit to the existing document and return the FULL updated document." : "Cover the user's topic thoroughly with 5-12 blocks."}
+- ${currentArtifact ? "Apply the user's edit to the existing document and return the FULL updated document." : opts?.slideCount ? `Generate EXACTLY ${opts.slideCount} blocks.` : "Cover the user's topic thoroughly with 5-12 blocks."}
 - Make content specific and concrete, never generic placeholders.
-- For slides, create a visual rhythm: alternate title, statement, comparison, proof, quote, metric, image, and closing layouts where they serve the story. Avoid repeating the same layout more than twice in a row.
-- For slides, use ${template?.theme ? `the "${template.theme}" theme` : "a theme that supports the topic"}; make the title and each slide's copy presentation-ready, not a document pasted onto slides.`;
+- For slides, create a visual rhythm: alternate hero, statement, comparison, proof, quote, metric, image-led (media-split/bleed), timeline/process/diagram, chart, and closing layouts where they serve the story. Avoid repeating the same layout more than twice in a row.
+- For slides, use ${template?.theme ? `the "${template.theme}" theme` : "a theme that supports the topic"}; make the title and each slide's copy presentation-ready, not a document pasted onto slides.
+- For slides, every block SHOULD include "purpose", "message", and "density" fields, and a "layout" object {family, variant, shell} matching its type (e.g. type "statement-slide" → layout.family "statement"). This is how the renderer understands design intent.`;
 }
 
 export function buildResearchPrompt(userMessage: string, templateId?: string): string {

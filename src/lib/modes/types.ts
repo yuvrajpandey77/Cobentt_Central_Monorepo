@@ -1,11 +1,49 @@
 export type ModeKey = "slides" | "document" | "sheet" | "deep-research";
 
+export type SlidePurpose =
+  | "hook" | "context" | "problem" | "proof" | "detail"
+  | "comparison" | "turn" | "insight" | "evidence" | "solution"
+  | "mechanism" | "result" | "close";
+
+export type SlideDensity = "sparse" | "balanced" | "dense";
+
+export type LayoutShell = "contained" | "bleed" | "split" | "overlap";
+
+export interface SlideLayout {
+  family?: string;
+  variant?: string;
+  shell?: LayoutShell;
+  /** Asymmetric media/text ratio (0.3–0.7). Only meaningful for split shells. */
+  ratio?: number;
+}
+
+export type VisualNeed = "none" | "photo" | "diagram" | "chart" | "icon" | "texture";
+
+export interface SlideVisual {
+  need?: VisualNeed;
+  /** Semantic direction: what visual communicates this slide's message. */
+  concept?: string;
+  /** Stock-search query or generation prompt. */
+  query?: string;
+  /** Resolved asset id (Attachment) or URL. */
+  assetId?: string;
+  crop?: { x: number; y: number; w: number; h: number };
+  role?: "background" | "side" | "full" | "thumb";
+}
+
 export interface ArtifactBlock {
   id: string;
   type: string;
   props: Record<string, unknown>;
   children?: ArtifactBlock[];
   style?: BlockStyle;
+  /** Design-intent fields (all optional; absent = legacy behavior). */
+  purpose?: SlidePurpose;
+  /** Single-sentence takeaway — drives hierarchy, not rendered directly. */
+  message?: string;
+  density?: SlideDensity;
+  layout?: SlideLayout;
+  visual?: SlideVisual;
 }
 
 export interface BlockStyle {
@@ -21,20 +59,27 @@ export interface BlockStyle {
   borderRadius?: number;
   border?: boolean;
   shadow?: boolean;
+  /** Mouse-dragged placement offsets (px) for free positioning inside the slide. */
+  offsetX?: number;
+  offsetY?: number;
 }
 
 export interface Artifact {
   title: string;
   theme?: string;
+  /** Full custom theme override (created in the theme builder). Persisted with the deck. */
+  themeConfig?: Record<string, unknown>;
   blocks: ArtifactBlock[];
 }
 
 export interface BlockProperty {
   key: string;
   label: string;
-  type: "text" | "textarea" | "number" | "select" | "list" | "color";
+  type: "text" | "textarea" | "number" | "select" | "list" | "object-list" | "color";
   options?: string[];
   placeholder?: string;
+  /** Field descriptors for object-list items (e.g. timeline milestones). */
+  itemFields?: Array<{ key: string; label: string; placeholder?: string }>;
 }
 
 export interface BlockTypeDef {
