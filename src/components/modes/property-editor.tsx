@@ -107,6 +107,62 @@ export function PropertyEditor({ block, def, onChange }: PropertyEditorProps) {
                 </div>
               </div>
             )}
+            {prop.type === "object-list" && (
+              <div className="space-y-1.5">
+                {(Array.isArray(value) ? value : []).map((item: unknown, i: number) => {
+                  const obj = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+                  return (
+                    <div key={i} className="rounded-lg border border-white/10 bg-white/[0.02] p-2 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-text-muted tabular-nums">#{i + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const arr = (Array.isArray(value) ? [...(value as unknown[])] : []);
+                            arr.splice(i, 1);
+                            update(prop.key, arr);
+                          }}
+                          className="text-text-muted hover:text-red-400 text-xs px-1"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      {(prop.itemFields ?? [{ key: "label", label: "Label" }]).map((f) => (
+                        <label key={f.key} className="block space-y-0.5">
+                          <span className="text-[10px] text-text-tertiary">{f.label}</span>
+                          <input
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white/90 outline-none focus:border-primary/40"
+                            value={String(obj[f.key] ?? "")}
+                            placeholder={f.placeholder}
+                            onChange={(e) => {
+                              const arr = (Array.isArray(value) ? [...(value as unknown[])] : []) as Record<string, unknown>[];
+                              const next = { ...(arr[i] && typeof arr[i] === "object" ? arr[i] : {}) };
+                              const raw = e.target.value;
+                              // Keep numeric edge indices numeric when they look numeric.
+                              next[f.key] = /^-?\d+$/.test(raw) && (f.key === "from" || f.key === "to") ? Number(raw) : raw;
+                              arr[i] = next;
+                              update(prop.key, arr);
+                            }}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const fields = prop.itemFields ?? [{ key: "label", label: "Label" }];
+                    const blank: Record<string, unknown> = {};
+                    for (const f of fields) blank[f.key] = "";
+                    update(prop.key, [...(Array.isArray(value) ? value : []), blank]);
+                  }}
+                  className="text-xs text-primary hover:text-primary/80"
+                >
+                  + Add
+                </button>
+              </div>
+            )}
             {prop.type === "list" && (
               <div className="space-y-1.5">
                 {(Array.isArray(value) ? value : []).map((item: string, i: number) => (

@@ -75,6 +75,89 @@ function summarizeChanges(
   return `${label} updated — ${changes.join(", ")}.`;
 }
 
+/**
+ * Targeted single-slide repair: recompose ONE flagged block with structured
+ * reasons injected. Returns the replacement block (same id) or null to keep
+ * the original. Never regenerates the whole deck.
+ */
+async function recomposeSlide(
+  model: string,
+  credential: { apiKey: string; baseUrl: string; extraHeaders?: Record<string, string> },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  block: any,
+  reasons: string[],
+  changes: string[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any | null> {
+  try {
+    const defs = MODE_DEFINITIONS["slides"]?.blockTypes ?? [];
+    const allowlist = defs.map((d) => d.type).join(", ");
+    const res = await chatCompletion(
+      {
+        model,
+        credential,
+        maxTokens: 1500,
+        stream: false,
+        temperature: 0.3,
+        messages: [
+        {
+          role: "system",
+          content: "You are a slide repair specialist. Fix exactly one slide. Respond with valid JSON only.",
+        },
+        {
+          role: "user",
+          content: `This slide failed visual quality checks. Recompose it as a SINGLE slide block that fixes every issue while preserving the slide's message and content.
+
+Current block JSON:
+${JSON.stringify(block).slice(0, 4000)}
+
+Issues: ${reasons.join("; ") || "unspecified"}
+Required fixes: ${changes.join("; ") || "improve layout and readability"}
+
+Allowed block types: ${allowlist}
+Anti-card rules: single statements → statement-slide; numbers → stat/chart-slide; progression → timeline-slide; flows → process-slide; systems → diagram-slide; comparisons → compare-slide with the right variant; image-led → media-split/bleed (only with a real URL already present — never invent URLs).
+Include "purpose", "message", "density", and "layout" {family, variant, shell} fields matching the chosen type.
+
+Respond ONLY with JSON: {"type": "<one of allowed>", "props": {...}, "purpose": "", "message": "", "density": "sparse|balanced|dense", "layout": {"family": "", "variant": "", "shell": "contained"}}`,
+        },
+      ],
+      },
+      // Bounded: a single repair must never stall the deck (1 retry, 30s cap).
+      { maxRetries: 1, timeoutMs: 30000 }
+    );
+    if (!res.ok) return null;
+    const body = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const text = body.choices?.[0]?.message?.content ?? "";
+    if (!text) return null;
+    const fixed = JSON.parse(extractJson(text)) as {
+      type?: string;
+      props?: Record<string, unknown>;
+      purpose?: string;
+      message?: string;
+      density?: string;
+      layout?: Record<string, unknown>;
+      visual?: Record<string, unknown>;
+    };
+    const validTypes = new Set(defs.map((d) => d.type));
+    if (!fixed || !validTypes.has(String(fixed.type)) || !fixed.props || typeof fixed.props !== "object") {
+      return null;
+    }
+    return {
+      id: typeof block?.id === "string" ? block.id : `blk_repaired_${Date.now().toString(36)}`,
+      type: fixed.type,
+      props: fixed.props,
+      ...(typeof fixed.purpose === "string" ? { purpose: fixed.purpose } : {}),
+      ...(typeof fixed.message === "string" ? { message: fixed.message } : {}),
+      ...(fixed.density === "sparse" || fixed.density === "balanced" || fixed.density === "dense" ? { density: fixed.density } : {}),
+      ...(fixed.layout && typeof fixed.layout === "object" ? { layout: fixed.layout } : {}),
+      ...(fixed.visual && typeof fixed.visual === "object" ? { visual: fixed.visual } : {}),
+      ...(block?.style && typeof block.style === "object" ? { style: block.style } : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ mode: string }> }
@@ -121,7 +204,45 @@ export async function POST(
     currentArtifactParsed = currentArtifact;
   }
 
-  const prompt = buildModePrompt(mode as never, sanitizedMessage, conversation.template ?? undefined, currentArtifactParsed);
+  // Slides setup block: exact page count + custom dynamic theme, embedded by
+  // the launchpad so no DB migration is needed. Strip it before the LLM sees
+  // the message, then re-apply the theme to the saved artifact below.
+  let setupSlideCount: number | undefined;
+  let setupThemeId: string | undefined;
+  let setupThemeConfig: Record<string, unknown> | undefined;
+  let setupThemeBrief = "";
+  let setupAudience = "Executives";
+  let setupGoal = "persuade";
+  let setupUseSourceImages = false;
+  let promptMessage = sanitizedMessage;
+  if (mode === "slides") {
+    try {
+      const { parseSlidesSetup } = await import("@/lib/modes/slide-themes");
+      const parsed = parseSlidesSetup(sanitizedMessage);
+      promptMessage = parsed.cleanMessage || sanitizedMessage;
+      setupSlideCount = parsed.setup.slideCount;
+      setupThemeId = parsed.setup.themeId;
+      if (typeof parsed.setup.audience === "string" && parsed.setup.audience) {
+        setupAudience = parsed.setup.audience;
+      }
+      if (typeof parsed.setup.goal === "string" && parsed.setup.goal) {
+        setupGoal = parsed.setup.goal;
+      }
+      setupUseSourceImages = parsed.setup.useSourceImages === true;
+      if (parsed.setup.themeConfig) {
+        setupThemeConfig = parsed.setup.themeConfig as Record<string, unknown>;
+        setupThemeBrief = `Custom theme ${setupThemeId ? `based on "${setupThemeId}"` : ""} with colors/fonts/backdrop ${JSON.stringify(parsed.setup.themeConfig)}. Set artifact "theme" to "${setupThemeId || "midnight"}".`;
+      } else if (setupThemeId) {
+        setupThemeBrief = `Use the "${setupThemeId}" visual theme.`;
+      }
+    } catch { /* fall back to raw message */ }
+  }
+
+  const isFreshSlidesDeck =
+    mode === "slides" &&
+    (!currentArtifactParsed || !Array.isArray(currentArtifactParsed.blocks) || currentArtifactParsed.blocks.length === 0);
+
+  const prompt = buildModePrompt(mode as never, promptMessage, conversation.template ?? undefined, currentArtifactParsed, undefined, { slideCount: setupSlideCount, themeBrief: setupThemeBrief || undefined });
 
   // Load extracted text from attached files (ownership is scoped to the
   // conversation, which the pipeline already validated).
@@ -140,9 +261,6 @@ export async function POST(
     }
   }
 
-  const finalPrompt = attachmentContext
-    ? buildModePrompt(mode as never, sanitizedMessage, conversation.template ?? undefined, currentArtifactParsed, attachmentContext)
-    : prompt;
   const requestedModel = conversation.model || "openai/gpt-4o-mini";
   let credential;
   try {
@@ -156,6 +274,67 @@ export async function POST(
   const model = credential.model;
   const start = Date.now();
 
+  // Presentation planner (fresh slides decks only): owns story, per-slide
+  // purpose, density, layout family, and visual need BEFORE composition.
+  // Falls back to single-pass generation when planning fails.
+  let planText = "";
+  let extraPromptTokens = 0;
+  let extraCompletionTokens = 0;
+  if (isFreshSlidesDeck) {
+    try {
+      const { planPresentation } = await import("@/lib/modes/planner");
+      const { themeLabel } = await import("@/lib/modes/slide-themes").then((m) => ({
+        themeLabel: (m.DYNAMIC_SLIDE_THEMES.find((t) => t.id === setupThemeId)?.label as string | undefined) ?? setupThemeId,
+      }));
+      const planned = await planPresentation(
+        {
+          request: promptMessage,
+          audience: setupAudience,
+          goal: setupGoal,
+          slideCount: setupSlideCount ?? 10,
+          themeLabel,
+          sourceContext: attachmentContext || undefined,
+        },
+        credential,
+        model
+      );
+      extraPromptTokens += planned.promptTokens;
+      extraCompletionTokens += planned.completionTokens;
+      console.log(
+        `[modes/generate] planner ${planned.plan ? `ok (${planned.plan.slides.length} slides)` : "failed, single-pass fallback"} in ${Date.now() - start}ms`
+      );
+      if (planned.plan) {
+        // Asset resolution: photo needs → upload/stock candidates.
+        let imageAttachments: Array<{ id: string; fileName: string; mimeType: string }> = [];
+        if (setupUseSourceImages) {
+          try {
+            imageAttachments = await prisma.attachment.findMany({
+              where: { conversationId, mimeType: { startsWith: "image/" } },
+              select: { id: true, fileName: true, mimeType: true },
+            });
+          } catch { /* uploads unavailable — stock/degrade path */ }
+        }
+        const { resolveSlideAssets, assetPromptFragment } = await import("@/lib/modes/assets");
+        const assets = await resolveSlideAssets(planned.plan, {
+          useSourceImages: setupUseSourceImages,
+          attachments: imageAttachments,
+        });
+        planText = `\n${JSON.stringify(planned.plan)}\n\n${assetPromptFragment(assets)}`;
+      }
+    } catch (err) {
+      console.warn("[modes/generate] planner failed, falling back:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  const planOpts = {
+    slideCount: setupSlideCount,
+    themeBrief: setupThemeBrief || undefined,
+    plan: planText || undefined,
+  };
+  const finalPrompt = attachmentContext || planText
+    ? buildModePrompt(mode as never, promptMessage, conversation.template ?? undefined, currentArtifactParsed, attachmentContext || undefined, planOpts)
+    : prompt;
+
   // Stream the generated artifact tokens over SSE so the client can render a
   // loading skeleton and progressively reveal the updated document instead of
   // swapping the whole canvas at once.
@@ -165,7 +344,7 @@ export async function POST(
         const response = await chatCompletion({
           model,
           credential,
-          maxTokens: 3500,
+          maxTokens: planText ? 6000 : 3500,
           stream: true,
           messages: [
             {
@@ -225,10 +404,67 @@ export async function POST(
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let artifact: any;
+        let refinedCount = 0;
         if (mode === "deep-research") {
           artifact = JSON.parse(extractJson(content));
         } else {
           artifact = parseArtifact(content);
+          if (mode === "slides") {
+            // Enforce the exact page count the user picked on the setup page.
+            if (typeof setupSlideCount === "number" && Array.isArray(artifact.blocks)) {
+              if (artifact.blocks.length > setupSlideCount) {
+                artifact.blocks = artifact.blocks.slice(0, setupSlideCount);
+              }
+            }
+            // Persist the chosen theme so the canvas + exports render it.
+            if (setupThemeId) artifact.theme = setupThemeId;
+            if (setupThemeConfig) artifact.themeConfig = setupThemeConfig;
+
+            // Visual evaluation + targeted single-slide repair (fresh decks).
+            // Silent: at most 3 slides, 2 passes, then accept. Time-boxed so
+            // slow repair calls can delay — but never stall — the response.
+            if (isFreshSlidesDeck && Array.isArray(artifact.blocks) && artifact.blocks.length > 0) {
+              try {
+                const { evaluateDeck } = await import("@/lib/modes/evaluate");
+                const themeForEval = async () => {
+                  try {
+                    const m = await import("@/lib/modes/slide-themes");
+                    const custom = (artifact.themeConfig && typeof artifact.themeConfig === "object" ? artifact.themeConfig : null) as Parameters<typeof m.getSlideTheme>[1];
+                    const t = m.getSlideTheme(artifact.theme, custom);
+                    return { bg: t.bg, text: t.text };
+                  } catch {
+                    return { bg: "#0b1220", text: "#f1f5f9" };
+                  }
+                };
+                const { bg, text } = await themeForEval();
+                for (let pass = 0; pass < 2; pass++) {
+                  // Stop repairs if the request is getting long — accept the
+                  // deck as-is rather than risking a platform timeout.
+                  if (Date.now() - start > 120000) {
+                    console.warn("[modes/generate] repair budget exhausted by time, accepting deck");
+                    break;
+                  }
+                  const ev = evaluateDeck(artifact, bg, text);
+                  console.log(`[modes/generate] eval pass ${pass}: ${ev.summary}`);
+                  const flagged = ev.results.filter((r) => r.action !== "pass").slice(0, 3);
+                  if (flagged.length === 0) break;
+                  for (const f of flagged) {
+                    const fixed = await recomposeSlide(model, credential, artifact.blocks[f.index], f.reasons, f.changes);
+                    if (fixed) {
+                      artifact.blocks[f.index] = fixed;
+                      refinedCount += 1;
+                      // Repair calls are small non-streamed completions; account
+                      // approximately since usage isn't parsed for them.
+                      extraPromptTokens += 400;
+                      extraCompletionTokens += 600;
+                    }
+                  }
+                }
+              } catch (err) {
+                console.warn("[modes/generate] evaluation skipped:", err instanceof Error ? err.message : err);
+              }
+            }
+          }
         }
 
         // Slides remain data-first for hand editing, with a self-contained HTML
@@ -245,7 +481,10 @@ export async function POST(
           .reverse()
           .find((f) => f.mode === mode);
 
-        const summary = summarizeChanges(mode, currentArtifactParsed, artifact);
+        let summary = summarizeChanges(mode, currentArtifactParsed, artifact);
+        if (refinedCount > 0) {
+          summary += ` ${refinedCount} slide${refinedCount === 1 ? "" : "s"} refined for layout and readability.`;
+        }
 
         // Apply the new artifact to the previous fragment when present so the doc
         // actually updates in place (the canvas reads the latest fragment).
@@ -295,13 +534,13 @@ export async function POST(
           });
         }
 
-        // Record token usage via shared helper
-        if (promptTokens || completionTokens) {
+        // Record token usage via shared helper (composer + planner + repairs)
+        if (promptTokens || completionTokens || extraPromptTokens || extraCompletionTokens) {
           await recordAITokens({
             userId,
             model,
-            promptTokens,
-            completionTokens,
+            promptTokens: promptTokens + extraPromptTokens,
+            completionTokens: completionTokens + extraCompletionTokens,
             endpoint: `/api/modes/${mode}/generate`,
             durationMs: Date.now() - start,
           });

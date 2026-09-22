@@ -1,19 +1,9 @@
 import { ModeDefinition } from "./types";
+import { DYNAMIC_SLIDE_THEMES, toLegacyPalette } from "./slide-themes";
 
-export const SLIDE_THEMES = [
-  { id: "midnight", label: "Midnight", bg: "#0b1220", accent: "#38bdf8", text: "#f1f5f9", muted: "#94a3b8", chip: "#0ea5e9" },
-  { id: "royal", label: "Royal", bg: "#1e1b4b", accent: "#a78bfa", text: "#faf5ff", muted: "#c4b5fd", chip: "#8b5cf6" },
-  { id: "emerald", label: "Emerald", bg: "#022c22", accent: "#34d399", text: "#ecfdf5", muted: "#6ee7b7", chip: "#10b981" },
-  { id: "sunset", label: "Sunset", bg: "#2a0a1a", accent: "#fb923c", text: "#fff7ed", muted: "#fdba74", chip: "#f97316" },
-  { id: "ocean", label: "Ocean", bg: "#082f49", accent: "#22d3ee", text: "#ecfeff", muted: "#67e8f9", chip: "#06b6d4" },
-  { id: "ink", label: "Light", bg: "#fafafa", accent: "#171717", text: "#171717", muted: "#52525b", chip: "#404040" },
-  { id: "crimson", label: "Crimson", bg: "#2a0d0d", accent: "#f9a8d4", text: "#fff1f2", muted: "#fda4af", chip: "#f43f5e" },
-  { id: "midnight-black", label: "Mono", bg: "#0a0a0a", accent: "#f5f5f5", text: "#ffffff", muted: "#a3a3a3", chip: "#d4d4d4" },
-  { id: "forest", label: "Forest", bg: "#04130b", accent: "#fde047", text: "#ecfdf5", muted: "#86efac", chip: "#65a30d" },
-  { id: "berry", label: "Berry", bg: "#15002b", accent: "#22d3ee", text: "#fdf4ff", muted: "#d8b4fe", chip: "#d946ef" },
-  { id: "slate-light", label: "Slate", bg: "#f8fafc", accent: "#1d4ed8", text: "#0f172a", muted: "#64748b", chip: "#3b82f6" },
-  { id: "sand", label: "Sand", bg: "#1c1305", accent: "#fbbf24", text: "#fef3c7", muted: "#fde68a", chip: "#d97706" },
-];
+// Legacy 6-field palette kept for pptx-era consumers; the canvas + exports
+// resolve the full dynamic theme via getSlideTheme().
+export const SLIDE_THEMES = DYNAMIC_SLIDE_THEMES.map((t) => ({ id: t.id, label: t.label, ...toLegacyPalette(t) }));
 
 export const SLIDES_MODE: ModeDefinition = {
   mode: "slides",
@@ -116,6 +106,108 @@ export const SLIDES_MODE: ModeDefinition = {
       properties: [
         { key: "title", label: "Title", type: "text" },
         { key: "steps", label: "Steps", type: "list" },
+      ],
+    },
+    {
+      type: "statement-slide",
+      label: "Statement",
+      defaultProps: { overline: "The takeaway", headline: "One powerful sentence.", sub: "" },
+      properties: [
+        { key: "overline", label: "Overline", type: "text", placeholder: "Small eyebrow label" },
+        { key: "headline", label: "Headline", type: "textarea", placeholder: "The single message" },
+        { key: "sub", label: "Supporting line", type: "textarea", placeholder: "Optional secondary line" },
+      ],
+    },
+    {
+      type: "editorial-slide",
+      label: "Editorial",
+      defaultProps: { overline: "Context", headline: "The headline", lede: "Opening line.", body: "Supporting paragraph.", stat: "", statLabel: "" },
+      properties: [
+        { key: "overline", label: "Overline", type: "text" },
+        { key: "headline", label: "Headline", type: "text", placeholder: "Display headline" },
+        { key: "lede", label: "Lede", type: "textarea", placeholder: "Opening line" },
+        { key: "body", label: "Body", type: "textarea", placeholder: "Supporting paragraph" },
+        { key: "stat", label: "Side statistic", type: "text", placeholder: "e.g. 4.2×" },
+        { key: "statLabel", label: "Stat label", type: "text", placeholder: "What the number means" },
+      ],
+    },
+    {
+      type: "media-split-slide",
+      label: "Media Split",
+      defaultProps: { title: "Showcase", body: "Short supporting copy.", bullets: ["Point one", "Point two"], url: "", ratio: "50-50", imageSide: "right" },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "body", label: "Body", type: "textarea" },
+        { key: "bullets", label: "Bullets", type: "list" },
+        { key: "url", label: "Image URL", type: "text", placeholder: "https://..." },
+        { key: "ratio", label: "Split ratio", type: "select", options: ["50-50", "60-40", "40-60", "65-35", "35-65"] },
+        { key: "imageSide", label: "Image side", type: "select", options: ["right", "left"] },
+      ],
+    },
+    {
+      type: "bleed-slide",
+      label: "Full Bleed",
+      defaultProps: { title: "A defining moment", subtitle: "", url: "" },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "subtitle", label: "Subtitle", type: "textarea" },
+        { key: "url", label: "Background image URL", type: "text", placeholder: "https://..." },
+      ],
+    },
+    {
+      type: "timeline-slide",
+      label: "Timeline",
+      defaultProps: { title: "The Journey", items: [{ date: "2024", label: "Started", detail: "" }, { date: "2025", label: "Launched", detail: "" }, { date: "2026", label: "Scaled", detail: "" }] },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "items", label: "Milestones", type: "object-list", itemFields: [{ key: "date", label: "Date" }, { key: "label", label: "Label" }, { key: "detail", label: "Detail" }] },
+      ],
+    },
+    {
+      type: "process-slide",
+      label: "Process Flow",
+      defaultProps: { title: "How it works", direction: "horizontal", steps: [{ label: "Input", detail: "" }, { label: "Process", detail: "" }, { label: "Output", detail: "" }] },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "direction", label: "Direction", type: "select", options: ["horizontal", "vertical"] },
+        { key: "steps", label: "Stages", type: "object-list", itemFields: [{ key: "label", label: "Stage" }, { key: "detail", label: "Detail" }] },
+      ],
+    },
+    {
+      type: "compare-slide",
+      label: "Comparison",
+      defaultProps: { title: "Compare", variant: "vs-split", leftTitle: "Before", left: ["Old way"], rightTitle: "After", right: ["New way"], verdict: "" },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "variant", label: "Variant", type: "select", options: ["vs-split", "before-after", "pros-cons", "table", "migration"] },
+        { key: "leftTitle", label: "Left title", type: "text" },
+        { key: "left", label: "Left items", type: "list" },
+        { key: "rightTitle", label: "Right title", type: "text" },
+        { key: "right", label: "Right items", type: "list" },
+        { key: "verdict", label: "Verdict line", type: "text", placeholder: "Optional bottom line" },
+      ],
+    },
+    {
+      type: "chart-slide",
+      label: "Chart",
+      defaultProps: { title: "Growth", chartType: "bar", labels: ["Q1", "Q2", "Q3", "Q4"], values: ["12", "24", "38", "61"], note: "" },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "chartType", label: "Chart type", type: "select", options: ["bar", "line", "donut"] },
+        { key: "labels", label: "Labels", type: "list" },
+        { key: "values", label: "Values (numbers)", type: "list" },
+        { key: "note", label: "Note", type: "text" },
+      ],
+    },
+    {
+      type: "diagram-slide",
+      label: "Diagram",
+      defaultProps: { title: "Architecture", direction: "horizontal", nodes: [{ label: "Frontend", detail: "" }, { label: "API", detail: "" }, { label: "Database", detail: "" }], edges: [{ from: 0, to: 1, label: "" }, { from: 1, to: 2, label: "" }] },
+      properties: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "direction", label: "Direction", type: "select", options: ["horizontal", "vertical", "hub"] },
+        { key: "nodes", label: "Nodes", type: "object-list", itemFields: [{ key: "label", label: "Label" }, { key: "detail", label: "Detail" }] },
+        { key: "edges", label: "Connections (node indices)", type: "object-list", itemFields: [{ key: "from", label: "From #" }, { key: "to", label: "To #" }, { key: "label", label: "Label" }] },
       ],
     },
   ],
