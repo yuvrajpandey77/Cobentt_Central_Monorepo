@@ -200,8 +200,62 @@ export async function POST(req: NextRequest) {
 
         sse(controller, "phase", { phase: "Compiling report", progress: 95 });
 
+        // Generate a real report title from the research content instead of
+        // echoing the user's raw prompt.
+        let title = "";
+        try {
+          const titleRes = await chatCompletion({
+            model,
+            credential,
+            maxTokens: 120,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a research editor. Given the research topic and section contents, write a concise, specific report title (5-10 words, title case, no quotes, no trailing period, no generic words like 'Report' unless needed). Respond ONLY with valid JSON: {\"title\": \"...\"}",
+              },
+              {
+                role: "user",
+                content: `Topic: ${sanitizedMessage}\nSections:\n${sections.map((h, i) => `## ${h}\n${(sectionContents[i] || "").slice(0, 800)}`).join("\n\n")}\n\nSummary: ${summary}`,
+              },
+            ],
+          });
+          if (titleRes.ok) {
+            const titleData = await titleRes.json();
+            const titleText = titleData.choices?.[0]?.message?.content ?? "";
+            try {
+              const parsedTitle = JSON.parse(extractJson(titleText));
+              if (typeof parsedTitle.title === "string" && parsedTitle.title.trim()) {
+                title = parsedTitle.title.trim().replace(/^["']|["']$/g, "").slice(0, 120);
+              }
+            } catch {}
+            if (titleData.usage) {
+              await recordAITokens({
+                userId,
+                model,
+                promptTokens: titleData.usage.prompt_tokens ?? 0,
+                completionTokens: titleData.usage.completion_tokens ?? 0,
+                endpoint: "/api/modes/deep-research/generate",
+              });
+            }
+          }
+        } catch {
+          title = "";
+        }
+        if (!title) {
+          // Fallback: derive a cleaned title from the prompt instead of pasting it raw.
+          const cleaned = sanitizedMessage
+            .replace(/^(please\s+)?(do\s+)?(deep\s+)?research\s+(on|about|for|into)?\s*/i, "")
+            .replace(/^(write|create|generate|make)\s+(a\s+)?(report\s+on|report\s+about|report\s+for)?\s*/i, "")
+            .trim();
+          const fallbackBase = cleaned || sanitizedMessage;
+          title = fallbackBase.length > 80 ? `${fallbackBase.slice(0, 77).trim()}...` : fallbackBase;
+          if (!title) title = "Research Report";
+          title = title.charAt(0).toUpperCase() + title.slice(1);
+        }
+
         const artifact = {
-          title: sanitizedMessage.slice(0, 80),
+          title,
           summary,
           sections: sections.map((heading, i) => ({ heading, content: sectionContents[i] })),
           sources: sourceList,

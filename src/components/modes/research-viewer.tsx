@@ -51,6 +51,62 @@ function parseArtifact(raw: unknown): ResearchArtifact | null {
   return null;
 }
 
+// Direct cursor editing, same interaction as the slides pane: click any text
+// on the paper and type. Commits on blur (Enter blurs single-line fields).
+function DirectEdit({
+  as: Tag = "div",
+  value,
+  onCommit,
+  className,
+  style,
+  multiline = false,
+  placeholder,
+  onFocusSelect,
+}: {
+  as?: string;
+  value: string;
+  onCommit: (v: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  multiline?: boolean;
+  placeholder?: string;
+  onFocusSelect?: () => void;
+}) {
+  const El = Tag as React.ElementType;
+  return (
+    <El
+      className={cn(className, "cursor-text outline-none rounded px-1 -mx-1 transition-colors hover:bg-primary/5 focus:bg-primary/10 focus:ring-1 focus:ring-primary/40")}
+      style={style}
+      contentEditable
+      suppressContentEditableWarning
+      spellCheck={false}
+      data-editable
+      data-placeholder={placeholder}
+      title="Click to edit"
+      onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+      onFocus={(e: React.FocusEvent<HTMLElement>) => {
+        e.stopPropagation();
+        onFocusSelect?.();
+      }}
+      onBlur={(e: React.FocusEvent<HTMLElement>) => {
+        const text = (e.currentTarget.innerText || "").replace(/\u00A0/g, " ").replace(/\n+$/, "").trimEnd();
+        if (text !== (value || "")) onCommit(text);
+      }}
+      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+        e.stopPropagation();
+        if (!multiline && e.key === "Enter") {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
+        if (e.key === "Escape") e.currentTarget.blur();
+      }}
+    >
+      {value}
+    </El>
+  );
+}
+
 export function ResearchViewer({ conversationId }: { conversationId: string }) {
   const router = useRouter();
   const trpc = useTRPC();
@@ -193,12 +249,13 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
   );
 
   const exportPdf = async () => {
-    if (!artifact) return;
+    const payload = current ?? artifact;
+    if (!payload) return;
     try {
       const res = await fetch(`/api/modes/deep-research/export`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId, format: "pdf", artifact: JSON.stringify(artifact) }),
+        body: JSON.stringify({ conversationId, format: "pdf", artifact: JSON.stringify(payload) }),
       });
       if (!res.ok) {
         let message = "Export failed";
@@ -211,10 +268,21 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
         throw new Error(message);
       }
       const blob = await res.blob();
+      if (!blob.size) throw new Error("Export failed");
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        let message = "Export failed";
+        try {
+          const body = JSON.parse(await blob.text());
+          if (body?.error) message = body.error;
+        } catch { /* ignore */ }
+        throw new Error(message);
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${artifact.title || "research"}.pdf`;
+      const safeName = (payload.title || "research").replace(/[\\/:*?"<>|]/g, "").trim().slice(0, 80) || "research";
+      a.download = `${safeName}.pdf`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -461,18 +529,23 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                   ? "bg-white text-neutral-900 border border-neutral-200 light-surface"
                   : "bg-neutral-900 text-white border border-white/10"
               )}>
-                <header className="border-b-2 pb-6">
-                  <h1
+                <header className="border-b-2 pb-6" onClick={() => { setSelectedSection(null); setStyleOpen(false); }}>
+                  <DirectEdit
+                    as="h1"
+                    value={current.title}
+                    onCommit={updateTitle}
+                    placeholder="Report title"
                     className={cn("text-3xl font-serif font-bold tracking-tight", docLight ? "text-neutral-900" : "text-white")}
-                    style={styleToAttr(current.titleStyle)}
-                  >
-                    {current.title}
-                  </h1>
-                  {current.summary && (
-                    <p className={cn("mt-4 text-sm leading-relaxed", docLight ? "text-neutral-600" : "text-text-secondary")}>
-                      {current.summary}
-                    </p>
-                  )}
+                  />
+                  <DirectEdit
+                    as="p"
+                    value={current.summary ?? ""}
+                    onCommit={updateSummary}
+                    multiline
+                    placeholder="Click to add a summary…"
+                    className={cn("mt-4 text-sm leading-relaxed", docLight ? "text-neutral-600" : "text-text-secondary")}
+                  />
+                  <p className="mt-1 text-[10px] text-text-disabled">Click any text on this page to edit it directly.</p>
                 </header>
 
                 <div className="space-y-6">
@@ -480,7 +553,7 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                     <section
                       key={i}
                       onClick={() => { setSelectedSection(i); setStyleOpen(false); }}
-                      className={cn("rounded-lg -mx-2 px-2 cursor-pointer transition-colors", selectedSection === i && "ring-2 ring-primary/40 bg-primary/5")}
+                      className={cn("rounded-lg -mx-2 px-2 py-1 cursor-text transition-colors", selectedSection === i ? "ring-2 ring-primary/40 bg-primary/5" : "hover:bg-primary/[0.03]")}
                     >
                       <h2
                         className={cn(
@@ -492,11 +565,28 @@ export function ResearchViewer({ conversationId }: { conversationId: string }) {
                         <span className={cn("text-xs font-mono", docLight ? "text-text-secondary" : "text-violet-400")}>
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        {section.heading}
+                        <DirectEdit
+                          as="span"
+                          value={section.heading}
+                          onCommit={(v) => updateSectionHeading(i, v)}
+                          className="flex-1"
+                          onFocusSelect={() => { setSelectedSection(i); setStyleOpen(false); }}
+                        />
                       </h2>
-                      <div className={cn("text-sm leading-relaxed", docLight ? "text-neutral-700" : "text-white/80")}>
-                        <ResearchMarkdown content={section.content} light={docLight} />
-                      </div>
+                      {selectedSection === i ? (
+                        <DirectEdit
+                          as="div"
+                          value={section.content}
+                          onCommit={(v) => updateSectionContent(i, v)}
+                          multiline
+                          className={cn("text-sm leading-relaxed whitespace-pre-wrap font-normal", docLight ? "text-neutral-700" : "text-white/80")}
+                          onFocusSelect={() => { setSelectedSection(i); setStyleOpen(false); }}
+                        />
+                      ) : (
+                        <div className={cn("text-sm leading-relaxed", docLight ? "text-neutral-700" : "text-white/80")} title="Click to edit">
+                          <ResearchMarkdown content={section.content} light={docLight} />
+                        </div>
+                      )}
                     </section>
                   ))}
                 </div>
