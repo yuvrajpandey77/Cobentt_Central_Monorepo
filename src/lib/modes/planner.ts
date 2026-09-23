@@ -10,6 +10,8 @@ export interface PlannedSlide {
   density: SlideDensity;
   layout: { family: string; variant: string; shell: LayoutShell; ratio?: number };
   visual: { need: VisualNeed; concept?: string; query?: string };
+  /** Assigned by template intelligence after planning (optional). */
+  template?: { id: string; score: number; treatment: string };
 }
 
 export interface PresentationPlan {

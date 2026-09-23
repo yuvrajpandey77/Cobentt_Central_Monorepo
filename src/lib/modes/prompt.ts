@@ -74,7 +74,7 @@ The user wants you to create a ${def.label.toLowerCase()} with this request:
     : "";
   const themeHint = opts?.themeBrief ? `Visual theme override from the user: ${opts.themeBrief}` : "";
   const planSection = opts?.plan
-    ? `\nPRESENTATION PLAN (established by the presentation architect — FOLLOW IT EXACTLY):\n${opts.plan}\n\nRules for the plan:\n- The planner owns story, per-slide purpose, layout family, and visual need. Do NOT reinvent the structure.\n- You own copy, details, and structured slide content. Map each planned slide to blocks in order.\n- Each block MAY carry optional design-intent fields: "purpose", "message" (one-sentence takeaway), "density" (sparse|balanced|dense), "layout" {family, variant, shell, ratio}, "visual" {need, concept}.\n- Set "layout.family" to the planned family and "type" to the matching block type.\n`
+    ? `\nPRESENTATION PLAN (established by the presentation architect — FOLLOW IT EXACTLY):\n${opts.plan}\n\nRules for the plan:\n- The planner owns story, per-slide purpose, layout family, and visual need. Do NOT reinvent the structure.\n- You own copy, details, and structured slide content. Map each planned slide to blocks in order.\n- Each block MAY carry optional design-intent fields: "purpose", "message" (one-sentence takeaway), "density" (sparse|balanced|dense), "layout" {family, variant, shell, ratio}, "visual" {need, concept}.\n- Set "layout.family" to the planned family and "type" to the matching block type.\n- Copy each planned slide's "template".id onto the block as "templateId", and follow its treatment hint for element-level styling (typography, metrics, cards, borders).\n`
     : "";
 
   const designerBrief =

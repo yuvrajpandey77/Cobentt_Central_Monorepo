@@ -73,11 +73,7 @@ const CARDISH = new Set(["content-slide", "grid-slide", "two-column-slide", "sta
  * Deterministic per-slide quality checks. No LLM cost.
  * Returns PASS | REPAIR (fixable fields) | REGENERATE (structural failure).
  */
-export function evaluateDeck(
-  artifact: Artifact,
-  themeBg = "#0b1220",
-  _themeText = "#f1f5f9"
-): DeckEval {
+export function evaluateDeck(artifact: Artifact, themeBg = "#0b1220"): DeckEval {
   const results: SlideEval[] = [];
   const blocks = artifact.blocks ?? [];
   let prevFamily: string | null = null;

@@ -214,6 +214,8 @@ export async function POST(
   let setupAudience = "Executives";
   let setupGoal = "persuade";
   let setupUseSourceImages = false;
+  let setupVisualStyle = "automatic";
+  let setupAutoMode = true;
   let promptMessage = sanitizedMessage;
   if (mode === "slides") {
     try {
@@ -229,6 +231,10 @@ export async function POST(
         setupGoal = parsed.setup.goal;
       }
       setupUseSourceImages = parsed.setup.useSourceImages === true;
+      if (typeof parsed.setup.visualStyle === "string" && parsed.setup.visualStyle) {
+        setupVisualStyle = parsed.setup.visualStyle;
+      }
+      setupAutoMode = parsed.setup.autoMode !== false;
       if (parsed.setup.themeConfig) {
         setupThemeConfig = parsed.setup.themeConfig as Record<string, unknown>;
         setupThemeBrief = `Custom theme ${setupThemeId ? `based on "${setupThemeId}"` : ""} with colors/fonts/backdrop ${JSON.stringify(parsed.setup.themeConfig)}. Set artifact "theme" to "${setupThemeId || "midnight"}".`;
@@ -280,6 +286,10 @@ export async function POST(
   let planText = "";
   let extraPromptTokens = 0;
   let extraCompletionTokens = 0;
+  // Template intelligence: direction theme adopted only in Auto mode without
+  // a custom theme (explicit user themes always win). Disabled entirely when
+  // TEMPLATE_INTELLIGENCE_ENABLED=false (old behavior identical).
+  let directionThemeId: string | undefined;
   if (isFreshSlidesDeck) {
     try {
       const { planPresentation } = await import("@/lib/modes/planner");
@@ -304,6 +314,58 @@ export async function POST(
         `[modes/generate] planner ${planned.plan ? `ok (${planned.plan.slides.length} slides)` : "failed, single-pass fallback"} in ${Date.now() - start}ms`
       );
       if (planned.plan) {
+        // Template intelligence: presentation direction + per-slide visual
+        // system selection (grammar references, not rigid templates).
+        try {
+          const templates = await import("@/lib/templates");
+          if (templates.templateIntelligenceEnabled()) {
+            const direction = templates.selectDirection({
+              audience: setupAudience,
+              goal: setupGoal,
+              tone: planned.plan.tone,
+              preferredCategories: templates.stylePresetToCategories(setupVisualStyle),
+            });
+            let usage = templates.emptyUsage();
+            const picks: Array<{ index: number; templateId: string; score: number; reasons: string[] }> = [];
+            for (const s of planned.plan.slides) {
+              const pick = templates.selectForSlide(
+                {
+                  presentationType: setupGoal,
+                  audience: setupAudience,
+                  tone: planned.plan.tone,
+                  slidePurpose: s.purpose,
+                  density: s.density,
+                  layout: { family: s.layout.family, variant: s.layout.variant, shell: s.layout.shell },
+                  visualNeed: s.visual.need,
+                  contentTypes: templates.contentTypesForFamily(s.layout.family),
+                  preferredCategories: templates.stylePresetToCategories(setupVisualStyle),
+                  aspectRatio: "16:9",
+                },
+                usage
+              );
+              usage = pick.updated;
+              s.template = {
+                id: pick.template.id,
+                score: Math.round(pick.score * 100) / 100,
+                treatment: templates.elementTreatment(pick.template.id),
+              };
+              picks.push({ index: s.index, templateId: pick.template.id, score: s.template.score, reasons: pick.reasons });
+            }
+            planText = `\n${JSON.stringify(planned.plan)}`;
+            planText += `\n\n${templates.buildTemplateContext(direction, picks)}`;
+            if (setupAutoMode && !setupThemeConfig) {
+              directionThemeId = templates.normalizeTemplate(direction.primary).themeId;
+            }
+            console.log(
+              `[modes/generate] template direction: ${direction.primary.name} + ${direction.secondaries.length} secondaries`
+            );
+          } else {
+            planText = `\n${JSON.stringify(planned.plan)}`;
+          }
+        } catch (err) {
+          console.warn("[modes/generate] template selection skipped:", err instanceof Error ? err.message : err);
+          planText = `\n${JSON.stringify(planned.plan)}`;
+        }
         // Asset resolution: photo needs → upload/stock candidates.
         let imageAttachments: Array<{ id: string; fileName: string; mimeType: string }> = [];
         if (setupUseSourceImages) {
@@ -319,7 +381,7 @@ export async function POST(
           useSourceImages: setupUseSourceImages,
           attachments: imageAttachments,
         });
-        planText = `\n${JSON.stringify(planned.plan)}\n\n${assetPromptFragment(assets)}`;
+        planText += `\n\n${assetPromptFragment(assets)}`;
       }
     } catch (err) {
       console.warn("[modes/generate] planner failed, falling back:", err instanceof Error ? err.message : err);
@@ -417,7 +479,10 @@ export async function POST(
               }
             }
             // Persist the chosen theme so the canvas + exports render it.
-            if (setupThemeId) artifact.theme = setupThemeId;
+            // Auto mode adopts the template direction's theme; explicit user
+            // themes (including custom builds) always win.
+            const finalThemeId = setupThemeConfig ? setupThemeId : directionThemeId ?? setupThemeId;
+            if (finalThemeId) artifact.theme = finalThemeId;
             if (setupThemeConfig) artifact.themeConfig = setupThemeConfig;
 
             // Visual evaluation + targeted single-slide repair (fresh decks).
@@ -431,12 +496,12 @@ export async function POST(
                     const m = await import("@/lib/modes/slide-themes");
                     const custom = (artifact.themeConfig && typeof artifact.themeConfig === "object" ? artifact.themeConfig : null) as Parameters<typeof m.getSlideTheme>[1];
                     const t = m.getSlideTheme(artifact.theme, custom);
-                    return { bg: t.bg, text: t.text };
+                    return t.bg;
                   } catch {
-                    return { bg: "#0b1220", text: "#f1f5f9" };
+                    return "#0b1220";
                   }
                 };
-                const { bg, text } = await themeForEval();
+                const bg = await themeForEval();
                 for (let pass = 0; pass < 2; pass++) {
                   // Stop repairs if the request is getting long — accept the
                   // deck as-is rather than risking a platform timeout.
@@ -444,7 +509,7 @@ export async function POST(
                     console.warn("[modes/generate] repair budget exhausted by time, accepting deck");
                     break;
                   }
-                  const ev = evaluateDeck(artifact, bg, text);
+                  const ev = evaluateDeck(artifact, bg);
                   console.log(`[modes/generate] eval pass ${pass}: ${ev.summary}`);
                   const flagged = ev.results.filter((r) => r.action !== "pass").slice(0, 3);
                   if (flagged.length === 0) break;

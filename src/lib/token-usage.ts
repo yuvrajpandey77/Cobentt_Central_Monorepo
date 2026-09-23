@@ -41,7 +41,58 @@ export async function recordTokenUsage(input: RecordUsageInput) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Create per-call record
+      // Aggregate FIRST: the upsert guarantees the parent user_usage row
+      // exists (token_usage.userId has a FK onto it — creating the child
+      // first fails for users without a row yet).
+      // Atomic daily aggregate update using raw SQL.
+      // Uses a CASE to reset daily counters when the bucket changes (midnight UTC).
+      // This avoids the read-check-write race in the previous implementation.
+      // NOTE: columns are camelCase (Prisma default) — they must be
+      // double-quoted or Postgres folds them to lowercase and misses.
+      await tx.$executeRawUnsafe(`
+        INSERT INTO user_usage (
+          "id", "userId", "dailyRequests", "dailyTokens",
+          "totalRequests", "totalTokens", "totalCostUsd",
+          "lastResetAt", "alert90Sent", "alert100Sent",
+          "createdAt", "updatedAt"
+        ) VALUES (gen_random_uuid(), $1, 1, $2, 1, $2, $3, NOW(), false, false, NOW(), NOW())
+        ON CONFLICT ("userId") DO UPDATE SET
+          "dailyRequests" = CASE
+            WHEN date_trunc('day', user_usage."lastResetAt" AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage."dailyRequests" + 1
+            ELSE 1
+          END,
+          "dailyTokens" = CASE
+            WHEN date_trunc('day', user_usage."lastResetAt" AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage."dailyTokens" + $2
+            ELSE $2
+          END,
+          "totalRequests" = user_usage."totalRequests" + 1,
+          "totalTokens" = user_usage."totalTokens" + $2,
+          "totalCostUsd" = user_usage."totalCostUsd" + $3,
+          "lastResetAt" = CASE
+            WHEN date_trunc('day', user_usage."lastResetAt" AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage."lastResetAt"
+            ELSE NOW()
+          END,
+          "alert90Sent" = CASE
+            WHEN date_trunc('day', user_usage."lastResetAt" AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage."alert90Sent"
+            ELSE false
+          END,
+          "alert100Sent" = CASE
+            WHEN date_trunc('day', user_usage."lastResetAt" AT TIME ZONE 'UTC')
+                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
+            THEN user_usage."alert100Sent"
+            ELSE false
+          END
+      `, input.userId, totalTokens, costUsd);
+
+      // Create per-call record (parent row now guaranteed to exist)
       await tx.tokenUsage.create({
         data: {
           userId: input.userId,
@@ -57,51 +108,6 @@ export async function recordTokenUsage(input: RecordUsageInput) {
           durationMs: input.durationMs,
         },
       });
-
-      // Atomic daily aggregate update using raw SQL.
-      // Uses a CASE to reset daily counters when the bucket changes (midnight UTC).
-      // This avoids the read-check-write race in the previous implementation.
-      await tx.$executeRawUnsafe(`
-        INSERT INTO user_usage (
-          user_id, daily_requests, daily_tokens,
-          total_requests, total_tokens, total_cost_usd,
-          last_reset_at, alert90_sent, alert100_sent
-        ) VALUES ($1, 1, $2, 1, $2, $3, NOW(), false, false)
-        ON CONFLICT (user_id) DO UPDATE SET
-          daily_requests = CASE
-            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
-                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
-            THEN user_usage.daily_requests + 1
-            ELSE 1
-          END,
-          daily_tokens = CASE
-            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
-                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
-            THEN user_usage.daily_tokens + $2
-            ELSE $2
-          END,
-          total_requests = user_usage.total_requests + 1,
-          total_tokens = user_usage.total_tokens + $2,
-          total_cost_usd = user_usage.total_cost_usd + $3,
-          last_reset_at = CASE
-            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
-                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
-            THEN user_usage.last_reset_at
-            ELSE NOW()
-          END,
-          alert90_sent = CASE
-            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
-                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
-            THEN user_usage.alert90_sent
-            ELSE false
-          END,
-          alert100_sent = CASE
-            WHEN date_trunc('day', user_usage.last_reset_at AT TIME ZONE 'UTC')
-                 = date_trunc('day', NOW() AT TIME ZONE 'UTC')
-            THEN user_usage.alert100_sent
-            ELSE false
-          END
-      `, input.userId, totalTokens, costUsd);
     });
   } catch (err) {
     console.error("[usage] recordTokenUsage failed; continuing without blocking", {
@@ -189,7 +195,7 @@ export async function getUserAnalytics(userId: string, days: number = 30) {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  // Daily aggregates
+  // Daily aggregates (camelCase columns must be double-quoted)
   const dailyUsage = await prisma.$queryRaw<
     Array<{
       date: Date;
@@ -198,14 +204,14 @@ export async function getUserAnalytics(userId: string, days: number = 30) {
       request_count: bigint;
     }>
   >`
-    SELECT 
-      date_trunc('day', created_at AT TIME ZONE 'UTC') AS date,
-      SUM(total_tokens)::bigint AS total_tokens,
-      SUM(cost_usd) AS total_cost,
+    SELECT
+      date_trunc('day', "createdAt" AT TIME ZONE 'UTC') AS date,
+      SUM("totalTokens")::bigint AS total_tokens,
+      SUM("costUsd") AS total_cost,
       COUNT(*)::bigint AS request_count
     FROM token_usage
-    WHERE user_id = ${userId}
-      AND created_at >= ${startDate}
+    WHERE "userId" = ${userId}
+      AND "createdAt" >= ${startDate}
     GROUP BY 1
     ORDER BY 1 DESC
   `;

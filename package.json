@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "intent:eval": "tsx src/lib/intent/eval.ts",
+    "templates:list": "tsx scripts/templates/list.ts",
+    "templates:validate": "tsx scripts/templates/validate.ts",
+    "templates:index": "tsx scripts/templates/index.ts",
+    "templates:test": "tsx scripts/templates/test.ts",
     "postinstall": "patch-package && prisma generate"
   },
   "dependencies": {

@@ -1,0 +1,1693 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-22T19:17:35.574Z",
+  "count": 15,
+  "templates": [
+    {
+      "id": "signal",
+      "name": "Signal",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "startup",
+        "investor",
+        "institutional",
+        "corporate"
+      ],
+      "visualStyle": {
+        "mood": [
+          "serious",
+          "premium",
+          "calm"
+        ],
+        "energy": "low",
+        "density": "low",
+        "minimalism": 0.9,
+        "editorial": 0.6,
+        "corporate": 0.9,
+        "playful": 0.1,
+        "technical": 0.4,
+        "experimental": 0.2
+      },
+      "typography": {
+        "headingStyle": "Geometric sans, tight tracking",
+        "bodyStyle": "Neutral sans, restrained",
+        "numericStyle": "Tabular, oversized metrics",
+        "alignment": "left",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#0b1220"
+        ],
+        "foreground": [
+          "#f1f5f9"
+        ],
+        "accent": [
+          "#38bdf8"
+        ],
+        "surface": [
+          "#111c33"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "metric-grid",
+        "comparison",
+        "timeline",
+        "quote",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "problem",
+        "proof",
+        "evidence",
+        "result",
+        "close"
+      ],
+      "visualNeeds": [
+        "none",
+        "chart",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "sparse",
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "one idea per slide",
+        "numerical hierarchy",
+        "restrained body copy"
+      ],
+      "bestFor": [
+        "Investor pitches",
+        "strategy reviews",
+        "executive briefings"
+      ],
+      "avoidFor": [
+        "Playful consumer content",
+        "dense technical diagrams"
+      ],
+      "tags": [
+        "institutional",
+        "premium",
+        "minimal",
+        "metrics"
+      ],
+      "preview": "Dark navy field, electric-blue accents, oversized numbers",
+      "appMapping": {
+        "themeId": "midnight",
+        "layoutBoost": [
+          "hero",
+          "statement",
+          "metrics",
+          "chart"
+        ],
+        "accentTreatment": "rule"
+      },
+      "compatibleWith": [
+        "mono-ledger",
+        "blueprint",
+        "long-table"
+      ]
+    },
+    {
+      "id": "studio",
+      "name": "Studio",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "creative",
+        "agency",
+        "product",
+        "marketing"
+      ],
+      "visualStyle": {
+        "mood": [
+          "energetic",
+          "confident",
+          "warm"
+        ],
+        "energy": "high",
+        "density": "medium",
+        "minimalism": 0.5,
+        "editorial": 0.8,
+        "corporate": 0.3,
+        "playful": 0.5,
+        "technical": 0.2,
+        "experimental": 0.5
+      },
+      "typography": {
+        "headingStyle": "Expressive grotesk, large scale",
+        "bodyStyle": "Humanist sans",
+        "alignment": "mixed",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#2a0a1a"
+        ],
+        "foreground": [
+          "#fff7ed"
+        ],
+        "accent": [
+          "#fb923c",
+          "#f472b6"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "split",
+        "image-text",
+        "grid",
+        "quote",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "solution",
+        "detail",
+        "turn",
+        "close"
+      ],
+      "visualNeeds": [
+        "photo",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "sparse",
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "diagonal energy",
+        "image-led moments",
+        "asymmetric splits"
+      ],
+      "bestFor": [
+        "Product launches",
+        "agency pitches",
+        "brand stories"
+      ],
+      "avoidFor": [
+        "Financial reports",
+        "compliance content"
+      ],
+      "tags": [
+        "editorial",
+        "launch",
+        "image-led",
+        "bold"
+      ],
+      "preview": "Sunset gradients, diagonal cuts, oversized product imagery",
+      "appMapping": {
+        "themeId": "sunset",
+        "layoutBoost": [
+          "hero",
+          "media-split",
+          "bleed",
+          "quote"
+        ],
+        "accentTreatment": "wash"
+      },
+      "compatibleWith": [
+        "zine-cut",
+        "glass-deck",
+        "long-table"
+      ]
+    },
+    {
+      "id": "long-table",
+      "name": "Long Table",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "luxury",
+        "editorial",
+        "portfolio",
+        "corporate"
+      ],
+      "visualStyle": {
+        "mood": [
+          "refined",
+          "quiet",
+          "premium"
+        ],
+        "energy": "low",
+        "density": "low",
+        "minimalism": 0.95,
+        "editorial": 0.9,
+        "corporate": 0.6,
+        "playful": 0.05,
+        "technical": 0.2,
+        "experimental": 0.2
+      },
+      "typography": {
+        "headingStyle": "High-contrast serif, generous whitespace",
+        "bodyStyle": "Serif text, measured",
+        "alignment": "left",
+        "hierarchy": "moderate"
+      },
+      "colorSystem": {
+        "background": [
+          "#1c1305"
+        ],
+        "foreground": [
+          "#fef3c7"
+        ],
+        "accent": [
+          "#fbbf24"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "image-text",
+        "timeline",
+        "quote",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "context",
+        "insight",
+        "close"
+      ],
+      "visualNeeds": [
+        "photo",
+        "none"
+      ],
+      "preferredContentDensity": [
+        "sparse"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "extreme whitespace",
+        "craft-focused",
+        "slow pacing"
+      ],
+      "bestFor": [
+        "Luxury brands",
+        "portfolios",
+        "editorial stories"
+      ],
+      "avoidFor": [
+        "Data-heavy decks",
+        "technical documentation"
+      ],
+      "tags": [
+        "luxury",
+        "serif",
+        "whitespace",
+        "craft"
+      ],
+      "preview": "Deep bronze field, gold accents, gallery pacing",
+      "appMapping": {
+        "themeId": "sand",
+        "layoutBoost": [
+          "hero",
+          "statement",
+          "editorial",
+          "bleed"
+        ],
+        "accentTreatment": "rule"
+      },
+      "compatibleWith": [
+        "signal",
+        "studio",
+        "biennale"
+      ]
+    },
+    {
+      "id": "raw-grid",
+      "name": "Raw Grid",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "brutalist",
+        "technical",
+        "experimental"
+      ],
+      "visualStyle": {
+        "mood": [
+          "raw",
+          "direct",
+          "loud"
+        ],
+        "energy": "high",
+        "density": "medium",
+        "minimalism": 0.4,
+        "editorial": 0.3,
+        "corporate": 0.1,
+        "playful": 0.3,
+        "technical": 0.7,
+        "experimental": 0.8
+      },
+      "typography": {
+        "headingStyle": "Heavy grotesk, uppercase",
+        "bodyStyle": "Mono-tinged sans",
+        "alignment": "left",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#0a0a0a"
+        ],
+        "foreground": [
+          "#ffffff"
+        ],
+        "accent": [
+          "#f5f5f5"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "grid",
+        "two-column",
+        "three-column",
+        "code"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "problem",
+        "detail",
+        "turn"
+      ],
+      "visualNeeds": [
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "balanced",
+        "dense"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "visible grid",
+        "hard edges",
+        "typographic poster"
+      ],
+      "bestFor": [
+        "Developer talks",
+        "provocations",
+        "design portfolios"
+      ],
+      "avoidFor": [
+        "Corporate earnings",
+        "luxury branding"
+      ],
+      "tags": [
+        "brutalist",
+        "grid",
+        "mono",
+        "poster"
+      ],
+      "preview": "Black field, white rules, hard monochrome geometry",
+      "appMapping": {
+        "themeId": "midnight-black",
+        "layoutBoost": [
+          "statement",
+          "cards",
+          "compare"
+        ],
+        "accentTreatment": "outline"
+      },
+      "compatibleWith": [
+        "retro-terminal",
+        "blueprint",
+        "zine-cut"
+      ]
+    },
+    {
+      "id": "mono-ledger",
+      "name": "Mono Ledger",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "institutional",
+        "data-heavy",
+        "corporate",
+        "research"
+      ],
+      "visualStyle": {
+        "mood": [
+          "precise",
+          "trustworthy",
+          "neutral"
+        ],
+        "energy": "low",
+        "density": "high",
+        "minimalism": 0.7,
+        "editorial": 0.4,
+        "corporate": 0.9,
+        "playful": 0.05,
+        "technical": 0.6,
+        "experimental": 0.1
+      },
+      "typography": {
+        "headingStyle": "Grotesk, tabular numerals",
+        "bodyStyle": "Compact sans",
+        "numericStyle": "Tabular, aligned columns",
+        "alignment": "left",
+        "hierarchy": "moderate"
+      },
+      "colorSystem": {
+        "background": [
+          "#f8fafc"
+        ],
+        "foreground": [
+          "#0f172a"
+        ],
+        "accent": [
+          "#1d4ed8"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "two-column",
+        "three-column",
+        "grid",
+        "metric-grid",
+        "table",
+        "chart"
+      ],
+      "supportedSlidePurposes": [
+        "evidence",
+        "proof",
+        "result",
+        "detail",
+        "comparison"
+      ],
+      "visualNeeds": [
+        "chart",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "balanced",
+        "dense"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "ledger tables",
+        "aligned numerals",
+        "blueprint grid backdrop"
+      ],
+      "bestFor": [
+        "Financial reports",
+        "QBRs",
+        "market analysis"
+      ],
+      "avoidFor": [
+        "Emotional storytelling",
+        "brand launches"
+      ],
+      "tags": [
+        "data",
+        "tables",
+        "metrics",
+        "light"
+      ],
+      "preview": "Crisp light surface, cobalt accents, ledger precision",
+      "appMapping": {
+        "themeId": "slate-light",
+        "layoutBoost": [
+          "metrics",
+          "chart",
+          "compare",
+          "cards"
+        ],
+        "accentTreatment": "badge"
+      },
+      "compatibleWith": [
+        "signal",
+        "dateline",
+        "blueprint"
+      ]
+    },
+    {
+      "id": "retro-terminal",
+      "name": "Retro Terminal",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "nostalgic",
+        "technical",
+        "playful",
+        "startup"
+      ],
+      "visualStyle": {
+        "mood": [
+          "nostalgic",
+          "clever",
+          "dev"
+        ],
+        "energy": "medium",
+        "density": "medium",
+        "minimalism": 0.5,
+        "editorial": 0.2,
+        "corporate": 0.2,
+        "playful": 0.7,
+        "technical": 0.9,
+        "experimental": 0.5
+      },
+      "typography": {
+        "headingStyle": "Monospace display",
+        "bodyStyle": "Monospace body",
+        "alignment": "left",
+        "hierarchy": "moderate"
+      },
+      "colorSystem": {
+        "background": [
+          "#022c22"
+        ],
+        "foreground": [
+          "#ecfdf5"
+        ],
+        "accent": [
+          "#34d399"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "code",
+        "process",
+        "two-column",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "mechanism",
+        "solution",
+        "detail"
+      ],
+      "visualNeeds": [
+        "none",
+        "diagram",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "terminal chrome",
+        "prompt glyphs",
+        "dot-field texture"
+      ],
+      "bestFor": [
+        "Dev-tool pitches",
+        "hackathons",
+        "retro brand stories"
+      ],
+      "avoidFor": [
+        "Enterprise compliance",
+        "luxury"
+      ],
+      "tags": [
+        "terminal",
+        "mono",
+        "dev",
+        "nostalgic"
+      ],
+      "preview": "Deep green terminal, mint glow, command-line motifs",
+      "appMapping": {
+        "themeId": "emerald",
+        "layoutBoost": [
+          "statement",
+          "process",
+          "diagram"
+        ],
+        "accentTreatment": "badge"
+      },
+      "compatibleWith": [
+        "raw-grid",
+        "blueprint",
+        "field-notes"
+      ]
+    },
+    {
+      "id": "zine-cut",
+      "name": "Zine Cut",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "playful",
+        "creative",
+        "experimental",
+        "marketing"
+      ],
+      "visualStyle": {
+        "mood": [
+          "rebellious",
+          "fun",
+          "collage"
+        ],
+        "energy": "high",
+        "density": "medium",
+        "minimalism": 0.3,
+        "editorial": 0.6,
+        "corporate": 0.1,
+        "playful": 0.9,
+        "technical": 0.1,
+        "experimental": 0.9
+      },
+      "typography": {
+        "headingStyle": "Mixed-case display, rotated accents",
+        "bodyStyle": "Casual sans",
+        "alignment": "mixed",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#2a0d0d"
+        ],
+        "foreground": [
+          "#fff1f2"
+        ],
+        "accent": [
+          "#f9a8d4",
+          "#fb7185"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "image-text",
+        "grid",
+        "quote"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "turn",
+        "insight",
+        "close"
+      ],
+      "visualNeeds": [
+        "photo",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "sparse",
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "cut-paper layers",
+        "sticker badges",
+        "high-chroma duos"
+      ],
+      "bestFor": [
+        "Consumer launches",
+        "campaigns",
+        "creative portfolios"
+      ],
+      "avoidFor": [
+        "Board decks",
+        "financial disclosures"
+      ],
+      "tags": [
+        "zine",
+        "collage",
+        "playful",
+        "duotone"
+      ],
+      "preview": "Wine-dark field, pink duotone, cut-paper energy",
+      "appMapping": {
+        "themeId": "crimson",
+        "layoutBoost": [
+          "hero",
+          "statement",
+          "media-split",
+          "quote"
+        ],
+        "accentTreatment": "badge"
+      },
+      "compatibleWith": [
+        "studio",
+        "raw-grid",
+        "glass-deck"
+      ]
+    },
+    {
+      "id": "biennale",
+      "name": "Biennale",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "creative",
+        "luxury",
+        "editorial",
+        "portfolio",
+        "agency"
+      ],
+      "visualStyle": {
+        "mood": [
+          "artful",
+          "curatorial",
+          "bold"
+        ],
+        "energy": "medium",
+        "density": "low",
+        "minimalism": 0.8,
+        "editorial": 0.95,
+        "corporate": 0.3,
+        "playful": 0.2,
+        "technical": 0.1,
+        "experimental": 0.6
+      },
+      "typography": {
+        "headingStyle": "Display serif, oversized",
+        "bodyStyle": "Quiet sans captions",
+        "alignment": "mixed",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#04130b"
+        ],
+        "foreground": [
+          "#ecfdf5"
+        ],
+        "accent": [
+          "#fde047"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "image-text",
+        "case-study",
+        "quote",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "context",
+        "insight",
+        "result",
+        "close"
+      ],
+      "visualNeeds": [
+        "photo",
+        "none"
+      ],
+      "preferredContentDensity": [
+        "sparse"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "exhibition pacing",
+        "art-plus-caption",
+        "acid-yellow highlights"
+      ],
+      "bestFor": [
+        "Case studies",
+        "portfolios",
+        "cultural pitches"
+      ],
+      "avoidFor": [
+        "Dense reporting",
+        "API documentation"
+      ],
+      "tags": [
+        "gallery",
+        "serif",
+        "exhibition",
+        "acid"
+      ],
+      "preview": "Forest-black gallery, yellow highlights, vast whitespace",
+      "appMapping": {
+        "themeId": "forest",
+        "layoutBoost": [
+          "hero",
+          "editorial",
+          "bleed",
+          "quote"
+        ],
+        "accentTreatment": "rule"
+      },
+      "compatibleWith": [
+        "long-table",
+        "studio",
+        "keynote-minimal"
+      ]
+    },
+    {
+      "id": "blueprint",
+      "name": "Blueprint",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "technical",
+        "research",
+        "corporate",
+        "data-heavy"
+      ],
+      "visualStyle": {
+        "mood": [
+          "precise",
+          "architectural",
+          "calm"
+        ],
+        "energy": "low",
+        "density": "medium",
+        "minimalism": 0.6,
+        "editorial": 0.3,
+        "corporate": 0.7,
+        "playful": 0.05,
+        "technical": 1,
+        "experimental": 0.2
+      },
+      "typography": {
+        "headingStyle": "Technical grotesk",
+        "bodyStyle": "Annotated sans",
+        "alignment": "left",
+        "hierarchy": "moderate"
+      },
+      "colorSystem": {
+        "background": [
+          "#082f49"
+        ],
+        "foreground": [
+          "#ecfeff"
+        ],
+        "accent": [
+          "#22d3ee"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "two-column",
+        "diagram",
+        "architecture",
+        "process",
+        "table",
+        "code"
+      ],
+      "supportedSlidePurposes": [
+        "mechanism",
+        "solution",
+        "detail",
+        "comparison",
+        "evidence"
+      ],
+      "visualNeeds": [
+        "diagram",
+        "chart",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "balanced",
+        "dense"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "annotation callouts",
+        "connector geometry",
+        "grid paper"
+      ],
+      "bestFor": [
+        "Architecture reviews",
+        "technical deep-dives",
+        "API platforms"
+      ],
+      "avoidFor": [
+        "Emotional brand films",
+        "lifestyle marketing"
+      ],
+      "tags": [
+        "blueprint",
+        "diagram",
+        "architecture",
+        "grid"
+      ],
+      "preview": "Deep-sea grid, cyan drafting lines, annotated systems",
+      "appMapping": {
+        "themeId": "ocean",
+        "layoutBoost": [
+          "diagram",
+          "process",
+          "compare",
+          "chart"
+        ],
+        "accentTreatment": "outline"
+      },
+      "compatibleWith": [
+        "signal",
+        "mono-ledger",
+        "dateline",
+        "retro-terminal"
+      ]
+    },
+    {
+      "id": "field-notes",
+      "name": "Field Notes",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "research",
+        "academic",
+        "editorial",
+        "corporate"
+      ],
+      "visualStyle": {
+        "mood": [
+          "grounded",
+          "evidence-led",
+          "warm"
+        ],
+        "energy": "low",
+        "density": "medium",
+        "minimalism": 0.6,
+        "editorial": 0.8,
+        "corporate": 0.5,
+        "playful": 0.1,
+        "technical": 0.4,
+        "experimental": 0.2
+      },
+      "typography": {
+        "headingStyle": "Transitional serif headlines",
+        "bodyStyle": "Readable text serif/sans mix",
+        "alignment": "left",
+        "hierarchy": "moderate"
+      },
+      "colorSystem": {
+        "background": [
+          "#022c22"
+        ],
+        "foreground": [
+          "#ecfdf5"
+        ],
+        "accent": [
+          "#a3e635",
+          "#fde047"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "image-text",
+        "timeline",
+        "quote",
+        "table"
+      ],
+      "supportedSlidePurposes": [
+        "context",
+        "evidence",
+        "insight",
+        "result",
+        "problem"
+      ],
+      "visualNeeds": [
+        "photo",
+        "none",
+        "chart"
+      ],
+      "preferredContentDensity": [
+        "balanced",
+        "dense"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "sourced captions",
+        "margin annotations",
+        "evidence-first"
+      ],
+      "bestFor": [
+        "Research briefings",
+        "theses",
+        "policy decks"
+      ],
+      "avoidFor": [
+        "Hype launches",
+        "meme marketing"
+      ],
+      "tags": [
+        "research",
+        "evidence",
+        "serif",
+        "fieldwork"
+      ],
+      "preview": "Natural deep-green, warm highlights, sourced layouts",
+      "appMapping": {
+        "themeId": "emerald",
+        "layoutBoost": [
+          "editorial",
+          "timeline",
+          "quote",
+          "chart"
+        ],
+        "accentTreatment": "rule"
+      },
+      "compatibleWith": [
+        "biennale",
+        "mono-ledger",
+        "signal"
+      ]
+    },
+    {
+      "id": "glass-deck",
+      "name": "Glass Deck",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "product",
+        "startup",
+        "marketing",
+        "creative"
+      ],
+      "visualStyle": {
+        "mood": [
+          "sleek",
+          "modern",
+          "premium"
+        ],
+        "energy": "medium",
+        "density": "medium",
+        "minimalism": 0.6,
+        "editorial": 0.5,
+        "corporate": 0.5,
+        "playful": 0.3,
+        "technical": 0.3,
+        "experimental": 0.4
+      },
+      "typography": {
+        "headingStyle": "Rounded geometric display",
+        "bodyStyle": "Clean sans",
+        "alignment": "mixed",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#15002b"
+        ],
+        "foreground": [
+          "#fdf4ff"
+        ],
+        "accent": [
+          "#22d3ee",
+          "#e879f9"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "split",
+        "image-text",
+        "grid",
+        "metric-grid",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "solution",
+        "proof",
+        "detail",
+        "close"
+      ],
+      "visualNeeds": [
+        "photo",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "sparse",
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "frosted cards",
+        "violet-cyan duotone",
+        "soft depth"
+      ],
+      "bestFor": [
+        "SaaS launches",
+        "product tours",
+        "startup decks"
+      ],
+      "avoidFor": [
+        "Legal briefs",
+        "print-first reports"
+      ],
+      "tags": [
+        "glass",
+        "saas",
+        "product",
+        "duotone"
+      ],
+      "preview": "Violet glass layers, cyan glow, frosted metric cards",
+      "appMapping": {
+        "themeId": "berry",
+        "layoutBoost": [
+          "hero",
+          "media-split",
+          "metrics",
+          "cards"
+        ],
+        "accentTreatment": "wash"
+      },
+      "compatibleWith": [
+        "studio",
+        "signal",
+        "zine-cut"
+      ]
+    },
+    {
+      "id": "keynote-minimal",
+      "name": "Keynote Minimal",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "minimal",
+        "corporate",
+        "academic",
+        "startup"
+      ],
+      "visualStyle": {
+        "mood": [
+          "clear",
+          "confident",
+          "neutral"
+        ],
+        "energy": "low",
+        "density": "low",
+        "minimalism": 1,
+        "editorial": 0.5,
+        "corporate": 0.7,
+        "playful": 0.05,
+        "technical": 0.2,
+        "experimental": 0.1
+      },
+      "typography": {
+        "headingStyle": "Light grotesk, huge scale",
+        "bodyStyle": "Minimal short lines",
+        "alignment": "center",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#faf9f6"
+        ],
+        "foreground": [
+          "#171717"
+        ],
+        "accent": [
+          "#171717"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "image-text",
+        "quote",
+        "section-divider",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "insight",
+        "turn",
+        "close",
+        "problem"
+      ],
+      "visualNeeds": [
+        "none",
+        "photo"
+      ],
+      "preferredContentDensity": [
+        "sparse"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "single thought per slide",
+        "paper calm",
+        "keynote pacing"
+      ],
+      "bestFor": [
+        "Keynotes",
+        "lectures",
+        "thought leadership"
+      ],
+      "avoidFor": [
+        "Dashboards",
+        "spec sheets"
+      ],
+      "tags": [
+        "minimal",
+        "keynote",
+        "paper",
+        "centered"
+      ],
+      "preview": "Soft paper, ink type, one thought per slide",
+      "appMapping": {
+        "themeId": "ink",
+        "layoutBoost": [
+          "hero",
+          "statement",
+          "quote"
+        ],
+        "accentTreatment": "rule"
+      },
+      "compatibleWith": [
+        "biennale",
+        "long-table",
+        "signal"
+      ]
+    },
+    {
+      "id": "dateline",
+      "name": "Dateline",
+      "version": "1.0.0",
+      "source": {
+        "type": "generated",
+        "license": "Proprietary (original grammar)"
+      },
+      "categories": [
+        "data-heavy",
+        "research",
+        "institutional",
+        "marketing"
+      ],
+      "visualStyle": {
+        "mood": [
+          "analytical",
+          "urgent",
+          "confident"
+        ],
+        "energy": "medium",
+        "density": "high",
+        "minimalism": 0.5,
+        "editorial": 0.6,
+        "corporate": 0.7,
+        "playful": 0.1,
+        "technical": 0.6,
+        "experimental": 0.3
+      },
+      "typography": {
+        "headingStyle": "Condensed display + dateline kickers",
+        "bodyStyle": "Dense briefing sans",
+        "numericStyle": "Aggressive tabular numerals",
+        "alignment": "left",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#082f49"
+        ],
+        "foreground": [
+          "#ecfeff"
+        ],
+        "accent": [
+          "#38bdf8",
+          "#22d3ee"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "metric-grid",
+        "chart",
+        "table",
+        "timeline",
+        "comparison"
+      ],
+      "supportedSlidePurposes": [
+        "proof",
+        "evidence",
+        "result",
+        "comparison",
+        "context"
+      ],
+      "visualNeeds": [
+        "chart",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "balanced",
+        "dense"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "characteristics": [
+        "dateline kickers",
+        "chart-forward",
+        "briefing density"
+      ],
+      "bestFor": [
+        "Market briefs",
+        "growth reviews",
+        "newsroom decks"
+      ],
+      "avoidFor": [
+        "Meditative brand films",
+        "poetry readings"
+      ],
+      "tags": [
+        "data",
+        "briefing",
+        "charts",
+        "kickers"
+      ],
+      "preview": "Newsroom navy, dateline kickers, chart-forward grids",
+      "appMapping": {
+        "themeId": "ocean",
+        "layoutBoost": [
+          "metrics",
+          "chart",
+          "timeline",
+          "compare"
+        ],
+        "accentTreatment": "badge"
+      },
+      "compatibleWith": [
+        "mono-ledger",
+        "blueprint",
+        "signal"
+      ]
+    },
+    {
+      "id": "reveal-classic",
+      "name": "Reveal Classic",
+      "version": "1.0.0",
+      "source": {
+        "type": "reference",
+        "url": "https://github.com/hakimel/reveal.js",
+        "repository": "hakimel/reveal.js",
+        "license": "MIT"
+      },
+      "categories": [
+        "minimal",
+        "academic",
+        "corporate",
+        "technical"
+      ],
+      "visualStyle": {
+        "mood": [
+          "clean",
+          "universal",
+          "functional"
+        ],
+        "energy": "low",
+        "density": "medium",
+        "minimalism": 0.8,
+        "editorial": 0.4,
+        "corporate": 0.6,
+        "playful": 0.1,
+        "technical": 0.5,
+        "experimental": 0.2
+      },
+      "typography": {
+        "headingStyle": "System grotesk, uppercase options",
+        "bodyStyle": "System sans",
+        "alignment": "center",
+        "hierarchy": "moderate"
+      },
+      "colorSystem": {
+        "background": [
+          "#f8fafc",
+          "#0f172a"
+        ],
+        "foreground": [
+          "#0f172a",
+          "#f8fafc"
+        ],
+        "accent": [
+          "#1d4ed8"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "two-column",
+        "quote",
+        "code",
+        "section-divider",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "context",
+        "detail",
+        "insight",
+        "close"
+      ],
+      "visualNeeds": [
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "sparse",
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "animation": {
+        "supported": true,
+        "style": [
+          "fade",
+          "slide",
+          "scale"
+        ]
+      },
+      "characteristics": [
+        "framework-neutral",
+        "fragment reveals",
+        "themeable base"
+      ],
+      "bestFor": [
+        "Classroom decks",
+        "meetup talks",
+        "general briefings"
+      ],
+      "avoidFor": [
+        "High-brand launches",
+        "print artifacts"
+      ],
+      "tags": [
+        "reference",
+        "framework",
+        "universal",
+        "fragments"
+      ],
+      "preview": "Clean universal deck grammar with progressive reveals",
+      "appMapping": {
+        "themeId": "slate-light",
+        "layoutBoost": [
+          "hero",
+          "statement",
+          "cards",
+          "quote"
+        ],
+        "accentTreatment": "rule"
+      },
+      "compatibleWith": [
+        "keynote-minimal",
+        "mono-ledger",
+        "blueprint"
+      ]
+    },
+    {
+      "id": "impress-flow",
+      "name": "Impress Flow",
+      "version": "1.0.0",
+      "source": {
+        "type": "reference",
+        "url": "https://github.com/impress/impress.js",
+        "repository": "impress/impress.js",
+        "license": "MIT"
+      },
+      "categories": [
+        "creative",
+        "experimental",
+        "technical",
+        "startup"
+      ],
+      "visualStyle": {
+        "mood": [
+          "spatial",
+          "cinematic",
+          "playful-smart"
+        ],
+        "energy": "medium",
+        "density": "medium",
+        "minimalism": 0.5,
+        "editorial": 0.4,
+        "corporate": 0.3,
+        "playful": 0.5,
+        "technical": 0.6,
+        "experimental": 0.9
+      },
+      "typography": {
+        "headingStyle": "Large spatial display",
+        "bodyStyle": "Wayfinding sans",
+        "alignment": "mixed",
+        "hierarchy": "strong"
+      },
+      "colorSystem": {
+        "background": [
+          "#1e1b4b"
+        ],
+        "foreground": [
+          "#faf5ff"
+        ],
+        "accent": [
+          "#a78bfa",
+          "#22d3ee"
+        ],
+        "contrast": "high"
+      },
+      "layoutPatterns": [
+        "hero",
+        "statement",
+        "process",
+        "diagram",
+        "section-divider",
+        "closing"
+      ],
+      "supportedSlidePurposes": [
+        "hook",
+        "mechanism",
+        "turn",
+        "solution",
+        "close"
+      ],
+      "visualNeeds": [
+        "diagram",
+        "none",
+        "icon"
+      ],
+      "preferredContentDensity": [
+        "sparse",
+        "balanced"
+      ],
+      "supportedAspectRatios": [
+        "16:9"
+      ],
+      "animation": {
+        "supported": true,
+        "style": [
+          "transform",
+          "scale",
+          "progressive reveal"
+        ]
+      },
+      "characteristics": [
+        "spatial journey",
+        "zoom transitions",
+        "wayfinding"
+      ],
+      "bestFor": [
+        "Product narratives",
+        "concept pitches",
+        "creative keynotes"
+      ],
+      "avoidFor": [
+        "Printable handouts",
+        "dense compliance decks"
+      ],
+      "tags": [
+        "reference",
+        "spatial",
+        "cinematic",
+        "journey"
+      ],
+      "preview": "Indigo spatial canvas, aurora transitions, journey pacing",
+      "appMapping": {
+        "themeId": "royal",
+        "layoutBoost": [
+          "hero",
+          "process",
+          "diagram",
+          "statement"
+        ],
+        "accentTreatment": "wash"
+      },
+      "compatibleWith": [
+        "studio",
+        "blueprint",
+        "glass-deck"
+      ]
+    }
+  ]
+}

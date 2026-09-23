@@ -206,6 +206,10 @@ export interface SlidesSetup {
   audience?: string;
   goal?: string;
   useSourceImages?: boolean;
+  /** Visual-style override: "automatic" (default) or a style preset. */
+  visualStyle?: string;
+  /** True when the user kept Auto mode (theme auto-selected). */
+  autoMode?: boolean;
 }
 
 /** Machine-readable setup block embedded by the launchpad/setup page.

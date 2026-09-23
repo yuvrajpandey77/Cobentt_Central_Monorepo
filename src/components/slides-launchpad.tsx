@@ -31,6 +31,13 @@ const goals: Array<{ id: Goal; label: string; hint: string }> = [
   { id: "excite", label: "Excite", hint: "Build energy" },
 ];
 
+/** Visual-style override (§22). Automatic stays the default. */
+const visualStyles = [
+  "automatic", "minimal", "editorial", "startup", "investor",
+  "technical", "academic", "creative", "brutalist", "experimental",
+] as const;
+type VisualStyle = (typeof visualStyles)[number];
+
 interface CustomThemeState {
   bg: string;
   bg2: string;
@@ -64,6 +71,7 @@ export function SlidesLaunchpad({
   const [auto, setAuto] = useState(true);
   const [audience, setAudience] = useState<Audience>("executives");
   const [goal, setGoal] = useState<Goal>("persuade");
+  const [visualStyle, setVisualStyle] = useState<VisualStyle>("automatic");
   const [useSourceImages, setUseSourceImages] = useState(false);
   const [slideCount, setSlideCount] = useState(10);
   const [selected, setSelected] = useState("pitch");
@@ -114,6 +122,8 @@ export function SlidesLaunchpad({
     const setup = buildSlidesSetupBlock({
       slideCount,
       goal,
+      visualStyle: auto ? "automatic" : visualStyle,
+      autoMode: auto,
       useSourceImages,
       themeId: effectiveTheme.id === baseTheme.id && !useCustomTheme ? baseTheme.id : baseTheme.id,
       themeConfig: useCustomTheme
@@ -225,6 +235,23 @@ export function SlidesLaunchpad({
               <button key={item.id} type="button" onClick={() => setGoal(item.id)} className={cn("rounded-xl border px-2 py-2 text-left transition", goal === item.id ? "border-primary/50 bg-primary/15" : "border-white/10 bg-white/[0.02] hover:border-white/25")}>
                 <span className="block text-xs font-medium text-white">{item.label}</span>
                 <span className="mt-0.5 block text-[10px] text-text-muted">{item.hint}</span>
+              </button>
+            ))}
+          </div>
+
+          <p className="mb-2 mt-4 text-xs font-medium text-text-secondary">Visual style</p>
+          <div className="flex flex-wrap gap-2">
+            {visualStyles.map((style) => (
+              <button
+                key={style}
+                type="button"
+                onClick={() => setVisualStyle(style)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs capitalize transition",
+                  visualStyle === style ? "border-primary/50 bg-primary/20 text-white" : "border-white/10 text-text-tertiary hover:border-white/25 hover:text-white"
+                )}
+              >
+                {style}
               </button>
             ))}
           </div>
