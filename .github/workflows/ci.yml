@@ -33,9 +33,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci --legacy-peer-deps
-      - run: npx next lint --dir src --quiet
-        env:
-          ESLINT_IGNORE_DURING_BUILD: "true"
+      # `next lint` is deprecated (removed in Next 16) — use the ESLint CLI directly.
+      - run: npx eslint --quiet
 
   build:
     name: Production Build
@@ -53,7 +52,13 @@ jobs:
         env:
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
           CLERK_SECRET_KEY: "sk_test_dummy"
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_dummy"
+          # Must be FORMAT-valid (base64 "<host>$" suffix) or Clerk throws
+          # during static prerender and the build worker exits 1.
+          # This placeholder decodes to "build.ci.invalid$" — non-routable,
+          # never used for API calls at build time.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_YnVpbGQuY2kuaW52YWxpZCQ="
+          # Required by src/lib/env.ts schema (checked at runtime/health).
+          API_KEY_ENCRYPTION_SECRET: "ci-build-placeholder-0123456789abcdef"
           INNGEST_EVENT_KEY: "dummy"
           INNGEST_SIGNING_KEY: "dummy"
           NODE_ENV: production
@@ -68,6 +73,13 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci --legacy-peer-deps
-      - name: Check env schema compiles
-        run: node -e "require('./src/lib/env.ts')"
-        continue-on-error: true
+      - name: Check env schema compiles and validates
+        # Node cannot require() a .ts file — use tsx to import it.
+        run: npx tsx -e "import { getServerEnv, getClientEnv } from './src/lib/env.ts'; getServerEnv(); getClientEnv(); console.log('env schema OK');"
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          CLERK_SECRET_KEY: "sk_test_dummy"
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_YnVpbGQuY2kuaW52YWxpZCQ="
+          API_KEY_ENCRYPTION_SECRET: "ci-build-placeholder-0123456789abcdef"
+          INNGEST_EVENT_KEY: "dummy"
+          INNGEST_SIGNING_KEY: "dummy"
