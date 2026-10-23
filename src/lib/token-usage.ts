@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import { calculateCost, AIProvider } from "./token-pricing";
 import { Decimal } from "@prisma/client/runtime/library";
+import { randomUUID } from "crypto";
+import { chargeUsage } from "@/lib/wallet";
 
 interface RecordUsageInput {
   userId: string;
@@ -109,6 +111,14 @@ export async function recordTokenUsage(input: RecordUsageInput) {
         },
       });
     });
+    // Bill the prepaid wallet for this call (idempotent per message). Failure is logged loudly but must not break the reply.
+    try {
+      const refId = input.messageId ? `${input.messageId}:${input.endpoint ?? ""}` : randomUUID();
+      const r = await chargeUsage(input.userId, input.model, input.promptTokens, input.completionTokens, refId);
+      if (r.shortfallST > 0) console.warn("[wallet] usage exceeded balance", { userId: input.userId, shortfallST: r.shortfallST, model: input.model });
+    } catch (billErr) {
+      console.error("[wallet] chargeUsage failed", { userId: input.userId, model: input.model, billErr });
+    }
   } catch (err) {
     console.error("[usage] recordTokenUsage failed; continuing without blocking", {
       userId: input.userId,

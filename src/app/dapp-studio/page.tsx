@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 import {
-  Sparkles,
+  Brain,
   ArrowUp,
   Loader2,
   Code2,
@@ -84,7 +84,7 @@ const workflowSteps = [
   {
     title: "Describe",
     description: "Tell us what you want to build in plain English",
-    icon: Sparkles,
+    icon: Brain,
   },
   {
     title: "Configure",
@@ -188,7 +188,7 @@ const PageShell = () => {
                 className="text-center max-w-4xl mx-auto"
               >
                 <Badge className="mb-6 inline-flex items-center gap-2 border border-white/15 bg-white/5 backdrop-blur-md ring-1 ring-white/10 px-4 py-1.5 text-white shadow-[0_4px_20px_rgba(0,0,0,0.25)]">
-                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <Brain className="h-4 w-4 text-amber-300" />
                   Professional Smart Contract Development
                 </Badge>
                 <h1 className="text-4xl font-semibold tracking-tight text-white md:text-5xl">

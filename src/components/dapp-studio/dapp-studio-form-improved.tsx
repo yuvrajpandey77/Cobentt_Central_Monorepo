@@ -31,7 +31,7 @@ import {
   Zap,
   Rocket,
   Globe,
-  Sparkles,
+  Brain,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
@@ -175,7 +175,7 @@ const STEP_ENTRIES = [
 
 const AIBadge = () => (
   <Badge variant="outline" className="ml-2 border-blue-400/30 bg-blue-500/10 text-blue-300 text-xs">
-    <Sparkles className="h-3 w-3 mr-1" />
+    <Brain className="h-3 w-3 mr-1" />
     AI
   </Badge>
 );
@@ -371,7 +371,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
         return (
           <div className="flex flex-col justify-center h-full min-h-[400px] space-y-6">
             <div className="flex items-center justify-center gap-2 text-sm text-text-secondary">
-              <Sparkles className="h-4 w-4 text-sky-300" />
+              <Brain className="h-4 w-4 text-sky-300" />
               {hasAISuggestions 
                 ? "AI has pre-filled these values. Review and customize as needed."
                 : "Configure core metadata for your deployment."}
@@ -527,7 +527,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
         return (
           <div className="flex flex-col justify-center h-full min-h-[400px] space-y-6">
             <div className="flex items-center justify-center gap-2 text-sm text-text-secondary">
-              <Sparkles className="h-4 w-4 text-sky-300" />
+              <Brain className="h-4 w-4 text-sky-300" />
               Attach optional modules. Your template will include audited patterns for each module you enable.
             </div>
             
@@ -654,7 +654,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
                 <Card className="border-blue-400/20 bg-blue-500/5">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <Sparkles className="h-5 w-5 text-blue-400" />
+                      <Brain className="h-5 w-5 text-blue-400" />
                       <h4 className="text-lg font-semibold text-white">AI Analysis</h4>
                       <Badge variant="outline" className="border-blue-400/30 bg-blue-500/10 text-blue-300">
                         Enhanced
@@ -775,7 +775,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
               <Card className="border-white/15 bg-white/8 backdrop-blur-md">
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2 text-white/80 mb-2">
-                    <Sparkles className="h-4 w-4 text-amber-300" />
+                    <Brain className="h-4 w-4 text-amber-300" />
                     <span className="text-xs font-medium">Your Description</span>
                   </div>
                   <p className="text-white text-sm leading-relaxed px-1">
@@ -790,7 +790,7 @@ export const DappStudioFormImproved = ({ onSubmit, defaultValues, userPrompt, on
               <Card className="border-white/15 bg-white/8 backdrop-blur-md">
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-300" />
+                    <Brain className="h-4 w-4 text-amber-300" />
                     <div className="flex-1">
                       <p className="text-xs font-medium text-white">AI Configuration Applied</p>
                       <p className="text-xs text-text-secondary mt-1">

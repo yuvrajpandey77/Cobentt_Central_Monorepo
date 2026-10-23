@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useEffect } from "react";
 import {
-  Sparkles,
+  Brain,
   Clipboard,
   Check,
   BookOpen,
@@ -147,7 +147,7 @@ export default function TechnicalDocumentationPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-text-tertiary" />
+                      <Brain className="w-4 h-4 text-text-tertiary" />
                       <span className="text-sm font-semibold text-white/80">
                         AI Assistance
                       </span>

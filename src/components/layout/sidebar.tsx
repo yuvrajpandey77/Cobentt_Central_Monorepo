@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Sparkles, Code2, FolderOpen, Settings as SettingsIcon, MessageCircle } from "lucide-react";
+import { Plus, Brain, Code2, FolderOpen, Settings as SettingsIcon, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/contexts/sidebar-context";
 import { Button } from "@/components/ui/button";
@@ -234,7 +234,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
                 <p className="text-sm text-text-secondary mb-6">Sign up to start building and save your projects</p>
                 <Link href="/sign-up" className="w-full">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
-                    <Sparkles className="w-4 h-4 mr-2" /> Get Started
+                    <Brain className="w-4 h-4 mr-2" /> Get Started
                   </Button>
                 </Link>
               </div>
@@ -248,7 +248,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
                 </Link>
                 <button className="group" aria-label="Templates">
                   <div className={iconClasses}>
-                    <Sparkles className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <Brain className="w-4 h-4 text-white/80 group-hover:text-primary" />
                   </div>
                 </button>
                 <Link href="/all-projects" className="group">

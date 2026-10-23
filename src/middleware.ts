@@ -23,6 +23,8 @@ const isPublicRoute = createRouteMatcher([
     "/api/inngest(.*)",
     // Razorpay webhook is public but verified by HMAC signature
     "/api/razorpay/webhook",
+    // Server-to-server (Rust API). Public to Clerk, but every request must carry a valid HMAC signature (see lib/internal-auth.ts).
+    "/api/internal/wallet/(.*)",
     // tRPC handles its own auth via protectedProcedure middleware
     "/api/trpc(.*)",
     // Health check is public (no sensitive data exposed)

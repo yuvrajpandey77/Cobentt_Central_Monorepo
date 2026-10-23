@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Rocket, CheckCircle2, Sparkles, ArrowLeft, Clipboard, ExternalLink, Loader2 } from "lucide-react";
+import { Rocket, CheckCircle2, Brain, ArrowLeft, Clipboard, ExternalLink, Loader2 } from "lucide-react";
 import type { DappStudioFormValues } from "@/components/dapp-studio/dapp-studio-form";
 import type { Blockchain, ContractType, Network } from "@/generated/prisma";
 import { useMutation } from "@tanstack/react-query";
@@ -126,7 +126,7 @@ export const DappStudioPreview = ({ data, onBack }: DappStudioPreviewProps) => {
             {data.features?.length > 0 && (
               <div className="mt-8 pt-6 border-t border-white/10">
                 <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <Brain className="h-4 w-4 text-amber-300" />
                   <p className="text-sm font-medium text-white">Enabled Features</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
