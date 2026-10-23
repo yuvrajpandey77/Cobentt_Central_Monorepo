@@ -64,7 +64,7 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://js.clerk.com https://*.clerk.accounts.dev https://accounts.google.com https://vercel.live https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://js.clerk.com https://*.clerk.accounts.dev https://accounts.google.com https://vercel.live https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https://*.razorpay.com https://img.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com",
               "font-src 'self' https://fonts.gstatic.com",

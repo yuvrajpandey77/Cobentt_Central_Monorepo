@@ -1,8 +1,14 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import RedisClient from "ioredis";
 
-const limitersByPrefix = new Map<string, Ratelimit>();
+interface LimiterLike {
+  limit(key: string): Promise<{ success: boolean; limit: number; remaining: number; reset: number }>;
+}
+
+const limitersByPrefix = new Map<string, LimiterLike>();
 let redisClient: Redis | null = null;
+let redisTcpClient: RedisClient | null = null;
 
 function getRedis(): Redis | null {
   if (redisClient) return redisClient;
@@ -13,18 +19,77 @@ function getRedis(): Redis | null {
   return redisClient;
 }
 
-function getOrCreateLimiter(prefix: string, limit: number, windowMs: number): Ratelimit | null {
+function getRedisTcp(): RedisClient | null {
+  if (redisTcpClient) return redisTcpClient;
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  redisTcpClient = new RedisClient(url, { lazyConnect: false, maxRetriesPerRequest: 2 });
+  redisTcpClient.on("error", (err: Error) => {
+    console.error(`[rate-limit] Redis connection error: ${err.message}`);
+  });
+  return redisTcpClient;
+}
+
+const SLIDING_WINDOW_LUA = `
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local limit = tonumber(ARGV[3])
+local identifier = ARGV[4]
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+local count = redis.call('ZCARD', key)
+if count < limit then
+  redis.call('ZADD', key, now, identifier .. ':' .. now .. ':' .. math.random(1e9))
+  redis.call('PEXPIRE', key, window)
+  return {1, limit - count - 1, now + window}
+end
+redis.call('PEXPIRE', key, window)
+return {0, 0, now + window}
+`;
+
+class IoredisLimiter implements LimiterLike {
+  constructor(private prefix: string, private limitCount: number, private windowMs: number) {}
+  async limit(key: string) {
+    const client = getRedisTcp();
+    if (!client) {
+      throw new Error("Redis unavailable");
+    }
+    const name = `cobentt:ratelimit:${this.prefix}`;
+    const raw = (await client.eval(
+      SLIDING_WINDOW_LUA,
+      1,
+      `${name}:${key}`,
+      Date.now(),
+      this.windowMs,
+      this.limitCount,
+      key
+    )) as [number, number, number];
+    return {
+      success: raw[0] === 1,
+      limit: this.limitCount,
+      remaining: Math.max(0, raw[1]),
+      reset: raw[2],
+    };
+  }
+}
+
+function getOrCreateLimiter(prefix: string, limit: number, windowMs: number): LimiterLike | null {
   const cacheKey = `${prefix}:${limit}:${windowMs}`;
   const cached = limitersByPrefix.get(cacheKey);
   if (cached) return cached;
-  const redis = getRedis();
-  if (!redis) return null;
-  const instance = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(limit, `${windowMs / 1000} s`),
-    analytics: true,
-    prefix: `cobentt:ratelimit:${prefix}`,
-  });
+  let instance: LimiterLike | null = null;
+  const restRedis = getRedis();
+  if (restRedis) {
+    instance = new Ratelimit({
+      redis: restRedis,
+      limiter: Ratelimit.slidingWindow(limit, `${windowMs / 1000} s`),
+      analytics: true,
+      prefix: `cobentt:ratelimit:${prefix}`,
+    });
+  } else if (process.env.REDIS_URL) {
+    instance = new IoredisLimiter(prefix, limit, windowMs);
+  }
+  if (!instance) return null;
   limitersByPrefix.set(cacheKey, instance);
   return instance;
 }
@@ -89,8 +154,11 @@ export async function checkRateLimit(
   // Opt-in single-instance escape hatch for local dev without Redis.
   // Production must leave this unset so spend paths stay fail-closed.
   const allowMemoryFallback = process.env.ALLOW_MEMORY_RATELIMIT === "true";
-  const redis = getRedis();
-  if (!redis) {
+  const hasRedis = Boolean(
+    (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
+      process.env.REDIS_URL
+  );
+  if (!hasRedis) {
     if (opts?.failClosed && !allowMemoryFallback) {
       console.error(`[rate-limit] Redis not configured — rejecting ${key} (fail-closed)`);
       return denied;

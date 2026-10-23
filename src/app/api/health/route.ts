@@ -100,8 +100,11 @@ function checkConfiguration(): CheckResult {
         return { status: "fail", message: "NEXT_PUBLIC_APP_URL still points at localhost" };
       }
     }
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-      return { status: "warn", message: "Upstash Redis not configured — single-instance in-memory rate limits; spend paths run fail-closed" };
+    const hasSharedRedis =
+      (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
+      process.env.REDIS_URL;
+    if (!hasSharedRedis) {
+      return { status: "warn", message: "No shared Redis configured (UPSTASH_* or REDIS_URL) — single-instance in-memory rate limits; spend paths run fail-closed" };
     }
     return { status: "pass" };
   } catch (err) {

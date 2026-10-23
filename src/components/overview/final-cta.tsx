@@ -10,7 +10,7 @@ export function FinalCTA() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="py-24 lg:py-40 relative overflow-hidden">
+    <section ref={ref} className="py-24 lg:py-40 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/[0.02] to-transparent pointer-events-none" aria-hidden="true" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 blur-[120px] rounded-full pointer-events-none" aria-hidden="true" />
 
@@ -38,7 +38,7 @@ export function FinalCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-            <AsymmetricButton variant="secondary" size="lg">
+            <AsymmetricButton variant="secondary" size="lg" as="a" href="/overview/download">
               <Download className="w-4 h-4" />
               Download Cobentt
             </AsymmetricButton>
