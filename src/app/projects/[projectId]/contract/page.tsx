@@ -16,7 +16,7 @@ import {
   Shield,
   Activity,
   Globe,
-  Sparkles,
+  Brain,
   Layers,
 } from 'lucide-react';
 import { ContractInteraction } from '@/modules/projects/ui/components/ContractInteraction';
@@ -273,7 +273,7 @@ function ContractPageContent() {
                       {project.contractType} Contract
                     </span>
                     <span className="inline-flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
+                      <Brain className="h-4 w-4" />
                       Latest Build Ready
                     </span>
                   </div>

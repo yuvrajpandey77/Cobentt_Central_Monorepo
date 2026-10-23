@@ -142,11 +142,20 @@ export async function runAIPipeline(
   // 6. Quota enforcement
   try {
     await enforceQuota(userId, estimatedTokens);
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith("PAYMENT_REQUIRED")) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: "Hosted AI needs a plan or a top-up.", code: "PAYMENT_REQUIRED", pricingUrl: "/overview/pricing" },
+          { status: 402 }
+        ),
+      };
+    }
     return {
       ok: false,
       response: NextResponse.json(
-        { error: "Daily quota exceeded. Please upgrade your plan." },
+        { error: "Daily limit reached. Please try again tomorrow or upgrade your plan." },
         { status: 429 }
       ),
     };

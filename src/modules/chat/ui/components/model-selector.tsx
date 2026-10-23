@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Sparkles, Zap, Brain, Code2 } from "lucide-react";
+import { ChevronDown, Lightbulb, Zap, Brain, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MODELS, TIER_LABELS, getModelById } from "@/lib/models";
 
 const tierIcons: Record<string, React.ReactNode> = {
   fast: <Zap className="h-3.5 w-3.5" />,
-  balanced: <Sparkles className="h-3.5 w-3.5" />,
+  balanced: <Lightbulb className="h-3.5 w-3.5" />,
   powerful: <Brain className="h-3.5 w-3.5" />,
   code: <Code2 className="h-3.5 w-3.5" />,
 };

@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { hasFunds } from "@/lib/wallet";
 import { TRPCError } from "@trpc/server";
 import {
   sendQuotaWarning90,
@@ -269,6 +270,15 @@ export async function enforceQuota(
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: check.reason || "Quota exceeded",
+    });
+  }
+
+  // Hosted AI is prepaid: no balance, no call. The daily caps above are speed/abuse limits only.
+  // (Estimate is in tokens of an average model; the exact bill happens after the call in recordTokenUsage.)
+  if (!(await hasFunds(userId, Math.ceil((estimatedTokens ?? 0) / 4)))) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "PAYMENT_REQUIRED: Hosted AI needs a plan or a top-up. Choose one at /overview/pricing.",
     });
   }
 

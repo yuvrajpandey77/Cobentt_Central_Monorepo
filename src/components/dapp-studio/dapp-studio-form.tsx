@@ -31,7 +31,7 @@ import {
   Zap,
   Rocket,
   Globe,
-  Sparkles,
+  Brain,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
@@ -162,7 +162,7 @@ const StepWrapper = ({ children }: { children: React.ReactNode }) => (
 
 const AIBadge = () => (
   <Badge variant="outline" className="ml-2 border-blue-400/30 bg-blue-500/10 text-blue-300 text-xs">
-    <Sparkles className="h-3 w-3 mr-1" />
+    <Brain className="h-3 w-3 mr-1" />
     AI
   </Badge>
 );
@@ -349,7 +349,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
           <StepWrapper>
             <div className="space-y-8">
               <div className="flex items-center gap-2 text-sm text-text-secondary">
-                <Sparkles className="h-4 w-4 text-sky-300" />
+                <Brain className="h-4 w-4 text-sky-300" />
                 {hasAISuggestions 
                   ? "AI has pre-filled these values. Review and customize as needed."
                   : "Configure core metadata for your deployment."}
@@ -508,7 +508,7 @@ export const DappStudioForm = ({ onSubmit, defaultValues }: DappStudioFormProps)
           <StepWrapper>
             <div className="space-y-6">
               <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="h-5 w-5 text-blue-400" />
+                <Brain className="h-5 w-5 text-blue-400" />
                 <h3 className="text-xl font-semibold text-white">Review Your Configuration</h3>
               </div>
               

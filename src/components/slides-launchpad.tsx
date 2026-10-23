@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, Check, Sparkles, Wand2, SlidersHorizontal, RotateCcw, Zap } from "lucide-react";
+import { ArrowRight, Check, Brain, Wand2, SlidersHorizontal, RotateCcw, Zap } from "lucide-react";
 import { SLIDES_MODE } from "@/lib/modes/definitions";
 import {
   DYNAMIC_SLIDE_THEMES,
@@ -156,7 +156,7 @@ export function SlidesLaunchpad({
     <section className="w-full max-w-4xl rounded-[28px] border border-white/10 bg-[#0b0d12]/85 p-5 shadow-2xl backdrop-blur-xl sm:p-7">
       <div className="mb-5 flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary">
-          <Sparkles className="h-5 w-5" />
+          <Brain className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-white">Design your deck before we build it</h2>

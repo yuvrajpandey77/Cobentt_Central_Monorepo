@@ -2,35 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/db";
 import { logPaymentEvent } from "@/lib/payment-audit";
-import { PAYMENT_PLANS } from "@/lib/payment-plans";
+import { verifyWebhookSignature } from "@/lib/razorpay-signature";
+import { activateOrder } from "@/lib/subscription";
+import { revokeOrderGrant } from "@/lib/wallet";
 
 export const dynamic = "force-dynamic";
 
 // Disable body parsing — we need the raw body for signature verification
 export const runtime = "nodejs";
 
-const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
-
-function verifyWebhookSignature(body: string, signature: string): boolean {
-  if (!WEBHOOK_SECRET) {
-    console.error("[razorpay-webhook] RAZORPAY_WEBHOOK_SECRET not configured");
-    return false;
-  }
-  const expectedSignature = crypto
-    .createHmac("sha256", WEBHOOK_SECRET)
-    .update(body)
-    .digest("hex");
-
-  const sigBuffer = Buffer.from(signature, "hex");
-  const expectedBuffer = Buffer.from(expectedSignature, "hex");
-  return sigBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(sigBuffer, expectedBuffer);
-}
-
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-razorpay-signature") ?? "";
 
-  if (!verifyWebhookSignature(rawBody, signature)) {
+  if (!verifyWebhookSignature(rawBody, signature, process.env.RAZORPAY_WEBHOOK_SECRET ?? "")) {
     console.warn("[razorpay-webhook] Invalid signature");
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
@@ -68,12 +53,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ status: "ok", message: "Duplicate event" });
   }
 
-  await logPaymentEvent({
-    event: `webhook.${eventType}`,
-    actor: "webhook",
-    details: { eventType, payloadKeys: Object.keys(payload).join(","), dedupeKey },
-  });
-
   try {
     switch (eventType) {
       case "payment.captured":
@@ -103,6 +82,12 @@ export async function POST(req: NextRequest) {
         console.info(`[razorpay-webhook] Unhandled event: ${eventType}`);
     }
 
+    // Mark as processed only AFTER success: if anything above throws, Razorpay's retry must run again, not be deduped away.
+    await logPaymentEvent({
+      event: `webhook.${eventType}`,
+      actor: "webhook",
+      details: { eventType, payloadKeys: Object.keys(payload ?? {}).join(","), dedupeKey },
+    });
     return NextResponse.json({ status: "ok" });
   } catch (err) {
     console.error(`[razorpay-webhook] Error processing ${eventType}:`, err);
@@ -119,156 +104,29 @@ export async function POST(req: NextRequest) {
 async function handlePaymentCaptured(payload: Record<string, { entity: Record<string, unknown> }>) {
   const payment = payload.payment?.entity;
   if (!payment) return;
-
   const orderId = String(payment.order_id ?? "");
   const paymentId = String(payment.id ?? "");
-
-  const existing = await prisma.paymentRecord.findUnique({
-    where: { razorpayOrderId: orderId },
-  });
-
-  if (existing) {
-    // Idempotency: skip if already captured
-    if (existing.status === "CAPTURED") return;
-
-    await prisma.paymentRecord.update({
-      where: { razorpayOrderId: orderId },
-      data: {
-        razorpayPaymentId: paymentId,
-        status: "CAPTURED",
-      },
-    });
-
-    // Activate subscription via webhook (ensures user gets access even if confirm route fails)
-    const planKey = Object.keys(PAYMENT_PLANS).find(
-      (k) => PAYMENT_PLANS[k].id === existing.plan
-    );
-    const planDef = planKey ? PAYMENT_PLANS[planKey] : null;
-
-    // SECURITY: only entitle when the captured amount matches the order amount.
-    // A mismatch means the money paid differs from the plan price — record it,
-    // but do NOT activate the plan (prevents pay-less-get-plan via tampered orders).
-    const capturedAmount = Number(payment.amount);
-    if (planDef && existing.clerkUserId && capturedAmount !== existing.amount) {
-      await logPaymentEvent({
-        paymentRecordId: existing.id,
-        clerkUserId: existing.clerkUserId,
-        event: "payment.amount_mismatch",
-        actor: "webhook",
-        razorpayOrderId: orderId,
-        razorpayPaymentId: paymentId,
-        success: false,
-        errorMessage: `Captured ${capturedAmount} != order ${existing.amount} for plan ${existing.plan}`,
-      });
-    }
-
-    if (planDef && existing.clerkUserId && capturedAmount === existing.amount) {
-      const periodStart = new Date();
-      const periodEnd = new Date();
-      periodEnd.setDate(periodEnd.getDate() + 30);
-
-      await prisma.allowedUser.upsert({
-        where: { clerkUserId: existing.clerkUserId },
-        create: {
-          clerkUserId: existing.clerkUserId,
-          email: `${existing.clerkUserId}@cobentt.local`,
-          status: "APPROVED",
-          plan: planDef.id,
-          maxDailyTokens: planDef.maxDailyTokens,
-          maxDailyRequests: planDef.maxDailyRequests,
-          graceTokens: planDef.graceTokens,
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
-          cancelAtPeriodEnd: false,
-          subscriptionStatus: "ACTIVE",
-          lastPaymentAt: new Date(),
-          lastPaymentId: paymentId,
-        },
-        update: {
-          plan: planDef.id,
-          status: "APPROVED",
-          approvedAt: new Date(),
-          maxDailyTokens: planDef.maxDailyTokens,
-          maxDailyRequests: planDef.maxDailyRequests,
-          graceTokens: planDef.graceTokens,
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
-          cancelAtPeriodEnd: false,
-          subscriptionStatus: "ACTIVE",
-          lastPaymentAt: new Date(),
-          lastPaymentId: paymentId,
-        },
-      });
-
-      try {
-        const { clerkClient } = await import("@clerk/nextjs/server");
-        const client = await clerkClient();
-        await client.users.updateUserMetadata(existing.clerkUserId, {
-          publicMetadata: {
-            plan: planDef.id,
-            subscriptionStatus: "ACTIVE",
-            currentPeriodEnd: periodEnd.toISOString(),
-          },
-        });
-      } catch (clerkErr) {
-        console.error("[razorpay-webhook] Clerk metadata sync failed:", clerkErr);
-      }
-    }
+  if (!orderId || !paymentId) return;
+  // Same activation the browser confirm route uses: exactly-once, amount-checked, stacks periods, syncs Clerk.
+  const r = await activateOrder({ orderId, paymentId, capturedPaise: Number(payment.amount), capturedCurrency: String(payment.currency ?? ""), actor: "webhook" });
+  if (!r.ok && r.reason !== "not_found") {
+    console.warn(`[razorpay-webhook] capture not activated for ${orderId}: ${r.reason}`);
   }
-
-  await logPaymentEvent({
-    paymentRecordId: existing?.id,
-    clerkUserId: existing?.clerkUserId,
-    event: "payment.captured",
-    actor: "webhook",
-    razorpayOrderId: orderId,
-    razorpayPaymentId: paymentId,
-    details: { amount: Number(payment.amount), currency: String(payment.currency) },
-  });
 }
 
 async function handlePaymentFailed(payload: Record<string, { entity: Record<string, unknown> }>) {
   const payment = payload.payment?.entity;
   if (!payment) return;
-
-  const orderId = payment.order_id as string;
-  const paymentId = payment.id as string;
+  const orderId = String(payment.order_id ?? "");
+  const paymentId = String(payment.id ?? "");
   const errorDescription = String(payment.error_description ?? "Payment failed");
 
-  const existing = await prisma.paymentRecord.findUnique({
-    where: { razorpayOrderId: orderId },
-  });
-
-  if (existing) {
-    await prisma.paymentRecord.update({
-      where: { razorpayOrderId: orderId },
-      data: {
-        razorpayPaymentId: paymentId,
-        status: "FAILED",
-      },
-    });
+  const existing = orderId ? await prisma.paymentRecord.findUnique({ where: { razorpayOrderId: orderId } }) : null;
+  // A failed attempt is normal (the customer retries the same order). Only an order that is still open can become
+  // FAILED, and a failed attempt never touches an existing plan: these are one-time passes, not renewals.
+  if (existing && (existing.status === "CREATED" || existing.status === "AUTHORIZED")) {
+    await prisma.paymentRecord.update({ where: { id: existing.id }, data: { status: "FAILED" } });
   }
-
-  // Downgrade subscription if payment fails
-  if (existing?.clerkUserId) {
-    await prisma.allowedUser.updateMany({
-      where: { clerkUserId: existing.clerkUserId },
-      data: {
-        subscriptionStatus: "PAST_DUE",
-      },
-    });
-
-    try {
-      const { clerkClient } = await import("@clerk/nextjs/server");
-      const client = await clerkClient();
-      await client.users.updateUserMetadata(existing.clerkUserId, {
-        publicMetadata: { subscriptionStatus: "PAST_DUE" },
-      });
-    } catch (clerkErr) {
-      console.error("[razorpay-webhook] Clerk metadata sync failed:", clerkErr);
-    }
-  }
-
   await logPaymentEvent({
     paymentRecordId: existing?.id,
     clerkUserId: existing?.clerkUserId,
@@ -292,13 +150,11 @@ async function handlePaymentAuthorized(payload: Record<string, { entity: Record<
     where: { razorpayOrderId: orderId },
   });
 
-  if (existing) {
+  // Events can arrive out of order: never move CAPTURED/REFUNDED/FAILED back to AUTHORIZED.
+  if (existing && existing.status === "CREATED") {
     await prisma.paymentRecord.update({
-      where: { razorpayOrderId: orderId },
-      data: {
-        razorpayPaymentId: paymentId,
-        status: "AUTHORIZED",
-      },
+      where: { id: existing.id },
+      data: { razorpayPaymentId: paymentId, status: "AUTHORIZED" },
     });
   }
 
@@ -339,6 +195,11 @@ async function handleRefund(
         status: isFullRefund ? "REFUNDED" : "PARTIALLY_REFUNDED",
       },
     });
+
+    // A full refund takes back the tokens that order granted (plan allowance or top-up).
+    if (isFullRefund && existing.clerkUserId) {
+      await revokeOrderGrant(existing.clerkUserId, existing.razorpayOrderId);
+    }
 
     // Downgrade if full refund AND no other active payments
     if (isFullRefund && existing.clerkUserId) {

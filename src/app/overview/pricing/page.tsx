@@ -1,65 +1,61 @@
 import type { Metadata } from "next";
 import { RazorpayCheckoutButton } from "@/components/overview/razorpay-checkout-button";
 import { Check, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { PLAN_SPECS, TOPUP_SPECS, chargeAmount, formatMoney } from "@/lib/pricing-catalog";
+import { billingCurrency, usdInrRate } from "@/lib/billing-config";
+
+// Prices come from the server-side plan table so what is shown is exactly what is charged.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description: "Simple, transparent pricing for individuals, teams, and enterprises.",
 };
 
+const currency = billingCurrency();
+const money = (usdCents: number) => formatMoney(chargeAmount(usdCents, currency, usdInrRate()), currency);
+const millions = (st: number) => `${st / 1_000_000}M`;
+
 const plans = [
   {
+    key: "free",
     name: "Free",
-    price: "$0",
+    price: money(0),
     period: "forever",
-    desc: "Perfect for getting started",
+    desc: "On-device AI, always free",
     features: [
-      "5 chats per day",
-      "3 AI models",
-      "Basic documents",
-      "100MB storage",
-      "Community support",
+      "Unlimited on-device chat in the Cobentt app",
+      "Memory, notes, reminders and calendar",
+      "Bring your own API key",
     ],
     cta: "Get Started",
     featured: false,
   },
-  {
-    name: "Pro",
-    price: "$20",
-    period: "/month",
-    desc: "For power users and professionals",
-    features: [
-      "Unlimited chats",
-      "All AI models",
-      "Full document suite with AI",
-      "10GB storage",
-      "AI agents",
-      "Image generation",
-      "Priority support",
-      "Context memory",
-    ],
-    cta: "Start Free Trial",
-    featured: true,
-  },
-  {
-    name: "Teams",
-    price: "$50",
-    period: "/month",
-    desc: "For teams and organizations",
-    features: [
-      "Everything in Pro",
-      "Unlimited storage",
-      "Team collaboration",
-      "Admin controls & audit logs",
-      "Custom integrations",
-      "Dedicated support",
-      "SLA guarantee",
-      "SSO & advanced security",
-    ],
-    cta: "Contact Sales",
-    featured: false,
-  },
+  ...(["starter", "plus", "pro"] as const).map((k) => {
+    const spec = PLAN_SPECS[k];
+    const blurb = { starter: "For everyday use", plus: "For heavier daily use", pro: "For power users" }[k];
+    const models = { starter: "Standard models", plus: "Standard and premium models", pro: "All models, including frontier" }[k];
+    return {
+      key: k,
+      name: spec.label,
+      price: money(spec.usdCents),
+      period: "/ 30 days",
+      desc: blurb,
+      features: [
+        `${millions(spec.monthlyST)} standard tokens each period`,
+        models,
+        `Up to ${spec.dailyRequests} requests a day`,
+        "Cobentt Cloud in the mobile app",
+        "Buy again early and the days stack",
+      ],
+      cta: `Get ${spec.label}`,
+      featured: k === "plus",
+    };
+  }),
 ];
+
+const topups = (["t5", "t10", "t25"] as const).map((k) => ({ key: k, price: money(TOPUP_SPECS[k].usdCents), tokens: millions(TOPUP_SPECS[k].st) }));
 
 const enterpriseFeatures = [
   "On-premise deployment",
@@ -89,13 +85,13 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto mb-20 lg:mb-28">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto mb-12 lg:mb-16">
           {plans.map((plan) => (
             <div
-              key={plan.name}
+              key={plan.key}
               className={`relative flex flex-col p-8 transition-all duration-300 ${
                 plan.featured
-                  ? "bg-white/[0.03] border-white/30 shadow-xl scale-105 md:scale-110"
+                  ? "bg-white/[0.03] border-white/30 shadow-xl lg:scale-105"
                   : "bg-bg-card border-white/10 hover:border-white/20"
               } border ${
                 plan.featured
@@ -124,19 +120,60 @@ export default function PricingPage() {
                   </div>
                 ))}
               </div>
-              <RazorpayCheckoutButton
-                plan={plan.name.toLowerCase() as "free" | "pro" | "teams"}
-                className={`inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-300 w-full ${
-                  plan.featured
-                    ? "bg-white text-bg-primary hover:bg-white/90 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
-                    : "bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10 hover:text-white rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
-                }`}
-              >
-                {plan.cta}
-                <ArrowRight className="w-3.5 h-3.5" />
-              </RazorpayCheckoutButton>
+              {plan.key === "free" ? (
+                <Link
+                  href="/sign-up"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-300 w-full bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10 hover:text-white rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
+                >
+                  {plan.cta}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : (
+                <RazorpayCheckoutButton
+                  product={`plan:${plan.key}` as "plan:starter" | "plan:plus" | "plan:pro"}
+                  label={`${plan.name} plan, 30 days`}
+                  className={`inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-medium transition-all duration-300 w-full ${
+                    plan.featured
+                      ? "bg-white text-bg-primary hover:bg-white/90 rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
+                      : "bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10 hover:text-white rounded-tr-[10px] rounded-bl-[10px] rounded-tl-[6px] rounded-br-[6px]"
+                  }`}
+                >
+                  {plan.cta}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </RazorpayCheckoutButton>
+              )}
             </div>
           ))}
+        </div>
+
+        <div className="max-w-4xl mx-auto mb-12 lg:mb-16 p-8 bg-bg-card border border-white/10 rounded-tl-[12px] rounded-tr-[40px] rounded-br-[12px] rounded-bl-[40px]">
+          <h2 className="text-xl font-bold text-white">Pay as you go</h2>
+          <p className="text-sm text-text-tertiary mt-1">No plan needed. Buy tokens when you want them; they last 12 months and are used after any plan allowance.</p>
+          <div className="grid sm:grid-cols-3 gap-3 mt-6">
+            {topups.map((t) => (
+              <div key={t.key} className="flex flex-col gap-3 p-5 border border-white/10 rounded-[12px] bg-white/[0.02]">
+                <div>
+                  <div className="text-2xl font-bold text-white">{t.price}</div>
+                  <div className="text-sm text-text-tertiary">{t.tokens} standard tokens</div>
+                </div>
+                <RazorpayCheckoutButton
+                  product={`topup:${t.key}` as "topup:t5" | "topup:t10" | "topup:t25"}
+                  label={`Top-up ${t.tokens} tokens`}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium w-full bg-white/5 text-text-secondary border border-white/10 hover:bg-white/10 hover:text-white rounded-[8px] transition-all"
+                >
+                  Buy tokens
+                </RazorpayCheckoutButton>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto mb-12 lg:mb-16 text-sm text-text-tertiary leading-relaxed">
+          <h2 className="text-lg font-semibold text-white mb-2">What is a standard token?</h2>
+          <p>
+            A standard token is one token of a small, fast model. Larger models cost more per token, so they use your balance faster: a Starter plan lasts for about
+            10 million tokens of a small model, or a fraction of that on a frontier model. Hosted AI only works while you have a plan or a balance. Nothing is charged automatically.
+          </p>
         </div>
 
         <div className="max-w-4xl mx-auto mb-20 lg:mb-28">
@@ -176,8 +213,9 @@ export default function PricingPage() {
           </h2>
           <div className="space-y-3">
             {[
-              { q: "Can I switch plans anytime?", a: "Yes. You can upgrade or downgrade at any time. Changes take effect immediately." },
-              { q: "Is there a free trial for Pro?", a: "Yes. Pro comes with a 14-day free trial. No credit card required." },
+              { q: "How does billing work?", a: "Each purchase gives you 30 days of the plan. Buying again before it ends adds another 30 days on top. Nothing renews automatically, so you are never charged without choosing to." },
+              { q: "What happens when my tokens run out?", a: "Hosted AI pauses until you buy a top-up or your plan period renews. On-device chat in the app never stops." },
+              { q: "Does my plan work in the Cobentt mobile app?", a: "Yes. Sign in to the app with the same account and Cobentt Cloud unlocks automatically. On-device chat in the app is always free." },
               { q: "Can I use my own API keys?", a: "Yes. You can bring your own API keys for OpenAI, Anthropic, Google, and any provider. Your data never passes through our servers." },
               { q: "Do you offer student or academic pricing?", a: "Yes. Contact us with your academic email for a discount on Pro plans." },
             ].map((item) => (

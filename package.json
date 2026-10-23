@@ -12,7 +12,8 @@
     "templates:validate": "tsx scripts/templates/validate.ts",
     "templates:index": "tsx scripts/templates/index.ts",
     "templates:test": "tsx scripts/templates/test.ts",
-    "postinstall": "patch-package && prisma generate"
+    "postinstall": "patch-package && prisma generate",
+    "test:payments": "tsx --test src/lib/subscription-period.test.ts src/lib/razorpay-signature.test.ts src/lib/pricing-catalog.test.ts src/lib/internal-auth.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",

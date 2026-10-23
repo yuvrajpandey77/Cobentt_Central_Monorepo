@@ -334,6 +334,8 @@ model AllowedUser {
   // Audit
   lastPaymentAt        DateTime?
   lastPaymentId        String?
+  // Which paid tier ("starter" | "plus" | "pro") is active; plan stays PRO for every paid tier.
+  planKey              String?
 
   // Legacy Stripe fields (kept for migration, unused)
   stripeCustomerId     String?
@@ -371,6 +373,8 @@ model PaymentRecord {
   currency             String              @default("INR")
   plan                 UserPlan
   billingCycle         String              @default("monthly")
+  // What was bought: "plan:starter" | "plan:plus" | "plan:pro" | "topup:t5" | "topup:t10" | "topup:t25". Null = legacy order.
+  product              String?
   
   // Status tracking
   status               PaymentStatus       @default(CREATED)
@@ -632,4 +636,33 @@ model AccountDeletionRequest {
   updatedAt      DateTime @updatedAt
 
   @@map("account_deletion_requests")
+}
+/// Prepaid balance in "standard tokens" (see src/lib/pricing-catalog.ts). The only thing that pays for hosted AI usage.
+model TokenWallet {
+  clerkUserId   String    @id
+  planST        BigInt    @default(0)
+  planExpiresAt DateTime?
+  paygST        BigInt    @default(0)
+  paygExpiresAt DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  @@map("token_wallets")
+}
+
+/// Append-only. `refId` is unique, which makes every grant/reserve/settle idempotent.
+model TokenLedger {
+  id               String   @id @default(uuid())
+  clerkUserId      String
+  kind             String   // GRANT_PLAN | TOPUP | RESERVE | SETTLE
+  deltaST          BigInt
+  fromPlan         BigInt   @default(0)
+  fromPayg         BigInt   @default(0)
+  refId            String   @unique
+  model            String?
+  promptTokens     Int?
+  completionTokens Int?
+  createdAt        DateTime @default(now())
+
+  @@index([clerkUserId, createdAt])
+  @@map("token_ledger")
 }

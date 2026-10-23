@@ -6,7 +6,7 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery, useMutation, useQueryClient, skipToken } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { MessageList } from "@/components/chat/message-list";
-import { Lock, Sparkles, Loader2, Copy, Check } from "lucide-react";
+import { Lock, Brain, Loader2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -151,7 +151,7 @@ export default function SharedChatPage({ params }: { params: Promise<{ token: st
                 "bg-white text-black hover:opacity-90 disabled:opacity-50"
               )}
             >
-              {fork.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {fork.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Brain className="w-3.5 h-3.5" />}
               Start your own from this chat
             </button>
           </div>
