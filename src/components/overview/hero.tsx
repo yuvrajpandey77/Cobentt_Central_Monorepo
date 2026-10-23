@@ -9,6 +9,7 @@ import {
   useMotionValue,
   useSpring,
   useInView,
+  useReducedMotion,
   type MotionValue,
 } from "framer-motion";
 import {
@@ -66,9 +67,9 @@ function FloatCard({
   return (
     <motion.div
       style={{ rotateX, rotateY, perspective: 800, ...style }}
-      className={`absolute ${floatClass} ${className}`}
+      className={`absolute ${className}`}
     >
-      {children}
+      <div className={floatClass}>{children}</div>
     </motion.div>
   );
 }
@@ -197,16 +198,19 @@ function ResearchFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mo
 /* ── Right: Model Router card ── */
 function ModelRouterFloatCard({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY: MotionValue<number> }) {
   const models = ["GPT-4o", "Claude", "Gemini", "DeepSeek", "Qwen"];
+  const cardRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const visible = useInView(cardRef, { margin: "80px" });
 
   useEffect(() => {
+    if (!visible) return;
     const t = setInterval(() => setActive((a) => (a + 1) % models.length), 2200);
     return () => clearInterval(t);
-  }, [models.length]);
+  }, [visible, models.length]);
 
   return (
     <FloatCard mouseX={mouseX} mouseY={mouseY} floatClass="cardFloat2" className="right-[4%] top-[55%] z-10">
-      <div className="w-[175px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[12px] rounded-tr-[40px] rounded-br-[12px] rounded-bl-[40px] p-3.5 shadow-2xl shadow-black/30">
+      <div ref={cardRef} className="w-[175px] bg-bg-card/70 backdrop-blur-lg border border-white/10 rounded-tl-[12px] rounded-tr-[40px] rounded-br-[12px] rounded-bl-[40px] p-3.5 shadow-2xl shadow-black/30">
         <div className="flex items-center gap-1.5 mb-2.5">
           <Route className="w-3 h-3 text-text-tertiary" />
           <span className="text-[8px] text-text-muted font-medium">Model Router</span>
@@ -577,6 +581,9 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
    ─────────────────────────────────────────── */
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
+  const reduceMotion = useReducedMotion();
+  const isPointerFine = useRef(false);
+  const heroOnScreen = useRef(true);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const rawHeadlineY = useTransform(scrollYProgress, [0, 1], [0, 50]);
@@ -589,7 +596,17 @@ export function Hero() {
 
   useEffect(() => {
     let rafId: number;
+    isPointerFine.current =
+      !reduceMotion &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: fine)").matches;
+    if (!isPointerFine.current) {
+      mouseX.set(0);
+      mouseY.set(0);
+      return;
+    }
     const handleMouse = (e: MouseEvent) => {
+      if (!heroOnScreen.current) return;
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(() => {
         const cx = window.innerWidth / 2;
@@ -603,6 +620,20 @@ export function Hero() {
       window.removeEventListener("mousemove", handleMouse);
       cancelAnimationFrame(rafId);
     };
+  }, [mouseX, mouseY, reduceMotion]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => {
+      heroOnScreen.current = entry.isIntersecting;
+      if (!entry.isIntersecting) {
+        mouseX.set(0);
+        mouseY.set(0);
+      }
+    });
+    io.observe(el);
+    return () => io.disconnect();
   }, [mouseX, mouseY]);
 
   return (
@@ -681,7 +712,7 @@ export function Hero() {
                 Documentation
               </a>
               <a
-                href="#"
+                href="/overview/download"
                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-text-tertiary hover:text-white border border-white/10 hover:border-white/20 rounded-tr-[12px] rounded-bl-[12px] rounded-tl-[8px] rounded-br-[8px] transition-all duration-300"
               >
                 <Smartphone className="w-3.5 h-3.5" />

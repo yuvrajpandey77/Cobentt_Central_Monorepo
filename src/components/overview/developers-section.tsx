@@ -76,7 +76,7 @@ export function DevelopersSection() {
                   <span className="w-2.5 h-2.5 rounded-full bg-[#fbc02d]/70" />
                   <span className="w-2.5 h-2.5 rounded-full bg-success/70" />
                 </div>
-                <span className="ml-3 text-xs text-text-secondary">sandbox   app/page.tsx</span>
+                <span className="ml-3 text-xs text-text-secondary">sandbox — app/page.tsx</span>
               </div>
               <div className="p-4 space-y-2 font-mono text-[10px] leading-relaxed bg-[#0a0a0f] h-[calc(100%-40px)] overflow-hidden">
                 <div className="flex items-center gap-2 text-text-secondary">

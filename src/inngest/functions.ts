@@ -1177,15 +1177,16 @@ export const verifyContract = inngest.createFunction(
         }
 
         // Determine which API to use based on blockchain and network
-        const apiUrls: Record<string, string> = {
-          'ETHEREUM-TESTNET': 'https://api-sepolia.etherscan.io/api',
-          'ETHEREUM-MAINNET': 'https://api.etherscan.io/api',
-          'POLYGON-TESTNET': 'https://api-testnet.polygonscan.com/api',
-          'POLYGON-MAINNET': 'https://api.polygonscan.com/api',
-          'ARBITRUM-TESTNET': 'https://api-sepolia.arbiscan.io/api',
-          'ARBITRUM-MAINNET': 'https://api.arbiscan.io/api',
-          'OPTIMISM-TESTNET': 'https://api-sepolia-optimistic.etherscan.io/api',
-          'OPTIMISM-MAINNET': 'https://api-optimistic.etherscan.io/api',
+        // Etherscan API V2: one endpoint, selected per chain by chainid.
+        const chainIds: Record<string, number> = {
+          'ETHEREUM-TESTNET': 11155111,
+          'ETHEREUM-MAINNET': 1,
+          'POLYGON-TESTNET': 80002,
+          'POLYGON-MAINNET': 137,
+          'ARBITRUM-TESTNET': 421614,
+          'ARBITRUM-MAINNET': 42161,
+          'OPTIMISM-TESTNET': 11155420,
+          'OPTIMISM-MAINNET': 10,
         };
 
         const apiKeys: Record<string, string | undefined> = {
@@ -1196,8 +1197,9 @@ export const verifyContract = inngest.createFunction(
         };
 
         const networkKey = `${project.blockchain}-${project.network}`;
-        const apiUrl = apiUrls[networkKey];
-        const apiKey = apiKeys[project.blockchain || 'ETHEREUM'];
+        const chainId = chainIds[networkKey];
+        const apiUrl = chainId ? `https://api.etherscan.io/v2/api?chainid=${chainId}` : undefined;
+        const apiKey = apiKeys[project.blockchain || 'ETHEREUM'] || process.env.ETHERSCAN_API_KEY;
 
         if (!apiUrl) {
           console.warn('Unsupported network for verification:', networkKey);

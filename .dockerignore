@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+cobentt_landing
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+*.log
+coverage
+.turbo

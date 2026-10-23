@@ -25,10 +25,13 @@ export async function register() {
       }
     }
 
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const hasSharedRedis =
+      (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) ||
+      process.env.REDIS_URL;
+    if (!hasSharedRedis) {
       console.warn(
-        "[boot] UPSTASH_REDIS_REST_URL/TOKEN not set — using single-instance in-memory rate limits. " +
-          "Money/spend paths run fail-closed. Set Upstash for shared limits across instances."
+        "[boot] UPSTASH_REDIS_REST_URL/TOKEN or REDIS_URL not set — using single-instance in-memory rate limits. " +
+          "Money/spend paths run fail-closed. Set up shared Redis for limits across instances."
       );
     }
     if (process.env.BYOK_ALLOW_SERVER_FALLBACK === "true") {

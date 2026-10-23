@@ -86,7 +86,7 @@ export function TheWorkspace() {
   const [direction, setDirection] = useState(1);
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isAutoPlaying = useInView(ref, { margin: "-80px" });
 
   const goTo = useCallback((i: number) => {
     setDirection(i > activeIndex ? 1 : -1);
@@ -99,11 +99,10 @@ export function TheWorkspace() {
   }, []);
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView || !isAutoPlaying) return;
     const id = setInterval(next, 4500);
-    timerRef.current = id;
     return () => clearInterval(id);
-  }, [isInView, next]);
+  }, [isInView, isAutoPlaying, next]);
 
   const variants = {
     enter: (d: number) => ({ x: d > 0 ? 120 : -120, opacity: 0 }),

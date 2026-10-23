@@ -647,6 +647,36 @@ body {
   0%, 100% { opacity: 0.3; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(1.05); }
 }
+
+/* Overview hero floating cards — composited translate only, never transform-conflicts with framer-motion */
+@keyframes floatY {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -14px, 0); }
+}
+.cardFloat1 { animation: floatY 6s ease-in-out infinite; will-change: transform; }
+.cardFloat2 { animation: floatY 7s ease-in-out 0.6s infinite; will-change: transform; }
+.cardFloat3 { animation: floatY 8s ease-in-out 1.2s infinite; will-change: transform; }
+.cardFloat4 { animation: floatY 6.5s ease-in-out 1.8s infinite; will-change: transform; }
+
+/* Overview hero micro-animations */
+@keyframes neuralPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .cardFloat1,
+  .cardFloat2,
+  .cardFloat3,
+  .cardFloat4 {
+    animation: none !important;
+  }
+}
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }

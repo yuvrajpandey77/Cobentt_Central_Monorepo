@@ -10,7 +10,7 @@ const layers = [
   { icon: Database, label: "Memory Engine", desc: "Persistent knowledge graph connecting every interaction across your workspace." },
   { icon: Route, label: "Routing Engine", desc: "Routes every request to the optimal model based on task, cost, and capability." },
   { icon: Shield, label: "Safety Layer", desc: "Content filtering, prompt injection detection, and output validation." },
-  { icon: Cpu, label: "Model Selection", desc: "Selects from 40+ models   frontier APIs to local Ollama instances." },
+  { icon: Cpu, label: "Model Selection", desc: "Selects from 40+ models, from frontier APIs to local Ollama instances." },
   { icon: Zap, label: "Response Generator", desc: "Formats, cites, and delivers results with full provenance tracking." },
 ];
 
@@ -45,7 +45,7 @@ export function InsideMeridian() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-4 text-base lg:text-lg text-text-tertiary max-w-2xl mx-auto"
           >
-            Meridian is a small language model that runs locally on your machine. It orchestrates frontier models, manages context, and keeps everything connected   without sending your data to the cloud.
+            Meridian is a small language model that runs locally on your machine. It orchestrates frontier models, manages context, and keeps everything connected without sending your data to the cloud.
           </motion.p>
         </div>
 

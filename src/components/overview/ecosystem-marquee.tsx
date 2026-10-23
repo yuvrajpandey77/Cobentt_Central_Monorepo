@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { SectionContainer } from "@/components/overview/ui/section-container";
 
@@ -12,7 +12,20 @@ const providers = [
 
 export function EcosystemMarquee() {
   const ref = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
+  const [trackInViewport, setTrackInViewport] = useState(false);
+
+  useEffect(() => {
+    const el = marqueeRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setTrackInViewport(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <SectionContainer className="py-16 lg:py-20 overflow-hidden">
@@ -33,7 +46,11 @@ export function EcosystemMarquee() {
         transition={{ duration: 0.8, delay: 0.2 }}
         className="relative"
       >
-        <div className="flex gap-3 animate-marquee w-max px-4">
+        <div
+          ref={marqueeRef}
+          className="flex gap-3 animate-marquee w-max px-4"
+          style={{ animationPlayState: trackInViewport ? "running" : "paused" }}
+        >
           {[...providers, ...providers].map((name, i) => (
             <div
               key={`${name}-${i}`}

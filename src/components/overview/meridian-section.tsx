@@ -80,7 +80,7 @@ export function MeridianSection() {
               The intelligence behind Cobentt.
             </p>
             <p className="text-base lg:text-lg text-text-tertiary leading-relaxed max-w-lg">
-              Meridian is a purpose-built orchestration engine. It plans every request, retrieves context, routes to the optimal model, and verifies every response   before you see a result.
+              Meridian is a purpose-built orchestration engine. It plans every request, retrieves context, routes to the optimal model, and verifies every response before you see a result.
             </p>
             <div className="grid grid-cols-2 gap-3 max-w-sm">
               {[

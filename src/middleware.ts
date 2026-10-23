@@ -37,11 +37,22 @@ export default clerkMiddleware(async (auth, req) => {
       try {
         await auth.protect();
       } catch (err) {
-        // Clerk itself can throw in production when keys are missing or
-        // mismatched (e.g. dev keys deployed to prod). For API routes we must
-        // still return JSON — an HTML 500 here surfaces on the client as
-        // `Unexpected token '<', "<!DOCTYPE"... is not valid JSON`.
         if (req.nextUrl.pathname.startsWith("/api/")) {
+          // Clerk signals "not signed in" on non-document requests by throwing
+          // Next's notFound() control-flow error, not a real outage. Never
+          // report that as 503 — clients must see a retryable-auth signal.
+          const digest =
+            typeof err === "object" && err !== null && "digest" in err
+              ? String((err as { digest?: unknown }).digest)
+              : "";
+          const message = err instanceof Error ? err.message : "";
+          if (digest.startsWith("NEXT_") || message.startsWith("NEXT_")) {
+            return NextResponse.json(
+              { error: "Unauthorized", code: "UNAUTHORIZED" },
+              { status: 401 },
+            );
+          }
+          // Real Clerk failure (network, key mismatch, ...).
           console.error("[middleware] auth.protect() failed:", err instanceof Error ? err.message : err);
           return NextResponse.json(
             { error: "Authentication service unavailable. Retry in a moment.", code: "AUTH_UNAVAILABLE" },
