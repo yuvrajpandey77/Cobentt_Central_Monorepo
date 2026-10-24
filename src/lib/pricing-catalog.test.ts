@@ -1,48 +1,53 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PLAN_SPECS, TOPUP_SPECS, REFERENCE_USD_PER_MILLION_ST, MODEL_TABLE, chargeAmount, costInST, formatMoney, lookupModel, reserveST, tierAllows } from "./pricing-catalog";
+import { PLAN_SPECS, TOPUP_SPECS, MODEL_TABLE, costMicroUSD, formatINR, formatUSD, lookupModel, reserveMicroUSD, tierAllows, tokensForBudget, PLATFORM_MARGIN } from "./pricing-catalog";
 import { debit, grantPlan, grantTopup, liveBalances, refund, EMPTY_WALLET } from "./wallet-math";
 
 const now = new Date("2026-10-23T00:00:00Z");
 const later = new Date("2026-11-22T00:00:00Z");
 
-test("every plan and top-up keeps provider cost under 60% of the price", () => {
-  for (const p of Object.values(PLAN_SPECS)) {
-    const cost = (p.monthlyST / 1e6) * REFERENCE_USD_PER_MILLION_ST;
-    assert.ok(cost / (p.usdCents / 100) <= 0.6, `${p.key} cost ratio`);
-  }
-  for (const t of Object.values(TOPUP_SPECS)) {
-    assert.ok(((t.st / 1e6) * REFERENCE_USD_PER_MILLION_ST) / (t.usdCents / 100) <= 0.6, `${t.key} cost ratio`);
-  }
+test("the starter plan is ₹499 for a $3 API budget, the example the product is built on", () => {
+  assert.equal(PLAN_SPECS.starter.priceINRPaise, 49_900);
+  assert.equal(PLAN_SPECS.starter.budgetMicroUSD, 3_000_000);
+  assert.equal(formatINR(PLAN_SPECS.starter.priceINRPaise), "₹499");
+  assert.equal(formatUSD(PLAN_SPECS.starter.budgetMicroUSD), "$3");
 });
-test("pay-as-you-go is never better value than the plan at the same price", () => {
-  assert.ok(TOPUP_SPECS.t5.st < PLAN_SPECS.starter.monthlyST);
+
+test("budgets rise with price and every top-up pack is priced in rupees", () => {
+  assert.ok(PLAN_SPECS.starter.budgetMicroUSD < PLAN_SPECS.plus.budgetMicroUSD);
+  assert.ok(PLAN_SPECS.plus.budgetMicroUSD < PLAN_SPECS.pro.budgetMicroUSD);
+  for (const t of Object.values(TOPUP_SPECS)) assert.ok(t.priceINRPaise > 0 && t.budgetMicroUSD > 0);
 });
-test("INR is derived from USD at the configured rate and rounded up to whole rupees", () => {
-  assert.equal(chargeAmount(500, "USD", 85), 500);
-  assert.equal(chargeAmount(500, "INR", 85), 42500);
-  assert.equal(chargeAmount(1200, "INR", 84.2), 101100);
-  assert.equal(formatMoney(42500, "INR"), "₹425");
-  assert.equal(formatMoney(500, "USD"), "$5");
-});
+
 test("unknown models are not allowed (never free)", () => {
   assert.equal(lookupModel("totally-made-up-model"), null);
   assert.ok(lookupModel("gpt-4o-mini"));
   assert.ok(lookupModel("openai/gpt-4o-mini"), "provider-prefixed ids resolve");
 });
-test("cost rounds up and premium models cost more standard tokens", () => {
+
+test("metering charges provider cost plus the platform margin, rounded up", () => {
   const mini = lookupModel("gpt-4o-mini")!;
-  const big = lookupModel("claude-3-opus")!;
-  assert.ok(costInST(big, 1000, 1000) > costInST(mini, 1000, 1000) * 20);
-  assert.ok(costInST(mini, 1, 0) >= 1);
-  assert.equal(reserveST(mini, 1000, 500), costInST(mini, 1000, 500));
+  const cost = (1000 / 1e6) * mini.inputPerM + (500 / 1e6) * mini.outputPerM;
+  assert.equal(costMicroUSD(mini, 1000, 500), Math.ceil(cost * (1 + PLATFORM_MARGIN) * 1e6));
+  assert.equal(reserveMicroUSD(mini, 1000, 500), costMicroUSD(mini, 1000, 500));
+  assert.ok(costMicroUSD(lookupModel("claude-3-opus")!, 1000, 1000) > costMicroUSD(mini, 1000, 1000) * 20);
 });
+
+test("a budget buys tokens at live price plus margin, and the same budget buys more on a cheaper model", () => {
+  const mini = lookupModel("gpt-4o-mini")!;
+  const opus = lookupModel("claude-3-opus")!;
+  const tokensMini = tokensForBudget(mini, PLAN_SPECS.starter.budgetMicroUSD);
+  assert.ok(tokensMini > 9_000_000 && tokensMini < 11_000_000, `about 10M mini tokens, got ${tokensMini}`);
+  assert.ok(tokensForBudget(opus, PLAN_SPECS.starter.budgetMicroUSD) < tokensMini / 20);
+});
+
 test("tier gating", () => {
   assert.equal(tierAllows("standard", lookupModel("gpt-4o-mini")!.tier), true);
   assert.equal(tierAllows("standard", lookupModel("claude-3-opus")!.tier), false);
   assert.equal(tierAllows("frontier", lookupModel("claude-3-opus")!.tier), true);
   assert.ok([...MODEL_TABLE.values()].every((m) => m.tier));
 });
+
 test("debit spends plan first, then payg, all or nothing", () => {
   let w = grantTopup(grantPlan(EMPTY_WALLET, 100, later), 50, now, 365);
   const r = debit(w, 120, now);

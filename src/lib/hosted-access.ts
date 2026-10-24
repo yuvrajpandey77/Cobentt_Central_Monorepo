@@ -1,5 +1,7 @@
 import prisma from "@/lib/db";
-import { FREE_LIMITS, PAYG_ONLY_LIMITS, PLAN_SPECS, costInST, lookupModel, reserveST, tierAllows, type ModelTier, type PlanKey } from "@/lib/pricing-catalog";
+import { FREE_LIMITS, PAYG_ONLY_LIMITS, PLAN_SPECS, costMicroUSD, lookupModel, reserveMicroUSD, tierAllows, type ModelTier, type PlanKey } from "@/lib/pricing-catalog";
+import { ensureLivePricing } from "@/lib/live-pricing";
+import { treasuryCovers } from "@/lib/treasury";
 import { hasActiveAccess } from "@/lib/subscription-period";
 import { getBalances, reserve, settle } from "@/lib/wallet";
 
@@ -23,7 +25,7 @@ export async function limitsFor(userId: string, now = new Date()): Promise<Acces
   return { source: "free", planKey: null, ...FREE_LIMITS };
 }
 
-export type Denied = { ok: false; status: 400 | 402 | 403 | 429; code: "MODEL_NOT_ALLOWED" | "MODEL_NOT_IN_PLAN" | "PAYMENT_REQUIRED" | "DAILY_LIMIT" | "BUSY" | "BAD_REQUEST" };
+export type Denied = { ok: false; status: 400 | 402 | 403 | 429 | 503; code: "MODEL_NOT_ALLOWED" | "MODEL_NOT_IN_PLAN" | "PAYMENT_REQUIRED" | "DAILY_LIMIT" | "BUSY" | "BAD_REQUEST" | "UNAVAILABLE" };
 
 /**
  * The one decision point for hosted AI used by the mobile gateway: who is this user, what may they use, how much may
@@ -34,8 +36,10 @@ export async function authorizeHosted(input: { userId: string; requestId: string
   if (!userId || !/^[\w-]{8,100}$/.test(requestId) || !Number.isInteger(input.promptTokens) || input.promptTokens < 0 || input.promptTokens > 2_000_000 || !Number.isInteger(input.maxOutputTokens) || input.maxOutputTokens < 1) {
     return { ok: false, status: 400, code: "BAD_REQUEST" };
   }
+  await ensureLivePricing();
   const rate = lookupModel(model);
   if (!rate) return { ok: false, status: 403, code: "MODEL_NOT_ALLOWED" };
+  if (!(await treasuryCovers())) return { ok: false, status: 503, code: "UNAVAILABLE" };
 
   const lim = await limitsFor(userId, now);
   if (!tierAllows(lim.modelTier, rate.tier)) return { ok: false, status: lim.source === "free" ? 402 : 403, code: lim.source === "free" ? "PAYMENT_REQUIRED" : "MODEL_NOT_IN_PLAN" };
@@ -52,7 +56,7 @@ export async function authorizeHosted(input: { userId: string; requestId: string
       AND NOT EXISTS (SELECT 1 FROM token_ledger s WHERE s."refId" = 'set:' || substr(r."refId", 5))`;
   if (Number(open[0]?.n ?? 0) >= lim.maxConcurrent) return { ok: false, status: 429, code: "BUSY" };
 
-  const need = reserveST(rate, input.promptTokens, maxOut);
+  const need = reserveMicroUSD(rate, input.promptTokens, maxOut);
   if (need === 0) return { ok: true, reservedST: 0, maxOutputTokens: maxOut, source: lim.source }; // zero-cost model: still capped above
   const r = await reserve(userId, requestId, need, rate.model, now);
   if (!r.ok) return { ok: false, status: 402, code: "PAYMENT_REQUIRED" };
@@ -62,7 +66,7 @@ export async function authorizeHosted(input: { userId: string; requestId: string
 export async function settleHosted(input: { userId: string; requestId: string; model: string; promptTokens: number; completionTokens: number }): Promise<boolean> {
   const rate = lookupModel(input.model);
   if (!rate) return false;
-  const actual = costInST(rate, input.promptTokens, input.completionTokens);
+  const actual = costMicroUSD(rate, input.promptTokens, input.completionTokens);
   return settle(input.userId, input.requestId, actual, { promptTokens: input.promptTokens, completionTokens: input.completionTokens });
 }
 

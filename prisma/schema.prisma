@@ -373,7 +373,7 @@ model PaymentRecord {
   currency             String              @default("INR")
   plan                 UserPlan
   billingCycle         String              @default("monthly")
-  // What was bought: "plan:starter" | "plan:plus" | "plan:pro" | "topup:t5" | "topup:t10" | "topup:t25". Null = legacy order.
+  // What was bought: "topup:t1" | "topup:t2" | "topup:t3" (plans renew through subscriptions). Null = legacy order.
   product              String?
   
   // Status tracking
@@ -665,4 +665,15 @@ model TokenLedger {
 
   @@index([clerkUserId, createdAt])
   @@map("token_ledger")
+}
+
+/// Razorpay Plan ids for each paid tier and price. Created once through the API, then reused for every subscription.
+model RazorpayPlanRef {
+  planKey        String
+  amountPaise    Int
+  razorpayPlanId String   @unique
+  createdAt      DateTime @default(now())
+
+  @@id([planKey, amountPaise])
+  @@map("billing_razorpay_plans")
 }
