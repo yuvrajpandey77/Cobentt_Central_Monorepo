@@ -12,6 +12,8 @@ const schema = z.object({
   model: z.string().min(1).max(120),
   promptTokens: z.number().int().min(0).max(10_000_000),
   completionTokens: z.number().int().min(0).max(10_000_000),
+  /** The provider's billed cost for the call, in USD. Preferred over token pricing when present. */
+  providerCostUSD: z.number().min(0).max(1000).optional(),
 }).strict();
 
 /** Charges real usage and returns the unused part of the reservation. Idempotent. A request that is never settled stays fully charged. */

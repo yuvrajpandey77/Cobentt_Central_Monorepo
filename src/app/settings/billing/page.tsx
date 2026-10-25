@@ -35,6 +35,13 @@ export default function BillingPage() {
   const qc = useQueryClient();
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const { data: catalog } = useQuery<{ plans: Array<{ key: "starter" | "plus" | "pro"; label: string; priceINR: string; priceINRPaise: number }> }>({
+    queryKey: ["billing", "catalog"],
+    queryFn: async () => (await fetch("/api/billing/catalog")).json(),
+    staleTime: 300_000,
+  });
 
   const { data, isLoading } = useQuery<Me>({
     queryKey: ["billing", "me"],
@@ -45,6 +52,23 @@ export default function BillingPage() {
     },
     refetchInterval: 60_000,
   });
+
+  const changePlan = async (plan: "starter" | "plus" | "pro") => {
+    setError(null);
+    setCancelling(true);
+    try {
+      const res = await fetch("/api/billing/change-plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan }) });
+      const body = (await res.json().catch(() => ({}))) as { error?: string; effective?: string };
+      if (!res.ok) throw new Error(body.error ?? "Could not change your plan.");
+      if (body.effective === "cycle_end") setNotice("Switches at the end of this period.");
+      else setNotice("Upgraded. Your new budget is applied once the payment is confirmed.");
+      await qc.invalidateQueries({ queryKey: ["billing", "me"] });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not change your plan.");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const cancel = async () => {
     if (!confirm("Stop renewal? You keep access until the end of this period.")) return;
@@ -144,6 +168,18 @@ export default function BillingPage() {
 
           <Separator />
 
+          {isPaid && !data.cancelAtPeriodEnd && catalog ? (
+            <div className="flex flex-wrap gap-2">
+              {catalog.plans
+                .filter((p) => p.key !== data.plan)
+                .map((p) => (
+                  <Button key={p.key} variant="outline" size="sm" onClick={() => changePlan(p.key)} disabled={cancelling}>
+                    {p.priceINRPaise > (catalog.plans.find((x) => x.key === data.plan)?.priceINRPaise ?? 0) ? "Upgrade" : "Switch"} to {p.label} ({p.priceINR}/month)
+                  </Button>
+                ))}
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             {isPaid && !data.cancelAtPeriodEnd ? (
               <Button variant="outline" onClick={cancel} disabled={cancelling}>
@@ -158,6 +194,7 @@ export default function BillingPage() {
               </Link>
             </Button>
           </div>
+          {notice ? <p className="text-sm text-muted-foreground">{notice}</p> : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import prisma from "@/lib/db";
-import { FREE_LIMITS, PAYG_ONLY_LIMITS, PLAN_SPECS, costMicroUSD, lookupModel, reserveMicroUSD, tierAllows, type ModelTier, type PlanKey } from "@/lib/pricing-catalog";
+import { FREE_LIMITS, MICRO_USD_PER_USD, PAYG_ONLY_LIMITS, PLAN_SPECS, PLATFORM_MARGIN, costMicroUSD, lookupModel, reserveMicroUSD, tierAllows, type ModelTier, type PlanKey } from "@/lib/pricing-catalog";
 import { ensureLivePricing } from "@/lib/live-pricing";
 import { treasuryCovers } from "@/lib/treasury";
 import { hasActiveAccess } from "@/lib/subscription-period";
@@ -63,10 +63,13 @@ export async function authorizeHosted(input: { userId: string; requestId: string
   return { ok: true, reservedST: need, maxOutputTokens: maxOut, source: lim.source };
 }
 
-export async function settleHosted(input: { userId: string; requestId: string; model: string; promptTokens: number; completionTokens: number }): Promise<boolean> {
+export async function settleHosted(input: { userId: string; requestId: string; model: string; promptTokens: number; completionTokens: number; providerCostUSD?: number }): Promise<boolean> {
   const rate = lookupModel(input.model);
   if (!rate) return false;
-  const actual = costMicroUSD(rate, input.promptTokens, input.completionTokens);
+  // The provider's own billed cost is what we actually owe, so it is preferred. Our token price stays the fallback.
+  const actual = input.providerCostUSD !== undefined
+    ? Math.ceil(input.providerCostUSD * (1 + PLATFORM_MARGIN) * MICRO_USD_PER_USD)
+    : costMicroUSD(rate, input.promptTokens, input.completionTokens);
   return settle(input.userId, input.requestId, actual, { promptTokens: input.promptTokens, completionTokens: input.completionTokens });
 }
 

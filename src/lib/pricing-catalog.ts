@@ -37,8 +37,8 @@ export interface PlanSpec {
 
 export const PLAN_SPECS: Record<PlanKey, PlanSpec> = {
   starter: { key: "starter", label: "Starter", id: "PRO", priceINRPaise: 49_900, budgetMicroUSD: 3_000_000, dailyRequests: 300, maxConcurrent: 2, maxOutputTokens: 4096, modelTier: "standard" },
-  plus: { key: "plus", label: "Plus", id: "PRO", priceINRPaise: 99_900, budgetMicroUSD: 6_000_000, dailyRequests: 800, maxConcurrent: 4, maxOutputTokens: 8192, modelTier: "premium" },
-  pro: { key: "pro", label: "Pro", id: "PRO", priceINRPaise: 199_900, budgetMicroUSD: 12_000_000, dailyRequests: 2000, maxConcurrent: 8, maxOutputTokens: 16384, modelTier: "frontier" },
+  plus: { key: "plus", label: "Plus", id: "PRO", priceINRPaise: 102_000, budgetMicroUSD: 6_000_000, dailyRequests: 800, maxConcurrent: 4, maxOutputTokens: 8192, modelTier: "premium" },
+  pro: { key: "pro", label: "Pro", id: "PRO", priceINRPaise: 170_000, budgetMicroUSD: 10_000_000, dailyRequests: 2000, maxConcurrent: 8, maxOutputTokens: 16384, modelTier: "frontier" },
 };
 
 export interface TopupSpec {
@@ -50,8 +50,8 @@ export interface TopupSpec {
 /** Pay-as-you-go packs, valid for TOPUP_VALID_DAYS. */
 export const TOPUP_SPECS: Record<TopupKey, TopupSpec> = {
   t1: { key: "t1", priceINRPaise: 49_900, budgetMicroUSD: 3_000_000 },
-  t2: { key: "t2", priceINRPaise: 99_900, budgetMicroUSD: 6_000_000 },
-  t3: { key: "t3", priceINRPaise: 199_900, budgetMicroUSD: 12_000_000 },
+  t2: { key: "t2", priceINRPaise: 102_000, budgetMicroUSD: 6_000_000 },
+  t3: { key: "t3", priceINRPaise: 170_000, budgetMicroUSD: 10_000_000 },
 };
 
 /** Limits for someone with only pay-as-you-go balance (no active plan): same as Starter. */

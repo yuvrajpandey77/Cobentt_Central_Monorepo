@@ -97,6 +97,41 @@ export async function cancelSubscription(clerkUserId: string): Promise<boolean> 
   return true;
 }
 
+export class NoActivePlan extends Error {}
+export class SamePlan extends Error {}
+
+/**
+ * Moves a running subscription to another tier. An upgrade takes effect now and Razorpay bills the new price at once;
+ * the budget changes only when that charge arrives (`subscription.charged`), so nothing is granted without payment.
+ * A downgrade waits for the end of the paid period.
+ */
+export async function changePlan(clerkUserId: string, to: PlanKey): Promise<{ effective: "now" | "cycle_end" }> {
+  const user = await prisma.allowedUser.findUnique({
+    where: { clerkUserId },
+    select: { razorpaySubscriptionId: true, planKey: true, subscriptionStatus: true, currentPeriodEnd: true },
+  });
+  const active = user?.subscriptionStatus === "ACTIVE" && !!user.currentPeriodEnd && user.currentPeriodEnd > new Date();
+  if (!user?.razorpaySubscriptionId || !user.planKey || !active) throw new NoActivePlan();
+  if (user.planKey === to) throw new SamePlan();
+  const from = PLAN_SPECS[user.planKey as PlanKey];
+  const target = PLAN_SPECS[to];
+  const upgrade = target.priceINRPaise > from.priceINRPaise;
+  const live = await getRazorpay().subscriptions.fetch(user.razorpaySubscriptionId);
+  if (live.status !== "active" && live.status !== "authenticated") throw new NoActivePlan();
+  const planId = await ensureRazorpayPlan(to);
+  await getRazorpay().subscriptions.update(user.razorpaySubscriptionId, {
+    plan_id: planId,
+    schedule_change_at: upgrade ? "now" : "cycle_end",
+  });
+  await logPaymentEvent({
+    clerkUserId,
+    event: upgrade ? "subscription.upgrade_requested" : "subscription.downgrade_scheduled",
+    actor: "user",
+    details: { subscriptionId: user.razorpaySubscriptionId, from: from.key, to },
+  });
+  return { effective: upgrade ? "now" : "cycle_end" };
+}
+
 type SubEntity = { id: string; plan_id: string; status: string; current_start?: number | null; current_end?: number | null };
 type PaymentEntity = { id: string; amount: number; currency: string; status?: string };
 

@@ -1,0 +1,24 @@
+-- Reverses the RENAME statements of 20261023000000_schema_catchup. Enum values added by that migration are left in place (Postgres cannot drop enum values safely).
+BEGIN;
+ALTER TABLE "public"."build_jobs" RENAME CONSTRAINT "build_jobs_pkey" TO "BuildJob_pkey";
+ALTER TABLE "public"."fragments" RENAME CONSTRAINT "fragments_pkey" TO "Fragment_pkey";
+ALTER TABLE "public"."messages" RENAME CONSTRAINT "messages_pkey" TO "Message_pkey";
+ALTER TABLE "public"."projects" RENAME CONSTRAINT "projects_pkey" TO "Project_pkey";
+ALTER TABLE "public"."build_jobs" RENAME CONSTRAINT "build_jobs_projectId_fkey" TO "BuildJob_projectId_fkey";
+ALTER TABLE "public"."fragments" RENAME CONSTRAINT "fragments_messageId_fkey" TO "Fragment_messageId_fkey";
+ALTER TABLE "public"."messages" RENAME CONSTRAINT "messages_conversationId_fkey" TO "Message_conversationId_fkey";
+ALTER TABLE "public"."messages" RENAME CONSTRAINT "messages_parentMessageId_fkey" TO "Message_parentMessageId_fkey";
+ALTER TABLE "public"."messages" RENAME CONSTRAINT "messages_projectId_fkey" TO "Message_projectId_fkey";
+ALTER TABLE "public"."projects" RENAME CONSTRAINT "projects_forkedFromId_fkey" TO "Project_forkedFromId_fkey";
+ALTER INDEX IF EXISTS "public"."build_jobs_projectId_createdAt_idx" RENAME TO "BuildJob_projectId_createdAt_idx";
+ALTER INDEX IF EXISTS "public"."build_jobs_projectId_status_idx" RENAME TO "BuildJob_projectId_status_idx";
+ALTER INDEX IF EXISTS "public"."build_jobs_status_createdAt_idx" RENAME TO "BuildJob_status_createdAt_idx";
+ALTER INDEX IF EXISTS "public"."fragments_messageId_key" RENAME TO "Fragment_messageId_key";
+ALTER INDEX IF EXISTS "public"."messages_conversationId_createdAt_idx" RENAME TO "Message_conversationId_createdAt_idx";
+ALTER INDEX IF EXISTS "public"."messages_projectId_createdAt_idx" RENAME TO "Message_projectId_createdAt_idx";
+ALTER INDEX IF EXISTS "public"."messages_status_idx" RENAME TO "Message_status_idx";
+ALTER INDEX IF EXISTS "public"."projects_isPublic_idx" RENAME TO "Project_isPublic_idx";
+ALTER INDEX IF EXISTS "public"."projects_userId_isPublic_idx" RENAME TO "Project_userId_isPublic_idx";
+ALTER INDEX IF EXISTS "public"."token_usage_endpoint_createdAt_idx" RENAME TO "TokenUsage_endpoint_createdAt_idx";
+DELETE FROM "_prisma_migrations" WHERE migration_name = '20261023000000_schema_catchup';
+COMMIT;

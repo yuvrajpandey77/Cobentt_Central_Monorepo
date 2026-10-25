@@ -12,10 +12,11 @@ import { POST as webhook } from "../../src/app/api/razorpay/webhook/route";
 import { createSubscription, ensureAllowedUser, cancelSubscription } from "../../src/lib/razorpay-subscriptions";
 import { authorizeHosted, settleHosted } from "../../src/lib/hosted-access";
 import { getBalances } from "../../src/lib/wallet";
-import { lookupModel, costMicroUSD, PLAN_SPECS } from "../../src/lib/pricing-catalog";
+import { lookupModel, costMicroUSD, PLAN_SPECS, PLATFORM_MARGIN, MICRO_USD_PER_USD } from "../../src/lib/pricing-catalog";
 import { ensureLivePricing } from "../../src/lib/live-pricing";
 import { publicCatalog } from "../../src/lib/catalog";
 import { activateOrder } from "../../src/lib/subscription";
+import { changePlan, NoActivePlan } from "../../src/lib/razorpay-subscriptions";
 import { setProviderBalanceReader, providerRemainingMicroUSD } from "../../src/lib/treasury";
 
 const WEBHOOK_SECRET = "e2e_webhook_secret_0123456789abcdef";
@@ -120,6 +121,23 @@ async function main() {
   bal = await getBalances(clerkUserId);
   assert.equal(bal.plan, PLAN_SPECS.starter.budgetMicroUSD - costMicroUSD(rate, 1000, 500), "settled to exact cost, unused reserve returned");
   ok("a request reserves its worst case, settles to the exact cost, and returns the unused reserve");
+
+  // The provider's billed cost is what settlement charges when it is reported (it wins over our token estimate).
+  const b0 = (await getBalances(clerkUserId)).plan;
+  const pAuth = await authorizeHosted({ userId: clerkUserId, requestId: `e2e-req-${RUN}-p`, model: MODEL, promptTokens: 1000, maxOutputTokens: 1000 });
+  assert.equal(pAuth.ok, true);
+  assert.equal(await settleHosted({ userId: clerkUserId, requestId: `e2e-req-${RUN}-p`, model: MODEL, promptTokens: 1000, completionTokens: 500, providerCostUSD: 0.00001 }), true);
+  assert.equal(b0 - (await getBalances(clerkUserId)).plan, Math.ceil(0.00001 * (1 + PLATFORM_MARGIN) * MICRO_USD_PER_USD));
+  ok("settlement charges the provider-reported cost plus margin when it is reported");
+
+  // Mid-period upgrade: the request goes to Razorpay for the running subscription. The budget only changes when the
+  // paid charge arrives, so the plan and balance are untouched here.
+  await prisma.allowedUser.update({ where: { clerkUserId }, data: { subscriptionStatus: "ACTIVE", currentPeriodEnd: new Date(Date.now() + 20 * DAY) } });
+  // Razorpay only changes plans on a live subscription. This test subscription was never paid, so Razorpay reports
+  // "created" and the change must be refused cleanly (not passed through as a provider error).
+  await assert.rejects(() => changePlan(clerkUserId, "plus"), (e: unknown) => e instanceof NoActivePlan);
+  assert.equal((await prisma.allowedUser.findUniqueOrThrow({ where: { clerkUserId } })).planKey, "starter");
+  ok("a plan change on a subscription Razorpay has not activated is refused cleanly, and nothing changes");
 
   // Auto-renewal next month: budget refills to the full $3, not stacked on the leftover.
   const r2 = await deliver("subscription.charged", `evt_e2e_2_${RUN}`, { ...subEntity(subscriptionId, planRef.razorpayPlanId, now + 30 * DAY, now + 60 * DAY), ...payEntity(`pay_e2e_2_${RUN}`, 49_900) });
