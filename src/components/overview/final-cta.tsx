@@ -34,7 +34,7 @@ export function FinalCTA() {
           </h2>
 
           <p className="text-base lg:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed">
-            Join thousands of researchers, developers, and creators who use Cobentt to ship faster and think deeper.
+            Chat, research, code and run agents in one workspace.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">

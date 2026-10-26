@@ -334,7 +334,7 @@ function Sidebar() {
             <User className="w-3 h-3 text-text-secondary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-medium text-text-secondary truncate">Alex Chen</p>
+            <p className="text-[10px] font-medium text-text-secondary truncate">You</p>
             <p className="text-[7px] text-text-disabled truncate">Pro plan</p>
           </div>
         </div>
@@ -448,7 +448,7 @@ function BrowserWindow({ mouseX, mouseY }: { mouseX: MotionValue<number>; mouseY
               <div className="w-3 h-3 rounded-full bg-white/10 flex items-center justify-center">
                 <span className="text-[5px] font-bold text-text-tertiary">C</span>
               </div>
-              <span className="text-[8px] text-text-muted truncate">cobentt.app/workspace</span>
+              <span className="text-[8px] text-text-muted truncate">cobentt.cogerphere.com</span>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[8px] text-text-disabled">

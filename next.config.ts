@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 // Ensure Turbopack uses the project root (not the user profile dir)
 // to avoid the multiple lockfiles root mis-detection warning
 
+// @inngest/agent-kit imports two Inngest internals that Inngest 3.5x no longer exports by package path.
+// The files exist in the installed package, so point those imports at the files directly.
+const inngestInternals = {
+  "inngest/helpers/errors": "./node_modules/inngest/helpers/errors.js",
+  "inngest/components/InngestFunction": "./node_modules/inngest/components/InngestFunction.js",
+};
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -15,6 +22,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     // Explicitly set the project root so Next doesn't pick the parent folder
     root: process.cwd(),
+    resolveAlias: inngestInternals,
   },
   // Ensure API routes are treated as dynamic
   output: 'standalone',

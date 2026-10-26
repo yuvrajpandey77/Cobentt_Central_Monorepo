@@ -36,7 +36,7 @@ const sections = [
   },
   {
     title: "Termination",
-    content: "You may terminate your account at any time via Settings > Delete Account. We may suspend or terminate your account for violation of these terms, with or without notice. Upon termination, your data will be permanently deleted within 30 days. Sections on IP, liability, and dispute resolution survive termination.",
+    content: "You may delete your account at any time, as described on the Account Deletion page. We may suspend or terminate your account for violation of these terms, with or without notice. Upon termination, your account is deleted as described on the Account Deletion page. Sections on IP, liability, and dispute resolution survive termination.",
   },
   {
     title: "Governing Law",

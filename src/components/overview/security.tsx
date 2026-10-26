@@ -8,7 +8,6 @@ import {
   Eye,
   ShieldBan,
   Cpu,
-  ShieldCheck,
 } from "lucide-react";
 import { SectionContainer } from "@/components/overview/ui/section-container";
 
@@ -21,7 +20,7 @@ const securityItems = [
   {
     icon: KeyRound,
     title: "Your API Keys",
-    desc: "Bring your own API keys. We never proxy through our servers.",
+    desc: "Use your own API keys, or a hosted plan billed in rupees.",
   },
   {
     icon: Eye,
@@ -37,11 +36,6 @@ const securityItems = [
     icon: Cpu,
     title: "Bring Your Own Models",
     desc: "Run local models with Ollama. No cloud dependency required.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Privacy First",
-    desc: "Built from the ground up with privacy as a core principle.",
   },
 ];
 

@@ -2,37 +2,59 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How Cobentt handles your data, privacy, and security. We believe in radical transparency and user control.",
+  description: "What Cobentt collects, who processes it, and how you control it.",
 };
 
 const sections = [
   {
-    title: "Information We Collect",
-    content: "We collect only the minimum data necessary to provide and improve the Cobentt workspace. This includes account information (email, name, avatar) when you register, usage data (feature interactions, performance metrics) to improve our service, and content data (chats, documents, files) that you explicitly provide within your workspace. We never collect keystroke data, mouse movements, or browsing activity outside our application.",
+    title: "What we collect",
+    content:
+      "Account details from sign-in: email, name and profile picture (managed by Clerk). Billing details for paid plans are handled by Razorpay; we store your plan, renewal date and usage totals. Usage counts such as tokens and request totals, which power your usage screen and limits. Your chats, documents and files are stored on your device when you use on-device chat. When you use Cobentt Cloud, your messages are sent to the AI model provider to produce an answer (see below).",
   },
   {
-    title: "How We Use Your Data",
-    content: "Your data powers your workspace — nothing more. We use account data to authenticate you and manage your subscription. Usage data helps us identify bugs, optimize performance, and decide which features to build next. Content data is used exclusively to deliver the service you requested: AI chat, document processing, research synthesis, and code analysis. We do not train AI models on your content. Your prompts, documents, and files remain yours.",
+    title: "Cobentt Cloud (the default)",
+    content:
+      "New accounts start on Cobentt Cloud. Your message and the context needed to answer it are sent through our gateway to OpenRouter, which routes it to the model that answers. We record the model used and the token counts for billing; we do not keep the text of your chats on our servers. You can switch to on-device chat in Settings, and then your messages stay on your phone.",
   },
   {
-    title: "Data Storage & Security",
-    content: "All data is encrypted at rest using AES-256 and in transit using TLS 1.3. We use industry-standard cloud providers with SOC 2 compliance for hosted data. If you use local models (Ollama), your data never leaves your machine. We retain your data for as long as your account is active. Upon deletion, all data is permanently erased within 30 days from our servers and backup systems.",
+    title: "On-device chat (optional)",
+    content:
+      "On-device models run entirely on your phone. Your prompts and answers do not leave the device. Model files are downloaded from Hugging Face when you choose to download one. Downloaded files stay on the device until you delete them.",
   },
   {
-    title: "Third-Party AI Providers",
-    content: "Cobentt routes requests to third-party AI providers (OpenAI, Anthropic, Google, etc.) only when you explicitly select them. When using your own API keys, your data is sent directly to the provider under their privacy policy. When using our managed API, we act as a data processor. We never share your personal information with third parties for their own purposes.",
+    title: "Your own API key",
+    content:
+      "If you add your own OpenRouter key or a custom endpoint, requests go directly from your device to that provider under its terms. We do not see those messages. Keys are stored on your device in secure storage and are not sent to our servers.",
   },
   {
-    title: "Your Rights",
-    content: "You own your data. Period. You can export all your data at any time via Settings > Export. You can delete your account and all associated data instantly. You can opt out of analytics collection. You can request a copy of all data we hold about you. You can withdraw consent for any processing at any time. Contact us at support@cogerphere.com for any data rights requests.",
+    title: "Who processes your data",
+    content:
+      "Clerk: sign-in and account identity. Razorpay: payments for paid plans. OpenRouter: AI model routing for Cobentt Cloud. Vercel: website analytics on this site. Inngest: background jobs that run AI workflows on the website. Hugging Face: serves on-device model files. We do not sell your personal information.",
+  },
+  {
+    title: "Analytics",
+    content:
+      "This website uses Vercel Analytics to count page views. It does not set tracking cookies. You can opt out in Settings → Privacy; the opt-out takes effect the next time you load the site. The mobile app does not send analytics events.",
+  },
+  {
+    title: "Security and backups",
+    content:
+      "Connections to Cobentt use HTTPS. Database backups are encrypted with AES-256 and kept for 14 days, after which they are deleted.",
+  },
+  {
+    title: "Your choices",
+    content:
+      "On the website you can export your data from Settings → Privacy → Export. In the mobile app you can delete all local data from Settings, and delete your account from Account → Delete Account. You can disable cookies in your browser, but sign-in needs its session cookie. For anything else, email support@cogerphere.com.",
   },
   {
     title: "Cookies",
-    content: "We use essential cookies only: session cookies for authentication and preference cookies for saving your settings. We do not use tracking cookies, advertising cookies, or third-party analytics cookies. You can disable cookies in your browser settings, though this may affect core functionality like persistent login sessions.",
+    content:
+      "We use only the cookies sign-in needs, plus a single preference that stores your analytics opt-out. We do not use advertising cookies.",
   },
   {
-    title: "Changes to This Policy",
-    content: "We will notify you of material changes via email and an in-app notification. Continued use after changes take effect constitutes acceptance of the updated policy. We will never make retroactive changes that reduce your privacy rights without your explicit consent.",
+    title: "Changes to this policy",
+    content:
+      "If we make a material change to this policy, we will show it on this page and tell signed-in users in the app before it takes effect.",
   },
 ];
 
@@ -49,7 +71,7 @@ export default function PrivacyPage() {
             <span className="text-white">your rules.</span>
           </h1>
           <p className="mt-4 text-base lg:text-lg text-text-tertiary max-w-xl mx-auto">
-            We believe privacy is not a feature — it is a fundamental right. Here is exactly how we handle your data.
+            This policy is the same for the website and the mobile app. Here is what happens to your data, and who handles it.
           </p>
         </div>
 
@@ -66,7 +88,7 @@ export default function PrivacyPage() {
 
           <div className="pt-6 text-center">
             <p className="text-xs text-text-muted">
-              Last updated: July 2026. If you have questions, email{" "}
+              Last updated: October 2026. If you have questions, email{" "}
               <a href="mailto:support@cogerphere.com" className="text-text-tertiary hover:text-white transition-colors underline underline-offset-2">
                 support@cogerphere.com
               </a>

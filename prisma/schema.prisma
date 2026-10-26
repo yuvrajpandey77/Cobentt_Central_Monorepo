@@ -677,3 +677,19 @@ model RazorpayPlanRef {
   @@id([planKey, amountPaise])
   @@map("billing_razorpay_plans")
 }
+
+/// Stores the first response for a client-supplied Idempotency-Key so repeats replay it instead of acting twice.
+model IdempotencyKey {
+  userId      String
+  scope       String
+  key         String
+  requestHash String
+  status      Int?
+  responseBody String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@id([userId, scope, key])
+  @@index([createdAt])
+  @@map("idempotency_keys")
+}

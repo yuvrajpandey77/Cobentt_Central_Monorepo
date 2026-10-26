@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
-import prisma from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { logUserAuditEvent } from "@/lib/user-audit";
+import { purgeAccount } from "@/lib/account-purge";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +10,10 @@ const deleteSchema = z.object({
   confirm: z.literal("DELETE MY ACCOUNT"),
 });
 
+/**
+ * Deletes the account now: cancels billing, removes the website rows, then the sign-in account.
+ * Immediate, like the mobile app. Re-running after a partial failure is safe.
+ */
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.userId) {
@@ -22,72 +25,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const body = await req.json();
-  const parsed = deleteSchema.safeParse(body);
+  const parsed = deleteSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Type "DELETE MY ACCOUNT" to confirm' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Type "DELETE MY ACCOUNT" to confirm' }, { status: 400 });
   }
 
-  const existing = await prisma.accountDeletionRequest.findUnique({
-    where: { clerkUserId: session.userId },
-  });
-
-  if (existing && existing.status === "PENDING") {
-    return NextResponse.json(
-      { error: "Deletion already scheduled", executeAt: existing.executeAt },
-      { status: 409 }
-    );
+  try {
+    await purgeAccount(session.userId);
+  } catch (err) {
+    console.error("[account] purge failed:", err);
+    return NextResponse.json({ error: "Could not cancel billing, so your account was not deleted. Try again." }, { status: 503 });
   }
 
-  const executeAt = new Date();
-  executeAt.setDate(executeAt.getDate() + 30);
-
-  const request = await prisma.accountDeletionRequest.create({
-    data: {
-      clerkUserId: session.userId,
-      executeAt,
-    },
-  });
-
-  await logUserAuditEvent({
-    clerkUserId: session.userId,
-    event: "account.deletion_requested",
-    details: { executeAt: executeAt.toISOString(), requestId: request.id },
-  });
-
-  return NextResponse.json({
-    success: true,
-    message: "Account deletion scheduled. You have 30 days to cancel.",
-    executeAt,
-  });
-}
-
-export async function DELETE() {
-  const session = await auth();
-  if (!session?.userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const client = await clerkClient();
+    await client.users.deleteUser(session.userId);
+  } catch (err) {
+    // Billing and website rows are already gone. Retrying this route finishes the job.
+    console.error("[account] clerk delete failed:", err);
+    return NextResponse.json({ error: "Your data was removed, but the sign-in account could not be deleted. Try again." }, { status: 500 });
   }
-
-  const existing = await prisma.accountDeletionRequest.findUnique({
-    where: { clerkUserId: session.userId },
-  });
-
-  if (!existing || existing.status !== "PENDING") {
-    return NextResponse.json({ error: "No pending deletion" }, { status: 404 });
-  }
-
-  await prisma.accountDeletionRequest.update({
-    where: { clerkUserId: session.userId },
-    data: { status: "CANCELLED" },
-  });
-
-  await logUserAuditEvent({
-    clerkUserId: session.userId,
-    event: "account.deletion_cancelled",
-  });
 
   return NextResponse.json({ success: true });
 }

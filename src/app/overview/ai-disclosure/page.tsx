@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 const sections = [
   {
     title: "AI Models We Use",
-    content: "Cobentt is an AI orchestration workspace — we do not train our own foundation models. Instead, we provide a unified interface to leading models from OpenAI (GPT-4, GPT-4o), Anthropic (Claude 3.5 Sonnet, Opus), Google (Gemini Pro, Gemini Ultra), Meta (Llama 3), Mistral, and open-weight models via Ollama. Our proprietary SLM, Meridian, handles planning, routing, and context management but does not generate content directly.",
+    content: "Cobentt does not train its own foundation models. By default, Cobentt Cloud answers with hosted models routed through OpenRouter, which chooses the model that answers your request. You can also use on-device models that run entirely on your phone, such as Meridian Nano, or add your own OpenRouter key or custom endpoint. The model used for each answer is shown in the app.",
   },
   {
     title: "Model Behavior & Limitations",
@@ -16,19 +16,15 @@ const sections = [
   },
   {
     title: "How Your Data Is Used by AI Providers",
-    content: "When you use your own API keys, your prompts and responses are processed directly by the third-party provider under their terms. When using Cobentt's managed API, we forward your request to the selected provider and return the response. We do not allow any provider to train on your data when acting as our processor. We have data processing agreements in place with all major providers that prohibit training on customer content.",
-  },
-  {
-    title: "Meridian — Our Orchestration Layer",
-    content: "Meridian is a small language model (SLM) developed by Cobentt for routing, planning, and context retrieval. It analyzes your request, retrieves relevant context from your knowledge base, plans the optimal execution strategy, selects the best model for the task, and verifies the response for quality and safety. Meridian does not generate creative content — it orchestrates. It runs in your browser or on our servers depending on your deployment choice.",
+    content: "With Cobentt Cloud, your request is sent through our gateway to OpenRouter and then to the model that answers it. We record the model and token counts for billing; we do not keep the text of your chats on our servers. With your own key or custom endpoint, your request goes directly to that provider under its terms. On-device models process everything on your phone. For how your data is stored and deleted, see the Privacy Policy.",
   },
   {
     title: "Human Oversight",
-    content: "AI-generated outputs in Cobentt are not reviewed by humans unless you explicitly share them for support or feedback purposes. We may sample anonymized interactions to improve Meridian's routing accuracy and safety filters. We do not employ AI to make automated decisions that significantly affect your legal rights or access to services.",
+    content: "AI-generated outputs are not reviewed by people unless you choose to share them with support. Cobentt does not use AI to make decisions that affect your legal rights or access to services.",
   },
   {
-    title: "Responsible AI Practices",
-    content: "We implement safety filters for harmful content, prompt injection detection, output validation against known harmful patterns, rate limiting to prevent abuse, and user reporting mechanisms for problematic outputs. We publish transparency reports quarterly detailing model performance, safety incidents, and improvements. We are committed to the responsible deployment of AI technology.",
+    title: "Limits you should know about",
+    content: "AI answers can be wrong. Check anything important, especially medical, legal or financial advice, before you act on it. Web search results used in an answer are shown with their sources in the app.",
   },
 ];
 

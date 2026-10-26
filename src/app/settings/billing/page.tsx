@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Clock, ArrowUpRight, Receipt, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { newIdempotencyKey } from "@/lib/idempotency-client";
 
 type Me = {
   plan: "free" | "starter" | "plus" | "pro";
@@ -57,7 +58,11 @@ export default function BillingPage() {
     setError(null);
     setCancelling(true);
     try {
-      const res = await fetch("/api/billing/change-plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan }) });
+      const res = await fetch("/api/billing/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": newIdempotencyKey() },
+        body: JSON.stringify({ plan }),
+      });
       const body = (await res.json().catch(() => ({}))) as { error?: string; effective?: string };
       if (!res.ok) throw new Error(body.error ?? "Could not change your plan.");
       if (body.effective === "cycle_end") setNotice("Switches at the end of this period.");
@@ -75,7 +80,7 @@ export default function BillingPage() {
     setCancelling(true);
     setError(null);
     try {
-      const res = await fetch("/api/billing/cancel", { method: "POST" });
+      const res = await fetch("/api/billing/cancel", { method: "POST", headers: { "Idempotency-Key": newIdempotencyKey() } });
       if (!res.ok) throw new Error(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Could not cancel.");
       await qc.invalidateQueries({ queryKey: ["billing", "me"] });
     } catch (e) {
@@ -137,7 +142,7 @@ export default function BillingPage() {
               <div>
                 <p className="text-sm font-medium">Plan budget left</p>
                 <p className="text-sm text-muted-foreground">
-                  {data.balance.planUSD} · resets {fmtDate(data.balance.planExpiresAt)}
+                  <span className="tabular-nums">{data.balance.planUSD}</span> · resets {fmtDate(data.balance.planExpiresAt)}
                 </p>
               </div>
             </div>
@@ -146,7 +151,7 @@ export default function BillingPage() {
               <div>
                 <p className="text-sm font-medium">Top-up balance</p>
                 <p className="text-sm text-muted-foreground">
-                  {data.balance.topupUSD} · valid until {fmtDate(data.balance.topupExpiresAt)}
+                  <span className="tabular-nums">{data.balance.topupUSD}</span> · valid until {fmtDate(data.balance.topupExpiresAt)}
                 </p>
               </div>
             </div>
@@ -218,7 +223,7 @@ export default function BillingPage() {
                       {u.kind === "USAGE" && u.promptTokens != null ? ` · ${u.promptTokens} in / ${u.completionTokens ?? 0} out` : ""}
                     </p>
                   </div>
-                  <span className={u.direction === "spent" ? "text-muted-foreground" : "text-foreground"}>
+                  <span className={`tabular-nums ${u.direction === "spent" ? "text-muted-foreground" : "text-foreground"}`}>
                     {u.direction === "spent" ? "−" : "+"}
                     {u.amountUSD}
                   </span>
