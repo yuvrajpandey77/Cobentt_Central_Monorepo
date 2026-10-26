@@ -91,11 +91,11 @@ export async function POST(req: NextRequest) {
 
     const r = await activateOrder({ orderId, paymentId, userId, capturedPaise: provider.amountPaise, capturedCurrency: provider.currency, actor: "user", correlationId });
     if (!r.ok) {
-      const map = { not_found: [404, "Order not found"], bad_plan: [500, "Something went wrong. Contact support."], amount_mismatch: [400, "Payment amount mismatch"], refunded: [409, "This payment was refunded"] } as const;
+      const map = { not_found: [404, "Order not found"], bad_product: [500, "Something went wrong. Contact support."], amount_mismatch: [400, "Payment amount mismatch"], refunded: [409, "This payment was refunded"] } as const;
       const [status, msg] = map[r.reason];
       return fail(status, msg);
     }
-    return NextResponse.json({ success: true, kind: r.kind, plan: r.plan, periodEnd: r.periodEnd.toISOString(), alreadyActive: !r.activated });
+    return NextResponse.json({ success: true, kind: "topup", plan: r.plan, alreadyActive: !r.activated });
   } catch (err) {
     console.error("[payment-confirm] error:", err);
     await audit("payment.confirm_failed", err instanceof Error ? err.message : "Unknown error", "system");

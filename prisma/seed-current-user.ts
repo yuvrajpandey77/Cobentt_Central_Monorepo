@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -44,10 +44,8 @@ async function main() {
         data: {
           clerkUserId,
           email: "dev@cogerphere.local", // Can be updated later
-          displayName: "Development User",
           status: "APPROVED",
           approvedAt: new Date(),
-          tier: "developer",
           maxDailyRequests: 100, // Increased for development
           maxDailyTokens: 500000, // 500k tokens per day
           graceTokens: 50000, // 50k grace tokens

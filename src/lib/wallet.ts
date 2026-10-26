@@ -2,7 +2,7 @@ import prisma from "@/lib/db";
 import { Prisma } from "@/generated/prisma";
 import { TOPUP_VALID_DAYS } from "@/lib/pricing-catalog";
 import { debit, debitUpTo, grantPlan, grantTopup, liveBalances, refund, type WalletState } from "@/lib/wallet-math";
-import { MODEL_TABLE, costInST, lookupModel, type ModelRate } from "@/lib/pricing-catalog";
+import { MODEL_TABLE, costMicroUSD, lookupModel, type ModelRate } from "@/lib/pricing-catalog";
 
 type Tx = Prisma.TransactionClient;
 
@@ -18,7 +18,7 @@ const toState = (r: Row): WalletState => ({ planST: Number(r.planST), planExpire
 
 /** Locks the user's wallet row for the rest of the transaction (creating it first). Serialises every spend and grant per user. */
 async function lockWallet(tx: Tx, userId: string): Promise<WalletState> {
-  await tx.$executeRaw`INSERT INTO "token_wallets" ("clerkUserId") VALUES (${userId}) ON CONFLICT ("clerkUserId") DO NOTHING`;
+  await tx.$executeRaw`INSERT INTO "token_wallets" ("clerkUserId", "updatedAt") VALUES (${userId}, now()) ON CONFLICT ("clerkUserId") DO NOTHING`;
   const rows = await tx.$queryRaw<Row[]>`SELECT * FROM "token_wallets" WHERE "clerkUserId" = ${userId} FOR UPDATE`;
   return toState(rows[0]);
 }
@@ -109,7 +109,7 @@ const WORST_RATE: ModelRate = [...MODEL_TABLE.values()].reduce((a, b) => (a.inpu
 export async function chargeUsage(userId: string, model: string, promptTokens: number, completionTokens: number, refId: string, now = new Date()): Promise<{ chargedST: number; shortfallST: number }> {
   const rate = lookupModel(model) ?? WORST_RATE;
   if (rate.inputPerM === 0 && rate.outputPerM === 0) return { chargedST: 0, shortfallST: 0 };
-  const owed = costInST(rate, promptTokens, completionTokens);
+  const owed = costMicroUSD(rate, promptTokens, completionTokens);
   return prisma.$transaction(async (tx) => {
     const seen = await tx.tokenLedger.findUnique({ where: { refId: `use:${refId}` }, select: { deltaST: true } });
     if (seen) return { chargedST: Number(-seen.deltaST), shortfallST: 0 };
@@ -127,6 +127,20 @@ export async function chargeUsage(userId: string, model: string, promptTokens: n
 export async function hasFunds(userId: string, estimateST: number, now = new Date()): Promise<boolean> {
   const b = await getBalances(userId, now);
   return b.total >= Math.max(1, estimateST);
+}
+
+/** Ends the plan allowance now (halted, paused or cancelled). Idempotent per `eventId`. */
+export async function expirePlanAllowance(userId: string, eventId: string, now = new Date()): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const refId = `exp:${eventId}`;
+    const seen = await tx.tokenLedger.findUnique({ where: { refId }, select: { id: true } });
+    if (seen) return false;
+    const w = await lockWallet(tx, userId);
+    const taken = Math.max(0, liveBalances(w, now).plan);
+    await save(tx, userId, { ...w, planST: 0, planExpiresAt: now });
+    await tx.tokenLedger.create({ data: { clerkUserId: userId, kind: "REVERSAL", deltaST: BigInt(-taken), refId } });
+    return true;
+  });
 }
 
 /**

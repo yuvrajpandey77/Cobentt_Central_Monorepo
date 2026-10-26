@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/prisma";
 import * as readline from "readline";
 
 const prisma = new PrismaClient();
@@ -61,10 +61,8 @@ async function main() {
         data: {
           clerkUserId: clerkUserId.trim(),
           email: email.trim() || "user@cogerphere.local",
-          displayName: name.trim() || "Cogerphere User",
           status: "APPROVED",
           approvedAt: new Date(),
-          tier: "developer",
           maxDailyRequests: 100,
           maxDailyTokens: 500000,
           graceTokens: 50000,
@@ -74,7 +72,6 @@ async function main() {
       console.log("\n✅ User created successfully!");
       console.log(`- Clerk ID: ${newUser.clerkUserId}`);
       console.log(`- Email: ${newUser.email}`);
-      console.log(`- Display Name: ${newUser.displayName}`);
       console.log(`- Status: ${newUser.status}`);
       console.log(`- Daily Requests: ${newUser.maxDailyRequests}`);
       console.log(`- Daily Tokens: ${newUser.maxDailyTokens.toLocaleString()}`);

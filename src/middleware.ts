@@ -29,6 +29,8 @@ const isPublicRoute = createRouteMatcher([
     "/api/trpc(.*)",
     // Health check is public (no sensitive data exposed)
     "/api/health",
+    // Public price list read by the mobile app before sign-in. Carries no user data.
+    "/api/billing/catalog",
 ]);
 
 

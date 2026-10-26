@@ -35,7 +35,7 @@ declare global {
   }
 }
 
-type ProductKey = "plan:starter" | "plan:plus" | "plan:pro" | "topup:t5" | "topup:t10" | "topup:t25";
+type ProductKey = "topup:t1" | "topup:t2" | "topup:t3";
 
 interface Props {
   /** What to buy. The server decides the price. */

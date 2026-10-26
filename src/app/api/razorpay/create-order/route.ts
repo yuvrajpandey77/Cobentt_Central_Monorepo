@@ -4,7 +4,7 @@ import { z } from "zod";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { logPaymentEvent } from "@/lib/payment-audit";
 import { getRazorpay } from "@/lib/razorpay";
-import { ALL_PRODUCT_KEYS, billingCurrency, parseProduct, productAmount } from "@/lib/billing-config";
+import { ALL_PRODUCT_KEYS, BILLING_CURRENCY, parseProduct, productAmount } from "@/lib/billing-config";
 import prisma from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     const productKey = parsed.data.product;
     const product = parseProduct(productKey)!;
-    const currency = billingCurrency();
-    const amount = productAmount(product, currency);
+    const currency = BILLING_CURRENCY;
+    const amount = productAmount(product);
 
     // Reuse a still-open order for the SAME product, price and currency (so a double click does not create two charges).
     const open = await prisma.paymentRecord.findFirst({
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
         amount,
         currency,
         // `plan` is a required legacy column; paid tiers are all PRO and top-ups leave the user's plan alone.
-        plan: product.kind === "plan" ? "PRO" : "FREE",
+        plan: "FREE",
         product: productKey,
         status: "CREATED",
         receipt,
