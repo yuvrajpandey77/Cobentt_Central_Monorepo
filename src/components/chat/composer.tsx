@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { AttachInput, AttachmentPills, type AttachmentMeta, type AttachmentPill, type AttachInputHandle } from "@/components/chat/attach-input";
 import { ModelSelector } from "@/modules/chat/ui/components/model-selector";
-import { DEFAULT_MODEL } from "@/lib/models";
+import { defaultModelFor } from "@/lib/models";
+import { useByok } from "@/hooks/use-byok";
 import { useIntentRouter } from "@/lib/intent/use-intent";
 import { IntentConfirmationCard } from "@/components/intent/intent-confirmation-card";
 import type { IntentResult } from "@/lib/intent/types";
@@ -69,7 +70,8 @@ export function Composer({
 
   // The model shown in the input-box picker is the model actually used:
   // it is sent with every stream request and stored on new conversations.
-  const effectiveModel = modelId || DEFAULT_MODEL;
+  const { providers: keyProviders } = useByok();
+  const effectiveModel = modelId || defaultModelFor(keyProviders);
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();

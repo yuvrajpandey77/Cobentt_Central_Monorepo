@@ -3,7 +3,7 @@ import "server-only";
 import prisma from "@/lib/db";
 import { decryptApiKey } from "@/lib/api-key-crypto";
 import { getProviderConfig } from "@/lib/ai/provider";
-import { MODELS } from "@/lib/models";
+import { MODELS, PROVIDER_MODEL_OPTIONS } from "@/lib/models";
 
 /**
  * BYOK (Bring Your Own Key) resolver — server-only.
@@ -180,7 +180,11 @@ export async function resolveByokCredential(
   // Normalize model for the upstream we're actually hitting.
   let upstreamModel = model;
   if (credential.provider === "openai") {
-    upstreamModel = model.replace(/^openai\//i, "").replace(/^openrouter\//i, "");
+    // An OpenRouter-only id (openrouter/fusion, openrouter/free) has no OpenAI
+    // equivalent. Use the OpenAI default for this key instead of failing.
+    upstreamModel = model.startsWith("openrouter/")
+      ? PROVIDER_MODEL_OPTIONS.openai[0]
+      : model.replace(/^openai\//i, "");
   }
   if (credential.provider === "openrouter" && !model.includes("/")) {
     upstreamModel = `openai/${model}`;

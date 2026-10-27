@@ -11,7 +11,8 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { DEFAULT_MODEL } from "@/lib/models";
+import { defaultModelFor } from "@/lib/models";
+import { useByok } from "@/hooks/use-byok";
 
 interface ChatViewProps {
   conversationId: string;
@@ -57,7 +58,8 @@ export const ChatView = ({ conversationId }: ChatViewProps) => {
     onError: (err) => toast.error(err.message || "Failed to regenerate"),
   }));
 
-  const currentModel = conversation?.model || DEFAULT_MODEL;
+  const { providers: keyProviders } = useByok();
+  const currentModel = conversation?.model || defaultModelFor(keyProviders);
 
   const handleModelChange = (model: string) => {
     updateConversation.mutate({ id: conversationId, model });
