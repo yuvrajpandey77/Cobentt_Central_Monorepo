@@ -8,6 +8,15 @@ export interface ModelInfo {
 }
 
 export const MODELS: ModelInfo[] = [
+  // OpenRouter: default. Fuses a panel of models into one answer.
+  {
+    id: "openrouter/fusion",
+    label: "OpenRouter Fusion",
+    provider: "OpenRouter",
+    tier: "powerful",
+    description: "Several models answer, then one fused answer",
+    context: 131072,
+  },
   // Fast / Cheap
   {
     id: "openrouter/free",
@@ -129,7 +138,36 @@ export const MODELS: ModelInfo[] = [
   },
 ];
 
-export const DEFAULT_MODEL = "openrouter/free";
+/** Models offered for each key provider, in order. The first is the default. */
+export const PROVIDER_MODEL_OPTIONS: Record<string, string[]> = {
+  openrouter: ["openrouter/fusion", "openrouter/free"],
+  openai: ["openai/gpt-4o-mini", "openai/gpt-4o"],
+};
+
+/** Provider order when a user has keys for more than one. OpenRouter wins. */
+const PROVIDER_PRIORITY = ["openrouter", "openai"];
+
+export const DEFAULT_MODEL = "openrouter/fusion";
+
+/** The provider whose models the picker should offer, from the keys the user saved. */
+export function activeProvider(providers: string[]): string | null {
+  return PROVIDER_PRIORITY.find((p) => providers.includes(p)) ?? null;
+}
+
+/** Models to show for the user's keys. With no keys, the full list is shown. */
+export function modelOptionsFor(providers: string[]): ModelInfo[] {
+  const provider = activeProvider(providers);
+  if (!provider) return UNIQUE_MODELS;
+  return PROVIDER_MODEL_OPTIONS[provider]
+    .map((id) => getModelById(id))
+    .filter((m): m is ModelInfo => Boolean(m));
+}
+
+/** Default model for the user's keys: OpenRouter Fusion, or the OpenAI default. */
+export function defaultModelFor(providers: string[]): string {
+  const provider = activeProvider(providers);
+  return provider ? PROVIDER_MODEL_OPTIONS[provider][0] : DEFAULT_MODEL;
+}
 
 export type ModeKey = "slides" | "document" | "sheet" | "deep-research";
 

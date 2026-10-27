@@ -316,8 +316,8 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                     id="main-project-form"
                     onSubmit={form.handleSubmit(onSubmit)} 
                     className={cn(
-                        "relative border border-white/20 rounded-3xl bg-white/10 backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
-                        isFocused && "border-white/40 shadow-2xl ring-1 ring-white/20",
+                        "relative border border-[var(--color-cb-border-strong)] rounded-3xl bg-[var(--color-cb-input-bg)] backdrop-blur-lg transition-all duration-200 ease-out cursor-text shadow-xl",
+                        isFocused && "border-[var(--color-text-muted)] shadow-2xl ring-1 ring-[var(--color-cb-border)]",
                     )}
                 >
 
@@ -349,11 +349,11 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                     {/* Ideas Section */}
                     {showIdeas && (
                     <div className="px-5 pb-3" ref={ideasMenuRef}>
-                        <div className="p-6 rounded-xl border border-white/15 bg-black/30 backdrop-blur-sm shadow-xl">
+                        <div className="p-6 rounded-xl border border-[var(--color-cb-border)] bg-[var(--color-cb-card)] backdrop-blur-sm shadow-xl">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                                <h3 className="text-sm font-semibold text-white">Quick Ideas</h3>
-                                <div className="flex-1 h-px bg-white/10"></div>
+                                <div className="w-2 h-2 bg-[var(--color-text-strong)] rounded-full"></div>
+                                <h3 className="text-sm font-semibold text-[var(--color-text-strong)]">Quick Ideas</h3>
+                                <div className="flex-1 h-px bg-[var(--color-cb-border)]"></div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {PROJECT_TEMPLATES.slice(0, 6).map((template) => (
@@ -361,7 +361,7 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                                         key={template.title}
                                         variant="outline"
                                         size="sm"
-                                        className="h-10 px-4 text-sm border-white/20 hover:border-white/40 bg-transparent hover:bg-white/10 text-white transition-colors duration-200"
+                                        className="h-10 px-4 text-sm border-[var(--color-cb-border-strong)] hover:border-[var(--color-text-muted)] bg-transparent hover:bg-[var(--color-cb-card)] text-[var(--color-text-primary)] transition-colors duration-200"
                                         onClick={() => {
                                             onSelect(template.prompt);
                                         }}
@@ -398,26 +398,26 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setShowModelMenu((v) => !v)}
-                                    className="h-10 px-4 rounded-full bg-transparent text-white/90 hover:text-white transition-all duration-200 ease-out focus:ring-2 focus:ring-white/20 focus:outline-none -ml-2"
+                                    className="h-10 px-4 rounded-full bg-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-strong)] transition-all duration-200 ease-out focus:ring-2 focus:ring-[var(--color-cb-border)] focus:outline-none -ml-2"
                                 >
                                     <span className="max-w-[160px] truncate">{selectedLabel}</span>
                                     <ChevronDown className="ml-1 size-3 opacity-80" />
                                 </Button>
                                 {showModelMenu && (
-                                    <div className="absolute bottom-12 left-0 w-72 max-h-72 overflow-y-auto thin-scrollbar rounded-xl border border-white/15 bg-black/95 backdrop-blur-xl text-white shadow-2xl p-2 z-20">
+                                    <div className="absolute bottom-12 left-0 w-72 max-h-72 overflow-y-auto thin-scrollbar rounded-xl border border-[var(--color-cb-border)] bg-[var(--color-cb-bg-elevated)] backdrop-blur-xl text-[var(--color-text-primary)] shadow-2xl p-2 z-20">
                                         <button
                                             type="button"
                                             onClick={() => pickModel("")}
                                             className={cn(
                                                 "w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
-                                                selectedModel === "" ? "bg-white/10" : "hover:bg-white/10"
+                                                selectedModel === "" ? "bg-[var(--color-cb-card)]" : "hover:bg-[var(--color-cb-card)]"
                                             )}
                                         >
                                             <div className="flex-1">
                                                 <div className="text-sm font-medium leading-tight">Auto</div>
                                                 <div className="text-[11px] text-text-secondary leading-snug">Recommended default for this workspace</div>
                                             </div>
-                                            {selectedModel === "" && <Check className="h-4 w-4 shrink-0 text-white/80" />}
+                                            {selectedModel === "" && <Check className="h-4 w-4 shrink-0 text-[var(--color-text-strong)]" />}
                                         </button>
                                         {UNIQUE_MODELS.map((m) => (
                                             <button
@@ -426,14 +426,14 @@ export const ProjectForm = ({ onContractPrompt, projectCategory, onCategoryClear
                                                 onClick={() => pickModel(m.id)}
                                                 className={cn(
                                                     "w-full flex items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
-                                                    selectedModel === m.id ? "bg-white/10" : "hover:bg-white/10"
+                                                    selectedModel === m.id ? "bg-[var(--color-cb-card)]" : "hover:bg-[var(--color-cb-card)]"
                                                 )}
                                             >
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-sm font-medium leading-tight truncate">{m.label}</div>
                                                     <div className="text-[11px] text-text-secondary leading-snug truncate">{m.provider} · {Math.round(m.context / 1000)}K context</div>
                                                 </div>
-                                                {selectedModel === m.id && <Check className="h-4 w-4 shrink-0 text-white/80" />}
+                                                {selectedModel === m.id && <Check className="h-4 w-4 shrink-0 text-[var(--color-text-strong)]" />}
                                             </button>
                                         ))}
                                     </div>

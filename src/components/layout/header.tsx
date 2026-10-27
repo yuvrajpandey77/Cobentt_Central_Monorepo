@@ -25,7 +25,7 @@ export const Header = () => {
     <header className={cn(
       "sticky top-0 z-30 w-full transition-all duration-300",
       isScrolled
-        ? "bg-white/20 dark:bg-black/20 backdrop-blur-md border-b border-white/20"
+        ? "bg-[var(--color-cb-bg)]/80 backdrop-blur-md border-b border-[var(--color-cb-border)]"
         : "bg-transparent backdrop-blur-sm"
     )}>
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
@@ -36,12 +36,12 @@ export const Header = () => {
             <SignedOut>
               <div className="flex items-center gap-3">
                 <Link href="/sign-in">
-                  <Button variant="ghost" size="default" className="text-white/80 hover:text-white hover:bg-white/10 border border-white/20 h-9 px-6">
+                  <Button variant="ghost" size="default" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-strong)] hover:bg-[var(--color-cb-card)] border border-[var(--color-cb-border-strong)] h-9 px-6">
                     Sign in
                   </Button>
                 </Link>
                 <Link href="/sign-up">
-                  <Button className="bg-white text-black hover:bg-gray-100 font-semibold shadow-lg border-none h-9 px-6">
+                  <Button className="bg-[var(--color-text-strong)] text-[var(--color-cb-bg)] hover:opacity-90 font-semibold shadow-lg border-none h-9 px-6">
                     Sign up
                   </Button>
                 </Link>
@@ -57,7 +57,7 @@ export const Header = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden text-white hover:bg-white/20 hover:text-black"
+            className="md:hidden text-[var(--color-text-strong)] hover:bg-[var(--color-cb-card)]"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -65,18 +65,18 @@ export const Header = () => {
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden border-t border-white/20 py-4">
+          <div className="md:hidden border-t border-[var(--color-cb-border)] py-4">
             <nav className="flex flex-col space-y-4">
               <div className="flex flex-col space-y-3 pt-4 w-full">
                 <SignedOut>
                   <div className="flex flex-col gap-3 w-full">
                     <Link href="/sign-in" className="w-full">
-                      <Button variant="ghost" size="default" className="text-white/80 hover:text-white hover:bg-white/10 w-full justify-start border border-white/20 h-9">
+                      <Button variant="ghost" size="default" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text-strong)] hover:bg-[var(--color-cb-card)] w-full justify-start border border-[var(--color-cb-border-strong)] h-9">
                         Sign in
                       </Button>
                     </Link>
                     <Link href="/sign-up" className="w-full">
-                      <Button className="bg-white text-black hover:bg-gray-100 font-semibold w-full border-none h-9">
+                      <Button className="bg-[var(--color-text-strong)] text-[var(--color-cb-bg)] hover:opacity-90 font-semibold w-full border-none h-9">
                         Sign up
                       </Button>
                     </Link>

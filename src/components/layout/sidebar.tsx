@@ -208,7 +208,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
 
   const convRoute = useCallback((conv: ConversationEntry) => `/${conv.mode || "chat"}/${conv.id}`, []);
 
-  const iconClasses = "h-9 w-9 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all duration-200";
+  const iconClasses = "h-9 w-9 rounded-lg border border-[var(--color-cb-border)] bg-[var(--color-cb-card)]/40 hover:bg-[var(--color-cb-card)] flex items-center justify-center transition-all duration-200";
 
   if (!user) {
     return (
@@ -230,7 +230,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
                 <div className="w-16 h-16 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <FolderOpen className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Create Something</h3>
+                <h3 className="text-lg font-semibold text-[var(--color-text-strong)] mb-2">Create Something</h3>
                 <p className="text-sm text-text-secondary mb-6">Sign up to start building and save your projects</p>
                 <Link href="/sign-up" className="w-full">
                   <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg">
@@ -243,28 +243,28 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
               <div className="flex flex-col items-center gap-3">
                 <Link href="/dapp-studio" className="group">
                   <div className={iconClasses}>
-                    <Code2 className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <Code2 className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-primary" />
                   </div>
                 </Link>
                 <button className="group" aria-label="Templates">
                   <div className={iconClasses}>
-                    <Brain className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <Brain className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-primary" />
                   </div>
                 </button>
                 <Link href="/all-projects" className="group">
                   <div className={cn(iconClasses, "relative")}>
-                    <FolderOpen className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <FolderOpen className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-primary" />
                     <span className="absolute -top-1.5 -right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/80 text-white border border-white/20">0</span>
                   </div>
                 </Link>
                 <Link href="/sign-up" className="group" aria-label="Get Started">
                   <div className={iconClasses}>
-                    <Plus className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <Plus className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-primary" />
                   </div>
                 </Link>
                 <Link href="/settings/user" className="group" aria-label="Settings">
                   <div className={iconClasses}>
-                    <SettingsIcon className="w-4 h-4 text-white/80 group-hover:text-primary" />
+                    <SettingsIcon className="w-4 h-4 text-[var(--color-text-secondary)] group-hover:text-primary" />
                   </div>
                 </Link>
               </div>
@@ -302,17 +302,17 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
             <div className="flex flex-col items-center gap-2 flex-shrink-0">
               <Link href="/chats" className="group">
                 <div className={iconClasses}>
-                  <MessageCircle className="w-3.5 h-3.5 text-white/80 group-hover:text-primary" />
+                  <MessageCircle className="w-3.5 h-3.5 text-[var(--color-text-secondary)] group-hover:text-primary" />
                 </div>
               </Link>
               <Link href="/dapp-studio" className="group">
                 <div className={iconClasses}>
-                  <Code2 className="w-3.5 h-3.5 text-white/80 group-hover:text-primary" />
+                  <Code2 className="w-3.5 h-3.5 text-[var(--color-text-secondary)] group-hover:text-primary" />
                 </div>
               </Link>
               <Link href="/all-projects" className="group">
                 <div className={cn(iconClasses, "relative")}>
-                  <FolderOpen className="w-3.5 h-3.5 text-white/80 group-hover:text-primary" />
+                  <FolderOpen className="w-3.5 h-3.5 text-[var(--color-text-secondary)] group-hover:text-primary" />
                   <span className="absolute -top-1.5 -right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/80 text-white border border-white/20">
                     {(projects?.length || 0) > 99 ? "99+" : (projects?.length || 0)}
                   </span>
@@ -403,7 +403,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
               autoFocus
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-black/40 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 text-white"
+              className="w-full px-3 py-2 text-sm bg-[var(--color-cb-input-bg)] border border-[var(--color-cb-border-strong)] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 text-[var(--color-text-primary)]"
               placeholder={isConversationTarget ? "Chat name" : "Project name"}
               maxLength={255}
             />
@@ -423,7 +423,7 @@ export const Sidebar = ({ className, dataSource = "trpc" }: SidebarProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deleteTarget?.__type === "conversation" ? "Chat" : "Project"}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <span className="font-semibold text-white">
+              Are you sure you want to delete <span className="font-semibold text-[var(--color-text-strong)]">
                 {deleteTarget?.__type === "conversation" ? (deleteTarget?.title || "this chat") : deleteTarget?.name}
               </span>? This action cannot be undone. All messages and data will be permanently removed.
             </AlertDialogDescription>

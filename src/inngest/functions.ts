@@ -1,3 +1,4 @@
+import { NonRetriableError } from "inngest";
 import { inngest } from "./client";
 import { createAgent, createTool, createNetwork, AnyZodType, Tool, Message, createState } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
@@ -65,6 +66,12 @@ export const CobenttAgent = inngest.createFunction(
   { id: "COBENTT" },
   { event: "Cobentt/runAgent" },
   async ({ event, step }) => {
+    // Every run must belong to a user. Without an owner the history query below
+    // would read messages from any project, so refuse the event instead.
+    if (!event.data.userId) {
+      throw new NonRetriableError("Cobentt/runAgent requires userId");
+    }
+
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("cogerphereailabsbeta1");
       await sandbox.setTimeout(SANDBOX_TIMEOUT);
@@ -78,7 +85,7 @@ export const CobenttAgent = inngest.createFunction(
         where: {
           projectId: event.data.projectId,
           // SECURITY: Only fetch messages belonging to the requesting user
-          ...(event.data.userId ? { project: { userId: event.data.userId } } : {}),
+          project: { userId: event.data.userId },
         },
         orderBy: {
           createdAt: "desc",

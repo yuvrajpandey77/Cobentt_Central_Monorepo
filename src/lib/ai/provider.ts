@@ -67,10 +67,9 @@ export function getProviderConfig(): ProviderConfig {
 
 export function normalizeModel(model: string): string {
   const cfg = getProviderConfig();
+  // OpenRouter ids such as "openrouter/fusion" are valid as sent.
   if (cfg.provider === "openrouter") {
-    return model.startsWith("openrouter/")
-      ? model.replace("openrouter/", "")
-      : model;
+    return model;
   }
   if (cfg.provider === "openai") {
     return model.replace(/^openrouter\//, "").replace(/^openai\//, "");

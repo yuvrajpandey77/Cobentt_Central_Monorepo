@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Lightbulb, Zap, Brain, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MODELS, TIER_LABELS, getModelById } from "@/lib/models";
+import { MODELS, TIER_LABELS, getModelById, modelOptionsFor } from "@/lib/models";
+import { useByok } from "@/hooks/use-byok";
 
 const tierIcons: Record<string, React.ReactNode> = {
   fast: <Zap className="h-3.5 w-3.5" />,
@@ -21,6 +22,9 @@ export const ModelSelector = ({ currentModel, onChange }: ModelSelectorProps) =>
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const current = getModelById(currentModel);
+  // With a saved key, offer only that provider's models. Without one, show all.
+  const { providers, loading } = useByok();
+  const scoped = !loading && providers.length > 0 ? modelOptionsFor(providers) : null;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -57,7 +61,28 @@ export const ModelSelector = ({ currentModel, onChange }: ModelSelectorProps) =>
       {open && (
         <div className="absolute bottom-full left-0 mb-2 w-72 rounded-xl border border-white/15 bg-black/95 backdrop-blur-xl shadow-2xl z-50 overflow-hidden">
           <div className="max-h-[60vh] overflow-y-auto thin-scrollbar p-2 space-y-1">
-            {tiers.map((tier) => {
+            {scoped && scoped.map((model) => (
+              <button
+                key={model.id}
+                type="button"
+                onClick={() => {
+                  onChange(model.id);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left px-2.5 py-2 rounded-lg text-xs transition-all duration-150",
+                  model.id === currentModel
+                    ? "bg-primary/20 text-white border border-primary/30"
+                    : "text-text-secondary hover:bg-white/10 hover:text-white border border-transparent"
+                )}
+              >
+                <div className="font-medium">{model.label}</div>
+                <div className="text-[10px] text-text-tertiary mt-0.5">
+                  {model.description} &middot; {Math.round(model.context / 1000)}K context
+                </div>
+              </button>
+            ))}
+            {!scoped && tiers.map((tier) => {
               const tierModels = MODELS.filter((m) => m.tier === tier);
               if (tierModels.length === 0) return null;
               return (

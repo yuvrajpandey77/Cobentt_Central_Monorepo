@@ -5,7 +5,6 @@ import { KeyRound, Eye, EyeOff, Loader2, CheckCircle2, XCircle, FlaskConical } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DEFAULT_MODEL, getModelById, UNIQUE_MODELS } from "@/lib/models";
 import { toast } from "sonner";
 import { useByok } from "@/hooks/use-byok";
 import { fetchJson } from "@/lib/safe-fetch-json";
@@ -47,14 +46,11 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
   const [provider, setProvider] = useState("openrouter");
   const [name, setName] = useState("My key");
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState(DEFAULT_MODEL);
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<"ok" | "fail" | null>(null);
   const [testMsg, setTestMsg] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const selectedModel = getModelById(model);
 
   const handleTest = async () => {
     if (!apiKey.trim()) {
@@ -68,11 +64,16 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
       const { data } = await fetchJson<{ ok: boolean; error?: string }>(`/api/byok/test`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: apiKey.trim(), model }),
+        // Test with a cheap model so checking a key never runs the paid Fusion synthesizer.
+        body: JSON.stringify({
+          provider,
+          apiKey: apiKey.trim(),
+          model: provider === "openai" ? "openai/gpt-4o-mini" : "openrouter/free",
+        }),
       });
       if (data?.ok) {
         setTestResult("ok");
-        setTestMsg(`Connected — ${selectedModel?.label ?? model} responded.`);
+        setTestMsg("Connected — your key works.");
       } else {
         setTestResult("fail");
         setTestMsg(data?.error || "Test failed. Check your connection and retry.");
@@ -146,7 +147,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
               ))}
             </select>
             <p className="text-[11px] text-text-tertiary">
-              OpenRouter works with every model. OpenAI keys work with GPT models only.
+              Pick the provider whose key you have. The chat model menu then offers its two models.
             </p>
           </div>
 
@@ -182,29 +183,6 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
             <p className="text-[11px] text-text-tertiary">
               Encrypted with AES-256-GCM. Never shown again after saving.
             </p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-text-secondary">Model</Label>
-            <select
-              value={model}
-              onChange={(e) => {
-                setModel(e.target.value);
-                setTestResult(null);
-              }}
-              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#a3c987]/60"
-            >
-              {UNIQUE_MODELS.map((m) => (
-                <option key={m.id} value={m.id} className="bg-[#1a1d20]">
-                  {m.label} — {m.provider}
-                </option>
-              ))}
-            </select>
-            {selectedModel && (
-              <p className="text-[11px] text-text-tertiary">
-                {selectedModel.description} · {Math.round(selectedModel.context / 1000)}K context
-              </p>
-            )}
           </div>
 
           {testResult && (
