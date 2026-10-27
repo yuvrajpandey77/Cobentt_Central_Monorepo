@@ -125,13 +125,13 @@ const PageContent = () => {
             
             {/* Main Content - Scrollable */}
             <div className={cn(
-                "flex-1 transition-all duration-500 ease-in-out",
+                "flex-1 min-w-0 transition-all duration-500 ease-in-out",
                 isCollapsed ? "lg:ml-[52px]" : "lg:ml-[240px]"
             )}>
                 <Header />
                 
                 {/* Hero Section */}
-                <section className="relative overflow-hidden h-screen flex items-start justify-center pt-[10.75rem]">
+                <section className="relative overflow-hidden h-screen flex items-start justify-center pt-[5.5rem]">
                     <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
                         <div className="text-center max-w-[47.52rem] mx-auto">
         
@@ -160,7 +160,7 @@ const PageContent = () => {
                                 </ModeProvider>
 
                                 <div className="flex items-center justify-center">
-                                    <div className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/5 p-1 backdrop-blur">
+                                    <div className="inline-flex max-w-full flex-wrap justify-center items-center gap-1 rounded-full border border-[var(--color-cb-border-strong)] bg-[var(--color-cb-card)] p-1 backdrop-blur">
                                         {([
                                             ["website", Globe],
                                             ["smart contract", ScrollText],
@@ -177,8 +177,8 @@ const PageContent = () => {
                                                 className={cn(
                                                     "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-200 inline-flex items-center gap-1.5",
                                                     projectCategory === cat
-                                                        ? "bg-white/80 text-black shadow-lg"
-                                                        : "text-text-tertiary hover:text-text-secondary hover:bg-white/10",
+                                                        ? "bg-[var(--color-text-strong)] text-[var(--color-cb-bg)] shadow-lg"
+                                                        : "text-text-tertiary hover:text-text-secondary hover:bg-[var(--color-cb-card)]",
                                                 )}
                                             >
                                                 <Icon className="h-4 w-4" />
