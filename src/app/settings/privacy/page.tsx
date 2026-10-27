@@ -64,11 +64,12 @@ export default function PrivacyPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success("Account deletion scheduled. You have 30 days to cancel.");
+      toast.success("Your account has been deleted.");
       setShowDeleteDialog(false);
       setDeleteConfirm("");
+      window.location.assign("/");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to schedule deletion");
+      toast.error(err instanceof Error ? err.message : "Failed to delete account");
     } finally {
       setDeleting(false);
     }
@@ -169,7 +170,7 @@ export default function PrivacyPage() {
             <div>
               <p className="text-sm font-medium">Delete Account</p>
               <p className="text-sm text-muted-foreground">
-                Permanently delete your account. 30-day grace period.
+                Permanently delete your account. This cannot be undone.
               </p>
             </div>
             <Button

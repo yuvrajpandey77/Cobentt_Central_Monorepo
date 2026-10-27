@@ -220,3 +220,29 @@ export async function applySubscriptionEvent(opts: {
   await logPaymentEvent({ clerkUserId, event: event, actor: "webhook", details: { subscriptionId: sub.id, status: t.status } });
   await syncPlanMetadata(clerkUserId);
 }
+
+/**
+ * Ends billing for an account that is being deleted. The subscription is cancelled now: there is no period left to finish,
+ * and nothing renews after deletion. Returns false when there was nothing to cancel. Throws if Razorpay refuses, so the
+ * caller can stop the deletion instead of leaving a live subscription behind.
+ */
+export async function cancelSubscriptionForDeletion(clerkUserId: string): Promise<boolean> {
+  const user = await prisma.allowedUser.findUnique({
+    where: { clerkUserId },
+    select: { razorpaySubscriptionId: true },
+  });
+  const subscriptionId = user?.razorpaySubscriptionId;
+  if (!subscriptionId) return false;
+
+  const remote = await getRazorpay().subscriptions.fetch(subscriptionId);
+  if (remote.status !== "cancelled" && remote.status !== "completed") {
+    await getRazorpay().subscriptions.cancel(subscriptionId, false);
+  }
+  await logPaymentEvent({
+    clerkUserId,
+    event: "subscription.cancelled_for_deletion",
+    actor: "system",
+    details: { subscriptionId },
+  });
+  return true;
+}

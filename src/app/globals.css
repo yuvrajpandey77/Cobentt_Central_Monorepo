@@ -563,6 +563,23 @@ body {
     color: inherit !important;
   }
 
+  /* Overview landing: the gradient box is the element's line box, so tight leading cuts descenders.
+     Drop the gradient for text elements only; buttons and links keep their own colors. */
+  .overview-wrapper :where(h1, h2, h3, h4, h5, h6, p, span, li, small, strong, em) {
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    background-image: none;
+    color: inherit;
+  }
+
+  /* Headlines wrap evenly; paragraphs avoid one-word last lines. Progressive: browsers without support wrap normally. */
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
   /* Exclude chat workspace from global gradient text */
   #chat-workspace * {
     -webkit-background-clip: initial !important;

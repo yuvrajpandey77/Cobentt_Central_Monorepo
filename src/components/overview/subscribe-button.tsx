@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
+import { newIdempotencyKey } from "@/lib/idempotency-client";
 
 type PlanKey = "starter" | "plus" | "pro";
 
@@ -14,6 +15,8 @@ export function SubscribeButton({ plan, label, className }: { plan: PlanKey; lab
   const { isSignedIn } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One key per checkout attempt: a network retry reuses it, so the server replays instead of creating a second subscription.
+  const keyRef = useRef<string | null>(null);
 
   const start = async () => {
     setError(null);
@@ -23,11 +26,13 @@ export function SubscribeButton({ plan, label, className }: { plan: PlanKey; lab
     }
     setBusy(true);
     try {
+      keyRef.current ??= newIdempotencyKey();
       const res = await fetch("/api/billing/subscribe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Idempotency-Key": keyRef.current },
         body: JSON.stringify({ plan }),
       });
+      keyRef.current = null;
       const body = (await res.json().catch(() => ({}))) as { checkoutUrl?: string; error?: string };
       if (!res.ok || !body.checkoutUrl) {
         setError(body.error ?? "Could not start checkout.");

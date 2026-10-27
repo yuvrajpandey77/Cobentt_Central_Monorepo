@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import GlobalQueryProgress from "@/components/global-query-progress";
-import { Analytics } from "@vercel/analytics/next";
+import { OptionalAnalytics } from "@/components/optional-analytics";
+import { CommandPalette } from "@/components/command-palette";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -33,6 +34,13 @@ export const metadata: Metadata = {
   },
 };
 
+/** viewport-fit=cover lets fixed headers and sheets use env(safe-area-inset-*) on notched phones. */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,7 +59,8 @@ export default function RootLayout({
             <GlobalQueryProgress />
             <Toaster />
             {children}
-            <Analytics />
+            <CommandPalette />
+            <OptionalAnalytics />
           </TRPCReactProvider>
         </ClerkProvider>
       </body>

@@ -10,29 +10,29 @@ const steps = [
   {
     icon: Download,
     title: "1. Export Your Data (Optional)",
-    content: "Before deleting, you can export all your data including chats, documents, projects, and settings via Settings > Export Data. We recommend this if you want to keep a copy of your work.",
+    content: "On the website, you can export your data from Settings → Privacy → Export before you delete. The mobile app does not have an export yet, so email support@cogerphere.com first if you need a copy.",
   },
   {
     icon: Trash2,
     title: "2. Initiate Deletion",
-    content: 'Go to Settings > Account > Delete Account. Click "Delete My Account" and confirm your choice. You will be asked to enter your password to verify your identity.',
+    content: "In the app, go to Account → Delete account and confirm. Deletion starts right away and cannot be undone.",
   },
   {
     icon: Clock,
-    title: "3. Grace Period (30 Days)",
-    content: "After initiating deletion, your account enters a 30-day grace period. During this time, your data is preserved but your account is inaccessible. You can cancel deletion by logging in and following the restore link sent to your email.",
+    title: "3. Timing",
+    content: "Deletion is immediate. There is no grace period and no restore link, so export your data first if you want a copy.",
   },
   {
     icon: ShieldCheck,
     title: "4. Permanent Deletion",
-    content: "After 30 days, your account and all associated data are permanently and irreversibly deleted. This includes your profile, projects, chats, documents, API keys, billing information, and usage history. This action cannot be undone.",
+    content: "Your sign-in account and your profile on our servers are removed when you confirm deletion. This cannot be undone. Chats, keys and models on your phone are removed with Settings → Delete all local data.",
   },
 ];
 
 const faqs = [
   {
     q: "What data is deleted?",
-    a: "All data is permanently deleted: account profile, authentication methods, projects, chats, documents, files, API keys, billing history, usage logs, and any stored preferences or settings. This deletion is irreversible.",
+    a: "Deleted: your sign-in account and profile on our servers. Encrypted database backups that still hold your data are deleted after 14 days.",
   },
   {
     q: "What data is retained?",
@@ -40,15 +40,15 @@ const faqs = [
   },
   {
     q: "Can I reactivate my account?",
-    a: "During the 30-day grace period, yes — simply log in and follow the restore prompt. After permanent deletion, no. All data is gone and cannot be recovered. We recommend exporting your data first.",
+    a: "No. Once deletion is done it cannot be recovered. Export your data first if you want a copy.",
   },
   {
     q: "What about third-party AI providers?",
-    a: "Cobentt does not control data stored by third-party AI providers (OpenAI, Anthropic, etc.) when you use your own API keys. You must delete data from those services separately. For Cobentt-managed API usage, we ensure your data is deleted from provider caches within 30 days.",
+    a: "Cobentt does not control data stored by third-party AI providers (for example OpenRouter or a custom endpoint) when you use your own key. You must delete data from those services separately. Requests sent to model providers are handled by those providers under their own retention terms.",
   },
   {
     q: "How long does billing stop?",
-    a: "Billing stops immediately upon initiation of deletion. You will not be charged after the deletion request is processed. If you are on a paid plan, you will retain access until the end of your current billing period.",
+    a: "Deleting your account cancels your paid subscription right away, so nothing renews after that.",
   },
 ];
 
