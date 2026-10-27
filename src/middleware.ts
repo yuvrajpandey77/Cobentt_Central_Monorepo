@@ -31,6 +31,9 @@ const isPublicRoute = createRouteMatcher([
     "/api/health",
     // Public price list read by the mobile app before sign-in. Carries no user data.
     "/api/billing/catalog",
+    // Cloud computer. The mobile app sends a Clerk bearer token, and every route in
+    // src/lib/cloud-computer/handlers.ts verifies it itself (401 without it). Only /health is open.
+    "/api/cloud-computer(.*)",
 ]);
 
 
