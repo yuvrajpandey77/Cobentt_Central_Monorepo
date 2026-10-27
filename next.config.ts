@@ -77,7 +77,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https://*.razorpay.com https://clerk.cobentt.cogerphere.com https://img.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com",
               "font-src 'self' https://fonts.gstatic.com",
               "worker-src 'self' blob:",
-              "connect-src 'self' https://clerk.cobentt.cogerphere.com https://api.razorpay.com https://checkout.razorpay.com https://lumberjack.razorpay.com https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.com https://clerk-telemetry.com https://api.openai.com https://openrouter.ai https://api.groq.com https://api.web3forms.com https://*.vercel.app https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
+              "connect-src 'self' https://*.protect.clerk.com:* wss://*.protect.clerk.com:* https://clerk.cobentt.cogerphere.com https://api.razorpay.com https://checkout.razorpay.com https://lumberjack.razorpay.com https://api.clerk.com https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.com https://clerk-telemetry.com https://api.openai.com https://openrouter.ai https://api.groq.com https://api.web3forms.com https://*.vercel.app https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
               "frame-src 'self' https://clerk.cobentt.cogerphere.com https://api.razorpay.com https://checkout.razorpay.com https://js.clerk.com https://*.clerk.accounts.dev https://accounts.google.com https://vercel.live https://*.vercel.live https://challenges.cloudflare.com https://*.protect.clerk.com",
               "object-src 'none'",
               "base-uri 'self'",

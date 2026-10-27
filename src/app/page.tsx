@@ -38,7 +38,12 @@ const PageContent = () => {
     const queryClient = useQueryClient();
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const [projectType, setProjectType] = useState<"webapp" | "contract">("webapp");
-    const [greeting] = useState(getDailyGreeting);
+    // The greeting depends on the viewer's local time. Choose it after mount so the
+    // server and the browser render the same HTML (otherwise React error #418).
+    const [greeting, setGreeting] = useState<{ heading: string } | null>(null);
+    useEffect(() => {
+        setGreeting(getDailyGreeting());
+    }, []);
     const [projectCategory, setProjectCategory] = useState<string | null>(null);
     const { userId } = useAuth();
 
@@ -139,7 +144,7 @@ const PageContent = () => {
 
                             {/* Main Heading */}
                             <h1 className="text-3xl md:text-4xl font-semibold opacity-90 leading-tight">
-                                {greeting.heading}
+                                {greeting?.heading ?? ""}
                             </h1>
 
                             {/* Project Form */}
