@@ -8,42 +8,89 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MessageList } from "@/components/chat/message-list";
 import { Composer } from "@/components/chat/composer";
 import type { Message } from "@/lib/chat-store";
-import { Menu, Share2 } from "lucide-react";
+import { Menu, Share2, SquarePen } from "lucide-react";
+import Image from "next/image";
 import { takePendingFiles } from "@/lib/attachments/shuttle";
 import { ShareDialog } from "@/components/chat/share-dialog";
 import { ByokGate } from "@/components/byok-gate";
+import { getModelById } from "@/lib/models";
 
-function ContextRing() {
+function ContextRing({ modelId }: { modelId: string }) {
   const { activeThread } = useChat();
   const approxTokens = (activeThread?.messages ?? [])
     .reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
-  const maxContext = 128000;
+  const maxContext = getModelById(modelId)?.context ?? 128000;
   const used = Math.min(Math.round((approxTokens / maxContext) * 100), 100);
   return (
-    <div className="relative w-12 h-12 flex items-center justify-center group">
-      <svg className="absolute inset-0 w-12 h-12 -rotate-90" viewBox="0 0 28 28">
+    <div className="relative w-9 h-9 flex items-center justify-center group">
+      <svg className="absolute inset-0 w-9 h-9 -rotate-90" viewBox="0 0 28 28">
         <circle cx="14" cy="14" r="11" fill="none" stroke="var(--color-cb-border)" strokeWidth="2.5" />
         <circle cx="14" cy="14" r="11" fill="none" stroke="var(--color-cb-accent)" strokeWidth="2.5"
           strokeDasharray={`${(used / 100) * 69.1} 69.1`} strokeLinecap="round" />
       </svg>
-      <span className="text-[10px] font-semibold text-[var(--color-cb-text-muted)]">{used}%</span>
-      <div className="absolute top-full mt-2 right-0 hidden group-hover:block px-2.5 py-1.5 rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[4px] rounded-br-[4px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] text-[11px] text-[var(--color-cb-text-muted)] max-w-[200px] z-10">
+      <span className="text-[9px] font-semibold text-[var(--color-cb-text-muted)]">{used}%</span>
+      <div className="absolute top-full mt-2 right-0 hidden group-hover:block px-2.5 py-1.5 rounded-[12px] bg-[var(--color-cb-card)] border border-[var(--color-cb-border)] text-[11px] text-[var(--color-cb-text-muted)] max-w-[220px] z-10">
         Context: {approxTokens.toLocaleString()} / {maxContext.toLocaleString()} tokens
       </div>
     </div>
   );
 }
 
-function EmptyState() {
+/** The app's chat opens with Coby and a human greeting, not an empty canvas. */
+function EmptyState({ name }: { name?: string | null }) {
+  const first = name?.trim().split(/\s+/)[0];
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 py-12" />
+    <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="w-16 h-16 rounded-full overflow-hidden border border-[var(--color-cb-border)] bg-[var(--color-cb-bg-elevated)] shadow-lg">
+        <Image src="/cobentttransparent.webp" alt="Cobentt" width={64} height={64} className="w-full h-full object-cover" priority />
+      </div>
+      <h2 className="mt-6 text-3xl md:text-4xl font-semibold tracking-tight text-[var(--color-cb-text-bright)]">
+        {first ? `Hi, ${first}` : "Hi there"}
+      </h2>
+      <p className="mt-2 text-sm text-[var(--color-cb-text-muted)]">
+        Ask, delegate, or paste a link and I&apos;ll read it.
+      </p>
+    </div>
+  );
+}
+
+/** Coby's live identity row — same role as the app's AgentBar. */
+function AgentBar({
+  modelLabel,
+  streaming,
+  searching,
+}: {
+  modelLabel: string;
+  streaming: boolean;
+  searching: boolean;
+}) {
+  return (
+    <div className="px-4 pb-2">
+      <div className="max-w-[800px] mx-auto flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-full overflow-hidden border border-[var(--color-cb-border)] bg-[var(--color-cb-bg-elevated)] shrink-0">
+          <Image src="/cobentttransparent.webp" alt="Coby" width={32} height={32} className="w-full h-full object-cover" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-[12px] font-medium text-[var(--color-cb-text-bright)]">Coby</div>
+          <div
+            className={`text-[11px] truncate ${
+              streaming ? "text-[var(--color-cb-accent)]" : "text-[var(--color-cb-text-muted)]"
+            }`}
+            aria-live="polite"
+          >
+            {streaming ? (searching ? "Searching the web…" : "Thinking…") : `${modelLabel} · cloud`}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function ChatContent() {
-  const { activeThread, sidebarOpen, setSidebarOpen } = useChat();
-  const { isLoaded } = useUser();
+  const { activeThread, sidebarOpen, setSidebarOpen, modelId, isStreaming, webSearch, createThread } = useChat();
+  const { isLoaded, user } = useUser();
   const { isSignedIn } = useAuth();
+  const modelLabel = getModelById(modelId)?.label ?? "OpenRouter Auto";
   const searchParams = useSearchParams();
   const [streamingMsg, setStreamingMsg] = useState<Message | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -51,6 +98,11 @@ export function ChatContent() {
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>(undefined);
   const [incomingFiles, setIncomingFiles] = useState<File[]>([]);
   const [regenerateRequest, setRegenerateRequest] = useState<{ userMessageId: string; content: string } | null>(null);
+  const [composerFocus, setComposerFocus] = useState(0);
+  const startNewChat = () => {
+    createThread();
+    setComposerFocus((n) => n + 1);
+  };
 
   // Files queued on the root page and carried here via the module shuttle
   useEffect(() => {
@@ -141,23 +193,40 @@ export function ChatContent() {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
+        {/* Header — thread identity on the left, live context / actions on the right */}
         <header className="flex items-center justify-between px-3 h-12 bg-[var(--color-cb-bg)] -mt-0.5">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-tr-[8px] rounded-bl-[8px] rounded-tl-[24px] rounded-br-[24px] hover:bg-[var(--color-cb-card)] transition-colors text-[var(--color-cb-text-muted)] overflow-hidden"
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-[14px] hover:bg-[var(--color-cb-card)] transition-colors text-[var(--color-cb-text-muted)] overflow-hidden shrink-0"
             >
               <Menu className="w-4 h-4" />
             </button>
+            <div className="min-w-0">
+              <div className="truncate text-[12px] font-medium text-[var(--color-cb-text-bright)]">
+                {activeThread?.title || "New chat"}
+              </div>
+              <div className="truncate text-[10px] text-[var(--color-cb-text-muted)]">
+                {modelLabel} · cloud
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <ContextRing />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ContextRing modelId={modelId} />
+            {activeThread && (
+              <button
+                onClick={startNewChat}
+                className="w-9 h-9 flex items-center justify-center rounded-[14px] bg-[var(--color-cb-card)] hover:bg-[var(--color-cb-border)] transition-colors text-[var(--color-cb-text-muted)]"
+                title="New chat"
+              >
+                <SquarePen className="w-4 h-4" />
+              </button>
+            )}
             {activeThread && (
               <button
                 onClick={() => setShareOpen(true)}
-                className="w-9 h-9 flex items-center justify-center rounded-tr-[24px] rounded-bl-[24px] rounded-tl-[8px] rounded-br-[8px] bg-[var(--color-cb-card)] hover:bg-[var(--color-cb-border)] transition-colors text-[var(--color-cb-text-muted)]"
+                className="w-9 h-9 flex items-center justify-center rounded-[14px] bg-[var(--color-cb-card)] hover:bg-[var(--color-cb-border)] transition-colors text-[var(--color-cb-text-muted)]"
                 title="Share chat"
               >
                 <Share2 className="w-4 h-4" />
@@ -166,11 +235,20 @@ export function ChatContent() {
           </div>
         </header>
 
+        {/* Coby's live identity, like the app's agent bar */}
+        {(displayMessages.length > 0 || streamingMsg) && (
+          <AgentBar
+            modelLabel={modelLabel}
+            streaming={isStreaming || !!streamingMsg}
+            searching={webSearch}
+          />
+        )}
+
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scrollbar px-4">
-          <div className="max-w-[800px] mx-auto pt-6">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto chat-scrollbar px-4 flex flex-col">
+          <div className="max-w-[800px] w-full mx-auto pt-6 flex-1 flex flex-col">
             {displayMessages.length === 0 && !streamingMsg ? (
-              <EmptyState />
+              <EmptyState name={user?.firstName ?? user?.fullName} />
             ) : (
               <MessageList
                 messages={displayMessages}
@@ -191,6 +269,7 @@ export function ChatContent() {
             initialFiles={incomingFiles}
             regenerateRequest={regenerateRequest}
             onRegenerateHandled={() => setRegenerateRequest(null)}
+            focusRequest={composerFocus}
           />
         </div>
       </div>

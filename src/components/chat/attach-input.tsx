@@ -31,6 +31,8 @@ interface AttachInputProps {
 }
 
 export interface AttachInputHandle {
+  /** Open the native file picker (used by the composer's plus menu). */
+  pick: () => void;
   /** Upload all locally-queued files to the given conversation and return
    *  their metadata. Resolves to [] when there are no pending files. */
   uploadPending: (conversationId: string) => Promise<AttachmentMeta[]>;
@@ -151,6 +153,7 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
     };
 
     useImperativeHandle(ref, () => ({
+      pick: () => inputRef.current?.click(),
       uploadPending,
       hasPending: () => pendingRef.current.length > 0,
       queueFiles: (files: File[]) => {
