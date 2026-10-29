@@ -79,6 +79,19 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
   return Math.min(max, Math.max(min, n));
 }
 
+/** A 200 response can still carry no answer (reasoning-only models). */
+function hasVisibleAnswer(body: string): boolean {
+  try {
+    const parsed = JSON.parse(body) as {
+      choices?: Array<{ message?: { content?: string | null } }>;
+    };
+    const content = parsed.choices?.[0]?.message?.content;
+    return typeof content === "string" && content.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 function parseUsage(body: string): { promptTokens: number; completionTokens: number } | null {
   try {
     const parsed = JSON.parse(body) as {
@@ -277,9 +290,44 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   if (!streaming) {
-    const text = await upstream.text().catch(() => "");
+    let text = await upstream.text().catch(() => "");
     clearTimeout(timeout);
-    if (!text.trim()) return fail(502, "PROVIDER_EMPTY", "The model provider returned an empty answer. Try again.");
+
+    // A free router can land on a preview/reasoning model that returns 200 with
+    // no content. That looked like a broken provider to users. Retry once with
+    // the reliable Auto router before giving up.
+    if (!hasVisibleAnswer(text) && credential.provider === "openrouter" && model !== "openrouter/auto") {
+      const retryController = new AbortController();
+      const retryTimeout = setTimeout(() => retryController.abort(), 45_000);
+      try {
+        const retry = await fetch(`${credential.baseUrl.replace(/\/$/, "")}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${credential.apiKey}`,
+            ...credential.extraHeaders,
+          },
+          body: JSON.stringify({ ...payload, model: "openrouter/auto" }),
+          signal: retryController.signal,
+        });
+        if (retry.ok) {
+          const retryText = await retry.text();
+          if (hasVisibleAnswer(retryText)) {
+            console.info("[ai/chat] empty answer from", model, "— served by openrouter/auto instead");
+            text = retryText;
+          }
+        }
+      } catch {
+        // Keep the original response and fall through to the empty-answer error.
+      } finally {
+        clearTimeout(retryTimeout);
+      }
+    }
+
+    if (!hasVisibleAnswer(text)) {
+      return fail(502, "PROVIDER_EMPTY", "The model didn't produce an answer. Try again, or pick Auto in Settings.");
+    }
     const usage = parseUsage(text);
     if (usage) {
       void recordAITokens({

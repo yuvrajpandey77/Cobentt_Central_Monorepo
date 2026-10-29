@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
     const pipeline = await runAIPipeline(userPrompt, {
       rateLimitKey: "ai",
       estimatedTokens: 2000,
+      // BYOK calls are paid for by the user's own provider key.
+      skipQuotaForByok: true,
     });
     if (!pipeline.ok) return pipeline.response;
 

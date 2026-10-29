@@ -45,6 +45,27 @@ export interface RunPipelineOptions {
   estimatedTokens?: number;
   /** Skip injection check (e.g. for system-generated content). */
   skipInjectionCheck?: boolean;
+  /**
+   * When the caller is going to pay with their own provider key (BYOK), the
+   * platform's prepaid balance must not gate the request. The endpoint still
+   * resolves the key itself and fails if it is missing or invalid.
+   */
+  skipQuotaForByok?: boolean;
+}
+
+/** True when the user has at least one active provider key of their own. */
+async function hasActiveByokKey(userId: string): Promise<boolean> {
+  try {
+    const { default: prisma } = await import("@/lib/db");
+    const key = await prisma.apiKey.findFirst({
+      where: { clerkUserId: userId, isActive: true },
+      select: { id: true },
+    });
+    return Boolean(key);
+  } catch {
+    // Fail closed: a DB failure must not let requests bypass prepaid metering.
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -139,26 +160,30 @@ export async function runAIPipeline(
     }
   }
 
-  // 6. Quota enforcement
-  try {
-    await enforceQuota(userId, estimatedTokens);
-  } catch (e) {
-    if (e instanceof Error && e.message.startsWith("PAYMENT_REQUIRED")) {
+  // 6. Quota enforcement. A BYOK request spends the user's own provider
+  // credit, not Cobentt's, so the prepaid wall does not apply to it.
+  const byokPays = opts.skipQuotaForByok === true && (await hasActiveByokKey(userId));
+  if (!byokPays) {
+    try {
+      await enforceQuota(userId, estimatedTokens);
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith("PAYMENT_REQUIRED")) {
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "Hosted AI needs a plan or a top-up.", code: "PAYMENT_REQUIRED", pricingUrl: "/overview/pricing" },
+            { status: 402 }
+          ),
+        };
+      }
       return {
         ok: false,
         response: NextResponse.json(
-          { error: "Hosted AI needs a plan or a top-up.", code: "PAYMENT_REQUIRED", pricingUrl: "/overview/pricing" },
-          { status: 402 }
+          { error: "Daily limit reached. Please try again tomorrow or upgrade your plan." },
+          { status: 429 }
         ),
       };
     }
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: "Daily limit reached. Please try again tomorrow or upgrade your plan." },
-        { status: 429 }
-      ),
-    };
   }
 
   // 7. Conversation ownership (optional)

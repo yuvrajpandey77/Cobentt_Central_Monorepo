@@ -7,7 +7,8 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import TextareaAutosize from "react-textarea-autosize";
-import { Plus, Globe, Send, Square } from "lucide-react";
+import { Plus, Globe, Send, Square, Paperclip, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { friendlyAIErrorMessage } from "@/lib/ai/client";
 import { AttachInput, AttachmentPills, type AttachmentMeta, type AttachmentPill, type AttachInputHandle } from "@/components/chat/attach-input";
@@ -49,6 +50,7 @@ export function Composer({
   initialFiles,
   regenerateRequest,
   onRegenerateHandled,
+  focusRequest = 0,
 }: {
   onStreamMessage?: (msg: Message | null) => void;
   onUserMessage?: (msg: Message) => void;
@@ -56,6 +58,8 @@ export function Composer({
   initialFiles?: File[];
   regenerateRequest?: { userMessageId: string; content: string } | null;
   onRegenerateHandled?: () => void;
+  /** Increment to focus the composer (used after New chat). */
+  focusRequest?: number;
 }) {
   const {
     activeThread, isStreaming, setIsStreaming,
@@ -83,6 +87,13 @@ export function Composer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const attachRef = useRef<AttachInputHandle>(null);
+
+  // Explicit focus after "New chat" — same affordance as the mobile composer.
+  useEffect(() => {
+    if (!focusRequest) return;
+    const t = setTimeout(() => textareaRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, [focusRequest]);
 
   const createConvMutation = useMutation(trpc.conversations.create.mutationOptions());
   const createMessageMutation = useMutation(trpc.chatMessages.create.mutationOptions());
@@ -291,14 +302,14 @@ export function Composer({
     } catch (err: unknown) {
       abortRef.current = null;
       const msg = err instanceof Error ? err.message : "Request failed";
+      // Keep the error on screen with a retry action; silently disappearing
+      // errors were the worst part of a failed send.
       onStreamMessage?.({
         id: assistantId,
         role: "assistant",
-        content: `**Error:** ${msg}\n\nPlease try again.`,
+        content: `Error: ${msg}`,
         timestamp: Date.now(),
       });
-      // Let user see error, clear after timeout
-      setTimeout(() => onStreamMessage?.(null), 5000);
     }
 
     setIsStreaming(false);
@@ -539,26 +550,44 @@ export function Composer({
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-text-secondary flex-shrink-0"
+              aria-expanded={showMenu}
+              className={cn(
+                "w-9 h-9 flex items-center justify-center rounded-full transition-colors flex-shrink-0",
+                showMenu
+                  ? "bg-[var(--color-cb-accent-muted)] text-[var(--color-cb-accent)]"
+                  : "bg-white/10 hover:bg-white/20 text-[var(--color-cb-text-muted)]"
+              )}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className={cn("w-4 h-4 transition-transform", showMenu && "rotate-45")} />
             </button>
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute bottom-11 left-0 z-20 w-48 py-1 bg-black/90 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl">
-                  {["Camera", "Gallery", "Files", "Web Search", "Connectors"].map((item) => (
-                    <button
-                      key={item}
-                      onClick={() => {
-                        if (item === "Web Search") { setWebTouched(true); setWebSearch(true); }
-                        setShowMenu(false);
-                      }}
-                      className="w-full text-left px-3 py-2.5 text-sm text-text-secondary hover:bg-white/10 hover:text-white transition-colors"
-                    >
-                      {item}{item === "Web Search" && webSearch ? " ✓" : ""}
-                    </button>
-                  ))}
+                <div className="absolute bottom-11 left-0 z-20 w-52 py-1 bg-[var(--color-cb-bg-elevated)] border border-[var(--color-cb-border)] rounded-[16px] shadow-2xl overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      attachRef.current?.pick();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--color-cb-text)] hover:bg-[var(--color-cb-card)] transition-colors"
+                  >
+                    <Paperclip className="w-4 h-4 text-[var(--color-cb-text-muted)]" />
+                    Add photo or file
+                  </button>
+                  <button
+                    onClick={() => {
+                      setWebTouched(true);
+                      setWebSearch(!webSearch);
+                      setShowMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between gap-2.5 px-3 py-2.5 text-sm text-[var(--color-cb-text)] hover:bg-[var(--color-cb-card)] transition-colors"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Globe className="w-4 h-4 text-[var(--color-cb-text-muted)]" />
+                      Web search
+                    </span>
+                    {webSearch && <Check className="w-3.5 h-3.5 text-[var(--color-cb-accent)]" />}
+                  </button>
                 </div>
               </>
             )}

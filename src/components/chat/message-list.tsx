@@ -3,8 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Message } from "@/lib/chat-store";
 import { useChat } from "@/lib/chat-store";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { FlowerLoader } from "@/components/flower-loader";
 import { AttachmentPills } from "@/components/chat/attach-input";
 import { ShareDialog } from "@/components/chat/share-dialog";
 import {
@@ -21,7 +21,35 @@ import {
 export function ThinkingLoader({ isStreaming }: { isStreaming: boolean }) {
   if (!isStreaming) return null;
 
-  return <FlowerLoader />;
+  return (
+    <div className="mb-3 flex items-center gap-2" role="status" aria-live="polite">
+      <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full border border-[var(--color-cb-border)] bg-[var(--color-cb-bg-elevated)]">
+        <Image src="/cobentttransparent.webp" alt="" width={20} height={20} className="h-full w-full object-cover" />
+      </div>
+      <span className="text-[12px] text-[var(--color-cb-text-muted)]">Thinking</span>
+      <span className="flex items-center gap-1">
+        {[0, 150, 300].map((delay) => (
+          <span
+            key={delay}
+            className="h-1 w-1 animate-bounce rounded-full bg-[var(--color-cb-text-muted)]"
+            style={{ animationDelay: `${delay}ms`, animationDuration: "900ms" }}
+          />
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/** Small identity row above Coby's answer, mirroring the app's agent header. */
+function AssistantIdentity() {
+  return (
+    <div className="mb-1.5 flex items-center gap-2">
+      <div className="h-5 w-5 overflow-hidden rounded-full border border-[var(--color-cb-border)] bg-[var(--color-cb-bg-elevated)]">
+        <Image src="/cobentttransparent.webp" alt="" width={20} height={20} className="h-full w-full object-cover" />
+      </div>
+      <span className="text-[11px] font-medium text-[var(--color-cb-text-muted)]">Cobentt</span>
+    </div>
+  );
 }
 
 function ThinkingBlock({ text, time }: { text: string; time?: number }) {
@@ -234,6 +262,7 @@ export function MessageList({
       {messages.map((msg, idx) => {
         const prevUser = getPrevUserMessage(idx);
         const isLastStreaming = isStreaming && idx === messages.length - 1 && msg.role === "assistant";
+        const isError = msg.role === "assistant" && msg.content.startsWith("Error:");
 
         return (
           <div key={msg.id} id={`msg-${msg.id}`} className={cn("animate-fade-in-up group", msg.role === "user" ? "flex justify-end" : "")}>
@@ -253,24 +282,61 @@ export function MessageList({
               </div>
             ) : (
               <div className="max-w-full px-0.5">
+                {(!isLastStreaming || Boolean(msg.content)) && <AssistantIdentity />}
                 {!isLastStreaming && msg.thinking && (
                   <ThinkingBlock text={msg.thinking} time={msg.thinkingTime} />
                 )}
                 {isLastStreaming && <ThinkingLoader isStreaming={true} />}
-                <div>{renderMarkdown(msg.content)}</div>
-
-                {msg.sources && msg.sources.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {msg.sources.map((s) => (
-                      <button key={s.index} className="flex items-center gap-1 px-2 py-1 rounded-[14px] bg-[var(--color-cb-accent-muted)] hover:bg-[var(--color-cb-border)] transition-colors">
-                        <span className="text-[10px] font-semibold text-[var(--color-cb-text-muted)]">{s.index}</span>
-                        <span className="text-[10px] text-[var(--color-cb-text-dim)]">{s.title}</span>
+                {isError ? (
+                  <div className="rounded-[16px] border border-[var(--color-cb-danger)]/30 bg-[var(--color-cb-danger)]/10 px-4 py-3">
+                    <p className="text-[13px] leading-relaxed text-[var(--color-cb-text)]">
+                      {msg.content.replace(/^Error:\s*/, "")}
+                    </p>
+                    {prevUser && onRegenerate && (
+                      <button
+                        onClick={() => onRegenerate(prevUser.id)}
+                        className="mt-2 flex items-center gap-1.5 text-[12px] font-medium text-[var(--color-cb-danger)] hover:opacity-80"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" /> Try again
                       </button>
-                    ))}
+                    )}
+                  </div>
+                ) : (
+                  <div>{renderMarkdown(msg.content)}</div>
+                )}
+
+                {!isError && msg.sources && msg.sources.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {msg.sources.map((s) => {
+                      const cls =
+                        "flex items-center gap-1 px-2 py-1 rounded-[14px] bg-[var(--color-cb-accent-muted)] hover:bg-[var(--color-cb-border)] transition-colors";
+                      const body = (
+                        <>
+                          <span className="text-[10px] font-semibold text-[var(--color-cb-text-muted)]">{s.index}</span>
+                          <span className="text-[10px] text-[var(--color-cb-text-dim)]">{s.title}</span>
+                        </>
+                      );
+                      return s.url ? (
+                        <a
+                          key={s.index}
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cls}
+                          title={s.url}
+                        >
+                          {body}
+                        </a>
+                      ) : (
+                        <span key={s.index} className={cls}>
+                          {body}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
 
-                {msg.content && !readOnly && (
+                {msg.content && !readOnly && !isError && (
                   <div className="flex items-center justify-between mt-3">
                     <AssistantActions
                       msg={msg}

@@ -12,7 +12,7 @@ export interface Message {
   timestamp: number;
   thinking?: string;
   thinkingTime?: number;
-  sources?: { index: number; title: string }[];
+  sources?: { index: number; title: string; url?: string }[];
   attachments?: { id: string; name: string; size: number }[];
 }
 
