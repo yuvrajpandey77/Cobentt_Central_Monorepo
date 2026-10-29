@@ -55,7 +55,7 @@ function ChatGroup({
         >
           <ChevronDown className="w-3 h-3 text-muted-foreground" />
         </motion.div>
-        <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">{label}</span>
+        <span className="text-[11px] font-medium text-[var(--color-cb-text-dim)] uppercase tracking-wider">{label}</span>
         <span className="text-[10px] text-muted-foreground ml-auto">{conversations.length}</span>
       </button>
       <AnimatePresence initial={false}>
@@ -126,7 +126,7 @@ export function SidebarChats(props: SidebarChatsProps) {
     <div>
       <div className="flex items-center gap-2 px-3 h-8 mb-1">
         <MessageCircle className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Chats</span>
+        <span className="text-[11px] font-medium text-[var(--color-cb-text-dim)] uppercase tracking-wider">Chats</span>
       </div>
       <div className="space-y-[1px]">
         {grouped.map((group) => (

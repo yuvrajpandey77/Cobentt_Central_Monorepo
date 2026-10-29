@@ -116,9 +116,9 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1a1d20] p-6 shadow-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-[var(--color-cb-border)] bg-[var(--color-cb-bg-elevated)] p-6 shadow-2xl">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#a3c987]/15 text-[#a3c987]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-cb-accent)]/15 text-[var(--color-cb-accent)]">
             <KeyRound className="h-5 w-5" />
           </div>
           <div>
@@ -138,10 +138,10 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
                 setProvider(e.target.value);
                 setTestResult(null);
               }}
-              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#a3c987]/60"
+              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-[var(--color-cb-text)] outline-none focus:border-[var(--color-cb-accent)]/60"
             >
               {PROVIDERS.map((p) => (
-                <option key={p.id} value={p.id} className="bg-[#1a1d20]">
+                <option key={p.id} value={p.id} className="bg-[var(--color-cb-bg-elevated)]">
                   {p.label}
                 </option>
               ))}
@@ -189,7 +189,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
             <div
               className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${
                 testResult === "ok"
-                  ? "border-[#a3c987]/30 bg-[#a3c987]/10 text-[#a3c987]"
+                  ? "border-[var(--color-cb-accent)]/30 bg-[var(--color-cb-accent)]/10 text-[var(--color-cb-accent)]"
                   : "border-red-400/30 bg-red-400/10 text-red-300"
               }`}
             >
@@ -216,7 +216,7 @@ export function ByokModal({ onDone }: { onDone?: () => void }) {
             <Button
               onClick={handleSave}
               disabled={saving || testResult !== "ok"}
-              className="flex-1 bg-[#a3c987] text-black hover:bg-[#a3c987]/90"
+              className="flex-1 bg-[var(--color-cb-accent)] text-[var(--color-cb-upgrade-text)] hover:bg-[var(--color-cb-accent)]/90"
             >
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save & continue
