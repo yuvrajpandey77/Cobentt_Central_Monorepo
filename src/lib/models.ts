@@ -28,10 +28,10 @@ export const MODELS: ModelInfo[] = [
   // Fast / Cheap
   {
     id: "openrouter/free",
-    label: "OpenRouter Free",
+    label: "OpenRouter Free (auto fallback)",
     provider: "OpenRouter",
     tier: "fast",
-    description: "Routes to the best available free model",
+    description: "Free models; falls back to Auto when a free model returns nothing",
     context: 131072,
   },
   {

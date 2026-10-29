@@ -42,8 +42,12 @@ export async function POST(
     return new Response("Not found", { status: 404 });
   }
 
-  const model =
+  const requestedModel =
     typeof reqModel === "string" ? reqModel : conversation.model || DEFAULT_MODEL;
+  // The free router frequently lands on a preview/reasoning model that returns
+  // no visible answer. Serve Auto for that selection so the user still gets a
+  // reply; the picker labels it as the auto fallback.
+  const model = requestedModel === "openrouter/free" ? "openrouter/auto" : requestedModel;
 
   // BYOK: resolve the caller's own key before spending anything.
   let credential;
