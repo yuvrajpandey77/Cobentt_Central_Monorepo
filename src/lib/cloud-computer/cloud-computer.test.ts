@@ -223,6 +223,19 @@ test("health is public, everything else needs a signed-in user", async () => {
   assert.equal(denied.status, 401);
 });
 
+test("mobile agent-server paths with the /api prefix reach the same handlers", async () => {
+  const { d } = deps();
+  // The mobile AgentServer calls POST /api/session, GET /api/workspace, …
+  const session = await call(d, "POST", "api/session", {});
+  assert.equal(session.status, 200);
+  assert.deepEqual(await session.json(), { token: "good", mode: "live" });
+
+  const workspace = await call(d, "GET", "api/workspace");
+  assert.equal(workspace.status, 200);
+  const agent = await call(d, "GET", "api/agent");
+  assert.equal(agent.status, 200);
+});
+
 test("the computer starts stopped, starts on request, and reports its network", async () => {
   const { d } = deps();
   const before = await (await call(d, "GET", "computer")).json();

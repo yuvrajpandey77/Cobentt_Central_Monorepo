@@ -34,6 +34,9 @@ const isPublicRoute = createRouteMatcher([
     // Cloud computer. The mobile app sends a Clerk bearer token, and every route in
     // src/lib/cloud-computer/handlers.ts verifies it itself (401 without it). Only /health is open.
     "/api/cloud-computer(.*)",
+    // Mobile AI gateway. Same pattern: the route verifies the Clerk bearer token
+    // itself (see src/app/api/ai/chat/route.ts) and returns 401 without it.
+    "/api/ai(.*)",
 ]);
 
 

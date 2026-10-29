@@ -78,14 +78,14 @@ export function AttachmentPills({
           key={p.id}
           className="flex items-center gap-2 rounded-lg bg-white/[0.06] border border-white/10 px-2 py-1.5"
         >
-          <FileText className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
-          <span className="text-xs text-text-secondary truncate max-w-[140px]">{p.name}</span>
-          <span className="text-[10px] text-text-muted flex-shrink-0">{formatBytes(p.size)}</span>
+          <FileText className="w-3.5 h-3.5 text-[var(--color-cb-text-dim)] flex-shrink-0" />
+          <span className="text-xs text-[var(--color-cb-text-muted)] truncate max-w-[140px]">{p.name}</span>
+          <span className="text-[10px] text-[var(--color-cb-text-dim)] flex-shrink-0">{formatBytes(p.size)}</span>
           {!readOnly && onRemove && (
             <button
               type="button"
               onClick={() => onRemove(p.id)}
-              className="w-5 h-5 flex items-center justify-center rounded-md text-text-tertiary hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+              className="w-5 h-5 flex items-center justify-center rounded-md text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text)] hover:bg-white/10 transition-colors flex-shrink-0"
               title="Remove attachment"
             >
               <X className="w-3 h-3" />
@@ -218,7 +218,7 @@ export const AttachInput = forwardRef<AttachInputHandle, AttachInputProps>(
           type="button"
           onClick={pick}
           disabled={disabled || uploading}
-          className="w-9 h-9 flex items-center justify-center rounded-full text-text-tertiary hover:text-text-secondary hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+          className="w-9 h-9 flex items-center justify-center rounded-full text-[var(--color-cb-text-dim)] hover:text-[var(--color-cb-text-muted)] hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
           title="Attach file"
         >
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}

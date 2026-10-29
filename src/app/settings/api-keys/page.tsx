@@ -223,10 +223,10 @@ export default function ApiKeysPage() {
           <select
             value={testModel}
             onChange={(e) => setTestModel(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#a3c987]/60 sm:w-72"
+            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-[var(--color-cb-text)] outline-none focus:border-[var(--color-cb-accent)]/60 sm:w-72"
           >
             {UNIQUE_MODELS.map((m) => (
-              <option key={m.id} value={m.id} className="bg-[#1a1d20]">
+              <option key={m.id} value={m.id} className="bg-[var(--color-cb-bg-elevated)]">
                 {m.label} — {m.provider}
               </option>
             ))}

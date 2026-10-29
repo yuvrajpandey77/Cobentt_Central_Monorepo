@@ -8,11 +8,11 @@ test("no saved key: default is OpenRouter Fusion and the full list is offered", 
   assert.ok(modelOptionsFor([]).length > 2);
 });
 
-test("OpenRouter key: default is Fusion, and the two choices are Fusion and Free", () => {
+test("OpenRouter key: default is Fusion, with Fusion, Auto and Free offered", () => {
   assert.equal(defaultModelFor(["openrouter"]), "openrouter/fusion");
   assert.deepEqual(
     modelOptionsFor(["openrouter"]).map((m) => m.id),
-    ["openrouter/fusion", "openrouter/free"],
+    ["openrouter/fusion", "openrouter/auto", "openrouter/free"],
   );
 });
 

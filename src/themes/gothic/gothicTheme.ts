@@ -1,14 +1,11 @@
 /**
- * Gothic Theme — dark only
+ * Cobentt Theme — Mobile-Unified Dark/Light
  *
- * A dark-only theme with deep blue-gray tones and a distressed display
- * heading. Inspired by ink, manuscript, and noir typography.
+ * True-black, neutral greys, white primary actions (the Grok / ChatGPT /
+ * Meta AI mobile look). Colour is reserved for meaning:
+ * blue = links / new, amber = memory, red = destructive, green = success.
  *
- * Core palette: #E8F1F6, #96A0AB, #495056, #24292D, #101314
- * Categorical colors follow a pastel-on-dark pattern (light backgrounds
- * with dark text) — same in any system color preference.
- *
- * Uses Manufacturing Consent for headings and Fustat for body text.
+ * Syncs with mobile theme.ts (darkColors / lightColors).
  */
 
 import {defineTheme, defineSyntaxTheme} from '@astryxdesign/core/theme';
@@ -45,18 +42,15 @@ export const gothicTheme = defineTheme({
   name: 'gothic',
 
   typography: {
-    // base 16 / ratio 1.25 — larger scale so the (optically small) blackletter
-    // display sizes read large enough to carry the theme.
+    // Mobile-unified scale: Plus Jakarta Sans + JetBrains Mono
     scale: {base: 16, ratio: 1.25},
     body: {
-      family: 'Fustat',
+      family: 'Plus Jakarta Sans',
       fallbacks:
         '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     },
-    // Headings (h1-h6) use Fustat to match the body — Manufacturing Consent
-    // is reserved for display sizes only (see component overrides below).
     heading: {
-      family: 'Fustat',
+      family: 'Plus Jakarta Sans',
       fallbacks:
         '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       weights: {3: 'bold', 4: 'bold'},
@@ -67,6 +61,9 @@ export const gothicTheme = defineTheme({
     },
   },
 
+  // Manufacturing Consent is reserved for display sizes only
+  // (see component overrides below).
+
   // Slower, theatrical motion — gothic doesn't rush.
   motion: {fast: 150, medium: 350, slow: 800, ratio: 0.75},
 
@@ -74,59 +71,58 @@ export const gothicTheme = defineTheme({
 
   tokens: {
     // =========================================================================
-    // Colors — gothic dark palette (single values, dark-only)
-    // Core: #E8F1F6, #96A0AB, #495056, #24292D, #101314
+    // Colors — mobile-unified palette (syncs with mobile theme.ts)
+    // Core: #000000, #0E0E0E, #171717, #ECECEC, #A3A3A3
     // =========================================================================
 
     // Core semantic
-    '--color-accent': '#E8F1F6',
-    '--color-accent-muted': '#E8F1F620',
-    '--color-neutral': '#E8F1F61A',
-    '--color-background-surface': '#101314',
-    '--color-background-body': '#101314',
-    '--color-overlay': '#101314CC',
-    '--color-overlay-hover': '#E8F1F60D',
-    '--color-overlay-pressed': '#E8F1F61A',
-    '--color-background-muted': '#24292D',
+    '--color-accent': '#FFFFFF',
+    '--color-accent-muted': '#FFFFFF20',
+    '--color-neutral': '#FFFFFF1A',
+    '--color-background-surface': '#000000',
+    '--color-background-body': '#000000',
+    '--color-overlay': '#000000CC',
+    '--color-overlay-hover': '#FFFFFF0D',
+    '--color-overlay-pressed': '#FFFFFF1A',
+    '--color-background-muted': '#171717',
 
     // Text
-    '--color-text-primary': '#E8F1F6',
-    '--color-text-secondary': '#96A0AB',
-    '--color-text-disabled': '#495056',
-    '--color-text-accent': '#E8F1F6',
-    '--color-on-dark': '#E8F1F6',
-    '--color-on-light': '#101314',
-    '--color-on-accent': '#101314',
-    '--color-on-success': '#101314',
-    '--color-on-error': '#101314',
-    '--color-on-warning': '#101314',
+    '--color-text-primary': '#ECECEC',
+    '--color-text-secondary': '#A3A3A3',
+    '--color-text-disabled': '#444444',
+    '--color-text-accent': '#FFFFFF',
+    '--color-on-dark': '#ECECEC',
+    '--color-on-light': '#000000',
+    '--color-on-accent': '#000000',
+    '--color-on-success': '#000000',
+    '--color-on-error': '#000000',
+    '--color-on-warning': '#000000',
 
     // Icon
-    '--color-icon-accent': '#E8F1F6',
-    '--color-icon-primary': '#E8F1F6',
-    '--color-icon-secondary': '#96A0AB',
-    '--color-icon-disabled': '#495056',
+    '--color-icon-accent': '#FFFFFF',
+    '--color-icon-primary': '#FFFFFF',
+    '--color-icon-secondary': '#A3A3A3',
+    '--color-icon-disabled': '#444444',
 
     // Surface variants
-    '--color-background-card': '#1a1d20',
-    '--color-background-popover': '#24292D',
-    '--color-background-inverted': '#E8F1F6',
+    '--color-background-card': '#0E0E0E',
+    '--color-background-popover': '#171717',
+    '--color-background-inverted': '#FFFFFF',
 
-    // Status / Sentiment — dusty pastels matching the categorical
-    // pattern. Used for status surfaces, destructive button bg, etc.
-    '--color-success': '#b3c79a', // sage moss
-    '--color-success-muted': '#b3c79a',
-    '--color-error': '#c6a6a2', // dusty rose
-    '--color-error-muted': '#c6a6a2',
-    '--color-warning': '#d3c490', // aged gold
-    '--color-warning-muted': '#d3c490',
+    // Status / Sentiment — mobile-unified
+    '--color-success': '#4ADE80',
+    '--color-success-muted': '#4ADE80',
+    '--color-error': '#FF6B6B',
+    '--color-error-muted': '#FF6B6B',
+    '--color-warning': '#FBBF24',
+    '--color-warning-muted': '#FBBF24',
 
     // Border
-    '--color-border': '#E8F1F61A',
-    '--color-border-emphasized': '#495056',
+    '--color-border': '#FFFFFF1F',
+    '--color-border-emphasized': '#444444',
 
     // Effects
-    '--color-skeleton': '#495056',
+    '--color-skeleton': '#444444',
     '--color-shadow': '#0000004D',
     '--color-tint-hover': 'white',
 
@@ -198,12 +194,13 @@ export const gothicTheme = defineTheme({
     '--color-text-yellow': '#6c5010',
 
     // =========================================================================
-    // Radius — subtle rounding (original gothic)
+    // Radius — mobile-unified rounding (syncs with mobile theme.ts radii)
+    // sm=18px, md=14px, lg=20px, pill=18px
     // =========================================================================
-    '--radius-none': '0.125rem',
-    '--radius-inner': '0.25rem',
-    '--radius-element': '0.5rem',
-    '--radius-container': '0.75rem',
+    '--radius-none': '0',
+    '--radius-inner': '0.875rem',
+    '--radius-element': '1.125rem',
+    '--radius-container': '1.25rem',
     '--radius-page': '1.5rem',
     '--radius-full': '9999px',
 
@@ -222,9 +219,7 @@ export const gothicTheme = defineTheme({
 
   components: {
     button: {
-      // Primary inherits default — light pill with dark text via
-      // --color-accent / --color-on-accent (matches the cream badge).
-      // Secondary uses the dark-slate "neutral" badge treatment.
+      // Primary — white pill with dark text (mobile-unified primary)
       'variant:secondary': {
         backgroundColor: 'var(--color-background-gray)',
         color: 'var(--color-text-gray)',
@@ -236,11 +231,10 @@ export const gothicTheme = defineTheme({
           backgroundColor: 'var(--color-overlay-hover)',
         },
       },
-      // Destructive uses the dusty rose bg with dark warm-brown text
-      // (matches the red badge).
+      // Destructive — uses mobile's danger red
       'variant:destructive': {
         backgroundColor: 'var(--color-error)',
-        color: 'var(--color-text-red)',
+        color: '#000000',
       },
     },
 
@@ -258,16 +252,16 @@ export const gothicTheme = defineTheme({
         color: 'var(--color-text-gray)',
       },
       'variant:success': {
-        backgroundColor: 'var(--color-background-green)',
-        color: 'var(--color-text-green)',
+        backgroundColor: 'rgba(74, 222, 128, 0.16)',
+        color: '#4ADE80',
       },
       'variant:warning': {
         backgroundColor: 'var(--color-background-yellow)',
         color: 'var(--color-text-yellow)',
       },
       'variant:error': {
-        backgroundColor: 'var(--color-background-red)',
-        color: 'var(--color-text-red)',
+        backgroundColor: 'rgba(255, 107, 107, 0.16)',
+        color: '#FF6B6B',
       },
     },
 
@@ -276,28 +270,28 @@ export const gothicTheme = defineTheme({
         borderRadius: 'var(--radius-element)',
       },
       'status:info': {
-        backgroundColor: 'var(--color-background-blue)',
-        '--color-text-primary': 'var(--color-text-blue)',
-        '--color-text-secondary': 'var(--color-text-blue)',
-        '--color-accent': 'var(--color-text-blue)',
+        backgroundColor: 'rgba(110, 168, 255, 0.16)',
+        '--color-text-primary': '#6EA8FF',
+        '--color-text-secondary': '#6EA8FF',
+        '--color-accent': '#6EA8FF',
       },
       'status:success': {
-        backgroundColor: 'var(--color-background-green)',
-        '--color-text-primary': 'var(--color-text-green)',
-        '--color-text-secondary': 'var(--color-text-green)',
-        '--color-success': 'var(--color-text-green)',
+        backgroundColor: 'rgba(74, 222, 128, 0.16)',
+        '--color-text-primary': '#4ADE80',
+        '--color-text-secondary': '#4ADE80',
+        '--color-success': '#4ADE80',
       },
       'status:warning': {
-        backgroundColor: 'var(--color-background-yellow)',
-        '--color-text-primary': 'var(--color-text-yellow)',
-        '--color-text-secondary': 'var(--color-text-yellow)',
-        '--color-warning': 'var(--color-text-yellow)',
+        backgroundColor: 'rgba(251, 191, 36, 0.16)',
+        '--color-text-primary': '#FBBF24',
+        '--color-text-secondary': '#FBBF24',
+        '--color-warning': '#FBBF24',
       },
       'status:error': {
-        backgroundColor: 'var(--color-background-red)',
-        '--color-text-primary': 'var(--color-text-red)',
-        '--color-text-secondary': 'var(--color-text-red)',
-        '--color-error': 'var(--color-text-red)',
+        backgroundColor: 'rgba(255, 107, 107, 0.16)',
+        '--color-text-primary': '#FF6B6B',
+        '--color-text-secondary': '#FF6B6B',
+        '--color-error': '#FF6B6B',
       },
     },
 
