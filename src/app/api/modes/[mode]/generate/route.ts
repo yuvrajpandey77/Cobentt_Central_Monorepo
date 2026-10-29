@@ -174,6 +174,8 @@ export async function POST(
     rateLimitKey: "ai",
     conversationId,
     estimatedTokens: 4000,
+    // BYOK calls are paid for by the user's own provider key.
+    skipQuotaForByok: true,
   });
   if (!pipeline.ok) return pipeline.response;
 

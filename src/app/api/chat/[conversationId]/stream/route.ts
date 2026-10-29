@@ -26,6 +26,8 @@ export async function POST(
     rateLimitKey: "chat",
     conversationId,
     estimatedTokens: estimateTokens(message || "") + 2000,
+    // The user's own key pays for this call; don't require a Cobentt plan.
+    skipQuotaForByok: true,
   });
   if (!pipeline.ok) return pipeline.response;
 

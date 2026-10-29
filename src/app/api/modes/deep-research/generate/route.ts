@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
     rateLimitConfig: { requests: 3, window: "60 s" },
     conversationId,
     estimatedTokens: 12000,
+    // BYOK calls are paid for by the user's own provider key.
+    skipQuotaForByok: true,
   });
   if (!pipeline.ok) return pipeline.response;
 
