@@ -86,7 +86,18 @@ const CONTROL: Record<string, { from: TaskStatus[]; to: TaskStatus; resend: bool
   retry: { from: ["failed", "cancelled"], to: "queued", resend: true },
 };
 
-export async function handleCloudComputer(req: Request, path: string[], deps: CloudDeps): Promise<Response> {
+/**
+ * The mobile client speaks the agent-server protocol, whose paths already start
+ * with `/api` (`/api/session`, `/api/workspace`, …). This route is mounted at
+ * `/api/cloud-computer`, so those requests arrive as `["api", "session"]`.
+ * Accept the prefix as well as the bare path so both the app and direct callers work.
+ */
+function normalizePath(path: string[]): string[] {
+  return path[0] === "api" ? path.slice(1) : path;
+}
+
+export async function handleCloudComputer(req: Request, rawPath: string[], deps: CloudDeps): Promise<Response> {
+  const path = normalizePath(rawPath);
   try {
     if (req.method === "GET" && path.join("/") === "health") return json({ status: "ok", mode: "live" });
     const userId = await deps.userIdFrom(req);

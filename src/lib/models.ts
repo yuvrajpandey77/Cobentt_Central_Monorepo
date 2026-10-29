@@ -17,6 +17,14 @@ export const MODELS: ModelInfo[] = [
     description: "Several models answer, then one fused answer",
     context: 131072,
   },
+  {
+    id: "openrouter/auto",
+    label: "OpenRouter Auto",
+    provider: "OpenRouter",
+    tier: "balanced",
+    description: "Picks an available model for each request",
+    context: 131072,
+  },
   // Fast / Cheap
   {
     id: "openrouter/free",
@@ -140,7 +148,7 @@ export const MODELS: ModelInfo[] = [
 
 /** Models offered for each key provider, in order. The first is the default. */
 export const PROVIDER_MODEL_OPTIONS: Record<string, string[]> = {
-  openrouter: ["openrouter/fusion", "openrouter/free"],
+  openrouter: ["openrouter/fusion", "openrouter/auto", "openrouter/free"],
   openai: ["openai/gpt-4o-mini", "openai/gpt-4o"],
 };
 
